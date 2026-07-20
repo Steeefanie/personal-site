@@ -1,0 +1,132 @@
+<button
+  class="utility-button theme-switcher"
+  type="button"
+  aria-label="切换到深色模式"
+  data-label-light-zh-cn="切换到浅色模式"
+  data-label-dark-zh-cn="切换到深色模式"
+  data-label-light-zh-tw="切換至淺色模式"
+  data-label-dark-zh-tw="切換至深色模式"
+  data-label-light-en="Switch to light mode"
+  data-label-dark-en="Switch to dark mode"
+>
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <defs>
+      <mask id="theme-phase-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24">
+        <rect width="24" height="24" fill="black" />
+        <circle cx="12" cy="12" r="5.65" fill="white" />
+        <circle cx="9.75" cy="9.55" r="4.85" fill="black" />
+      </mask>
+    </defs>
+    <circle cx="12" cy="12" r="5.65" fill="currentColor" mask="url(#theme-phase-mask)" />
+    <g fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round">
+      <path d="M12 1.8v2.15M12 20.05v2.15M1.8 12h2.15M20.05 12h2.15" />
+      <path d="m4.78 4.78 1.5 1.5m11.44 11.44 1.5 1.5m0-14.44-1.5 1.5M6.28 17.72l-1.5 1.5" />
+    </g>
+  </svg>
+</button>
+
+<script>
+  type Theme = 'light' | 'dark';
+  type Locale = 'zh-CN' | 'zh-TW' | 'en';
+  const themeButton = document.querySelector<HTMLButtonElement>('.theme-switcher');
+  let themeLocked = false;
+
+  const getLocale = (): Locale => {
+    const value = document.documentElement.dataset.language;
+    return value === 'zh-TW' || value === 'en' ? value : 'zh-CN';
+  };
+
+  const updateThemeLabel = () => {
+    if (!themeButton) return;
+    const targetTheme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+    const locale = getLocale();
+    const suffix = locale === 'zh-CN' ? 'ZhCn' : locale === 'zh-TW' ? 'ZhTw' : 'En';
+    const label = themeButton.dataset[`label${targetTheme === 'light' ? 'Light' : 'Dark'}${suffix}`];
+    if (label) themeButton.setAttribute('aria-label', label);
+  };
+
+  const commitTheme = (theme: Theme) => {
+    document.documentElement.dataset.theme = theme;
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#141414' : '#f5f5f5');
+    document.querySelector<HTMLLinkElement>('#site-favicon')?.setAttribute('href', theme === 'dark'
+      ? '/brand/favicon-dark-nobg.svg'
+      : '/brand/favicon-light-nobg.svg');
+    try { localStorage.setItem('theme', theme); } catch (_) { /* Storage may be unavailable. */ }
+    updateThemeLabel();
+  };
+
+  const releaseThemeLock = () => {
+    themeLocked = false;
+    const root = document.documentElement;
+    root.classList.remove('theme-transition');
+    root.style.removeProperty('--theme-origin-x');
+    root.style.removeProperty('--theme-origin-y');
+    root.style.removeProperty('--theme-radius');
+    root.style.removeProperty('--theme-duration');
+    root.style.removeProperty('--theme-viewport-width');
+    root.style.removeProperty('--theme-viewport-height');
+  };
+
+  themeButton?.addEventListener('click', async () => {
+    if (themeLocked || !themeButton) return;
+    themeLocked = true;
+    const current: Theme = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
+    const next: Theme = current === 'dark' ? 'light' : 'dark';
+    const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (reduceMotion) {
+      commitTheme(next);
+      releaseThemeLock();
+      return;
+    }
+
+    const icon = themeButton.querySelector<SVGSVGElement>('svg');
+    const iconRect = icon?.getBoundingClientRect() ?? themeButton.getBoundingClientRect();
+    const centerX = iconRect.left + iconRect.width / 2;
+    const centerY = iconRect.top + iconRect.height / 2;
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const radius = Math.max(
+      Math.hypot(centerX, centerY),
+      Math.hypot(viewportWidth - centerX, centerY),
+      Math.hypot(centerX, viewportHeight - centerY),
+      Math.hypot(viewportWidth - centerX, viewportHeight - centerY),
+    );
+    const duration = Math.min(440, Math.max(280, radius / 3.3));
+    const root = document.documentElement;
+    root.style.setProperty('--theme-origin-x', `${(centerX / viewportWidth) * 100}%`);
+    root.style.setProperty('--theme-origin-y', `${(centerY / viewportHeight) * 100}%`);
+    root.style.setProperty('--theme-radius', `${radius}px`);
+    root.style.setProperty('--theme-duration', `${duration}ms`);
+    root.style.setProperty('--theme-viewport-width', `${viewportWidth}px`);
+    root.style.setProperty('--theme-viewport-height', `${viewportHeight}px`);
+
+    if (document.startViewTransition) {
+      root.classList.add('theme-transition');
+      const transition = document.startViewTransition(() => commitTheme(next));
+      try {
+        await transition.finished;
+      } catch (_) {
+        // Navigation and visibility changes are allowed to cancel a transition.
+      } finally {
+        releaseThemeLock();
+      }
+      return;
+    }
+
+    try {
+      const fadeOut = root.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 100, easing: 'ease-out', fill: 'forwards' });
+      await fadeOut.finished;
+      commitTheme(next);
+      fadeOut.cancel();
+      await root.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 140, easing: 'ease-out' }).finished;
+    } catch (_) {
+      commitTheme(next);
+    } finally {
+      releaseThemeLock();
+    }
+  });
+
+  window.addEventListener('site:language-change', updateThemeLabel);
+  updateThemeLabel();
+</script>

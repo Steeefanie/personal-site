@@ -1,0 +1,37 @@
+---
+import { localeDateFormats, locales, type Localized } from '../lib/i18n';
+
+interface LocalizedProject {
+  title: string;
+  description: string;
+  updatedDate?: Date;
+  publishDate: Date;
+  stack: string[];
+  attribution?: string;
+}
+
+interface Props {
+  slug: string;
+  locales: Localized<LocalizedProject>;
+}
+
+const { slug, locales: entries } = Astro.props;
+const base = entries['zh-CN'];
+const formatDate = (locale: keyof typeof entries) => new Intl.DateTimeFormat(
+  localeDateFormats[locale],
+  { dateStyle: 'long' },
+).format(entries[locale].updatedDate ?? entries[locale].publishDate);
+---
+
+<li class="content-list-item">
+  <a href={`/projects/${slug}/`}>
+    <div>
+      <h2 class="item-title">{locales.map((locale) => <span data-lang={locale}>{entries[locale].title}</span>)}</h2>
+      <p class="item-description">{locales.map((locale) => <span data-lang={locale}>{entries[locale].attribution && <span class="content-attribution">{entries[locale].attribution}</span>}{entries[locale].description}</span>)}</p>
+    </div>
+    <div class="item-meta">
+      <time datetime={(base.updatedDate ?? base.publishDate).toISOString()}>{locales.map((locale) => <span data-lang={locale}>{formatDate(locale)}</span>)}</time>
+      <span class="tag-list">{base.stack.map((item) => <span class="tag">#{item}</span>)}</span>
+    </div>
+  </a>
+</li>

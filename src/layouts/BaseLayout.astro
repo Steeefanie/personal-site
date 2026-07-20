@@ -1,0 +1,89 @@
+---
+import SiteHeader from '../components/SiteHeader.astro';
+import SiteFooter from '../components/SiteFooter.astro';
+import LocalizedText from '../components/LocalizedText.astro';
+import { text, ui, type Localized } from '../lib/i18n';
+import '../styles/global.css';
+
+interface Props {
+  titles?: Localized<string>;
+  descriptions?: Localized<string>;
+  activeNav?: 'home' | 'blog' | 'projects' | 'recipes';
+}
+
+const defaultTitles = text('Steeefanie｜个人网站', 'Steeefanie｜個人網站', 'Steeefanie | Personal Site');
+const defaultDescriptions = ui.home.description;
+const {
+  titles = defaultTitles,
+  descriptions = defaultDescriptions,
+  activeNav = 'home',
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="zh-CN" data-language="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={descriptions['zh-CN']} />
+    <meta name="theme-color" content="#f5f5f5" />
+    <link id="site-favicon" rel="icon" href="/brand/favicon-light-nobg.svg" type="image/svg+xml" />
+    <title>{titles['zh-CN']}</title>
+    <script is:inline>
+      (() => {
+        try {
+          const savedTheme = localStorage.getItem('theme');
+          const theme = savedTheme === 'dark' || savedTheme === 'light'
+            ? savedTheme
+            : (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+          document.documentElement.dataset.theme = theme;
+          document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#141414' : '#f5f5f5');
+          document.querySelector('#site-favicon')?.setAttribute('href', theme === 'dark'
+            ? '/brand/favicon-dark-nobg.svg'
+            : '/brand/favicon-light-nobg.svg');
+
+          const savedLanguage = localStorage.getItem('language');
+          const language = savedLanguage === 'zh-TW' || savedLanguage === 'en' ? savedLanguage : 'zh-CN';
+          if (savedLanguage === 'zh') localStorage.setItem('language', 'zh-CN');
+          document.documentElement.dataset.language = language;
+          document.documentElement.lang = language;
+        } catch (_) {
+          document.documentElement.dataset.theme = 'light';
+          document.documentElement.dataset.language = 'zh-CN';
+          document.querySelector('#site-favicon')?.setAttribute('href', '/brand/favicon-light-nobg.svg');
+        }
+      })();
+    </script>
+  </head>
+  <body
+    data-title-zh-cn={titles['zh-CN']}
+    data-title-zh-tw={titles['zh-TW']}
+    data-title-en={titles.en}
+    data-description-zh-cn={descriptions['zh-CN']}
+    data-description-zh-tw={descriptions['zh-TW']}
+    data-description-en={descriptions.en}
+  >
+    <a class="skip-link" href="#main-content">
+      <LocalizedText value={text('跳到主要内容', '跳至主要內容', 'Skip to content')} />
+    </a>
+    <SiteHeader activeNav={activeNav} />
+    <main id="main-content" class="main-content">
+      <slot />
+    </main>
+    <SiteFooter />
+    <script>
+      const syncDocumentLanguage = () => {
+        const candidate = document.documentElement.dataset.language;
+        const language = candidate === 'zh-TW' || candidate === 'en' ? candidate : 'zh-CN';
+        document.documentElement.lang = language;
+        const suffix = language === 'zh-CN' ? 'ZhCn' : language === 'zh-TW' ? 'ZhTw' : 'En';
+        const title = document.body.dataset[`title${suffix}`];
+        const description = document.body.dataset[`description${suffix}`];
+        if (title) document.title = title;
+        if (description) document.querySelector('meta[name="description"]')?.setAttribute('content', description);
+      };
+      syncDocumentLanguage();
+      window.addEventListener('site:language-change', syncDocumentLanguage);
+    </script>
+  </body>
+</html>
