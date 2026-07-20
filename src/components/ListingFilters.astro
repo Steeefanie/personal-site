@@ -1,0 +1,41 @@
+---
+import LocalizedText from './LocalizedText.astro';
+import { ui, type Localized } from '../lib/i18n';
+
+interface FilterOption {
+  value: string;
+  label: Localized<string>;
+}
+
+interface FilterGroup {
+  key: 'category';
+  param: string;
+  label: Localized<string>;
+  options: FilterOption[];
+}
+
+interface Props {
+  groups: FilterGroup[];
+  showLabels?: boolean;
+}
+
+const { groups, showLabels = true } = Astro.props;
+---
+
+<div class="listing-filters" data-listing-filters>
+  {groups.map((group) => (
+    <fieldset class:list={['filter-group', { 'filter-group--label-hidden': !showLabels }]} data-filter-group={group.key} data-filter-param={group.param}>
+      <legend class:list={{ 'sr-only': !showLabels }}><LocalizedText value={group.label} /></legend>
+      <div class="filter-options">
+        <button type="button" class="filter-chip" data-filter-value="" aria-pressed="true"><LocalizedText value={ui.common.all} /></button>
+        {group.options.map((option) => (
+          <button type="button" class="filter-chip" data-filter-value={option.value} aria-pressed="false"><LocalizedText value={option.label} /></button>
+        ))}
+      </div>
+    </fieldset>
+  ))}
+  <div class="filter-empty" data-filter-empty hidden>
+    <p><LocalizedText value={ui.common.noResults} /></p>
+    <button type="button" class="text-button" data-clear-filters><LocalizedText value={ui.common.clearFilters} /></button>
+  </div>
+</div>

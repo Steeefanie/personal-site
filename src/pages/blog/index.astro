@@ -1,0 +1,22 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PostListItem from '../../components/PostListItem.astro';
+import ListingPagination from '../../components/ListingPagination.astro';
+import { pairEntries } from '../../lib/content';
+import { locales, text } from '../../lib/i18n';
+
+const entries = await getCollection('blog', ({ data }) => !data.draft);
+const posts = pairEntries(entries);
+---
+
+<BaseLayout activeNav="blog" titles={text('随笔｜Steeefanie', '隨筆｜Steeefanie', 'Blog | Steeefanie')} descriptions={text('各种各样的技术笔记、踩坑经历、碎碎念。', '各式各樣的技術筆記、踩雷經歷與生活碎念。', 'Technical notes, lessons learned, and assorted thoughts.')}>
+  <div class="site-shell">
+    <section class="listing-section" aria-label="Blog">
+      <ul class="content-list">
+        {posts.map((post) => <PostListItem slug={post.slug} locales={Object.fromEntries(locales.map((locale) => [locale, post.locales[locale].data])) as any} />)}
+      </ul>
+      <ListingPagination pageSize={20} />
+    </section>
+  </div>
+</BaseLayout>

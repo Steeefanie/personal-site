@@ -1,0 +1,72 @@
+---
+import { getCollection, render, type CollectionEntry } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ProseLayout from '../../components/ProseLayout.astro';
+import LocalizedText from '../../components/LocalizedText.astro';
+import { pairEntries } from '../../lib/content';
+import { localeDateFormats, locales, text, type Localized } from '../../lib/i18n';
+
+interface Adjacent { slug: string; titles: Localized<string> }
+interface Props {
+  entries: Localized<CollectionEntry<'blog'>>;
+  previous?: Adjacent;
+  next?: Adjacent;
+}
+
+export async function getStaticPaths() {
+  const entries = await getCollection('blog', ({ data }) => !data.draft);
+  const groups = pairEntries(entries);
+  return groups.map((group, index) => ({
+    params: { slug: group.slug },
+    props: {
+      entries: group.locales,
+      previous: index < groups.length - 1 ? {
+        slug: groups[index + 1].slug,
+        titles: Object.fromEntries(locales.map((locale) => [locale, groups[index + 1].locales[locale].data.title])),
+      } : undefined,
+      next: index > 0 ? {
+        slug: groups[index - 1].slug,
+        titles: Object.fromEntries(locales.map((locale) => [locale, groups[index - 1].locales[locale].data.title])),
+      } : undefined,
+    },
+  }));
+}
+
+const { entries, previous, next } = Astro.props;
+const { Content: ZhCNContent } = await render(entries['zh-CN']);
+const { Content: ZhTWContent } = await render(entries['zh-TW']);
+const { Content: EnContent } = await render(entries.en);
+const contents = { 'zh-CN': ZhCNContent, 'zh-TW': ZhTWContent, en: EnContent };
+const dates = Object.fromEntries(locales.map((locale) => [locale, new Intl.DateTimeFormat(localeDateFormats[locale], { dateStyle: 'long' }).format(entries[locale].data.publishDate)])) as Localized<string>;
+const titles = Object.fromEntries(locales.map((locale) => [locale, `${entries[locale].data.title}${locale === 'en' ? ' | ' : '｜'}Steeefanie`])) as Localized<string>;
+const descriptions = Object.fromEntries(locales.map((locale) => [locale, entries[locale].data.description])) as Localized<string>;
+---
+
+<BaseLayout activeNav="blog" titles={titles} descriptions={descriptions}>
+  <article>
+    <header class="article-header">
+      <div class="reading-shell">
+        <a class="text-link" href="/blog/"><LocalizedText value={text('返回随笔', '返回隨筆', 'Back to Blog')} /></a>
+        <h1>{locales.map((locale) => <span data-lang={locale}>{entries[locale].data.title}</span>)}</h1>
+        <p class="article-deck">{locales.map((locale) => <span data-lang={locale}>{entries[locale].data.attribution && <span class="content-attribution">{entries[locale].data.attribution}</span>}{entries[locale].data.description}</span>)}</p>
+        <div class="article-meta">
+          <time datetime={entries['zh-CN'].data.publishDate.toISOString()}>{locales.map((locale) => <span data-lang={locale}>{dates[locale]}</span>)}</time>
+          {locales.map((locale) => <span data-lang={locale}>{entries[locale].data.readingTime}</span>)}
+          <span class="tag-list">{locales.map((locale) => <span data-lang={locale}>{entries[locale].data.tags.map((tag) => <span class="tag">#{tag.label}</span>)}</span>)}</span>
+        </div>
+      </div>
+    </header>
+    <ProseLayout>
+      {locales.map((locale) => {
+        const Content = contents[locale];
+        return <div data-lang={locale}><Content /></div>;
+      })}
+    </ProseLayout>
+    {(previous || next) && (
+      <nav class="reading-shell article-pager" aria-label="Adjacent posts">
+        {previous && <div class="pager-slot pager-slot--previous"><a class="pager-link" href={`/blog/${previous.slug}/`}><span class="pager-label"><LocalizedText value={text('上一篇', '上一篇', 'Previous')} /></span><span class="pager-title">{locales.map((locale) => <span data-lang={locale}>{previous.titles[locale]}</span>)}</span></a></div>}
+        {next && <div class="pager-slot pager-slot--next"><a class="pager-link" href={`/blog/${next.slug}/`}><span class="pager-label"><LocalizedText value={text('下一篇', '下一篇', 'Next')} /></span><span class="pager-title">{locales.map((locale) => <span data-lang={locale}>{next.titles[locale]}</span>)}</span></a></div>}
+      </nav>
+    )}
+  </article>
+</BaseLayout>

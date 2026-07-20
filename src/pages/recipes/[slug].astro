@@ -1,0 +1,73 @@
+---
+import { getCollection, render, type CollectionEntry } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ProseLayout from '../../components/ProseLayout.astro';
+import LocalizedText from '../../components/LocalizedText.astro';
+import { pairEntries } from '../../lib/content';
+import { locales, text, ui, type Localized } from '../../lib/i18n';
+
+interface Adjacent { slug: string; titles: Localized<string> }
+interface Props {
+  entries: Localized<CollectionEntry<'recipes'>>;
+  previous?: Adjacent;
+  next?: Adjacent;
+}
+
+export async function getStaticPaths() {
+  const entries = await getCollection('recipes', ({ data }) => !data.draft);
+  const groups = pairEntries(entries);
+  return groups.map((group, index) => ({
+    params: { slug: group.slug },
+    props: {
+      entries: group.locales,
+      previous: index < groups.length - 1 ? {
+        slug: groups[index + 1].slug,
+        titles: Object.fromEntries(locales.map((locale) => [locale, groups[index + 1].locales[locale].data.title])),
+      } : undefined,
+      next: index > 0 ? {
+        slug: groups[index - 1].slug,
+        titles: Object.fromEntries(locales.map((locale) => [locale, groups[index - 1].locales[locale].data.title])),
+      } : undefined,
+    },
+  }));
+}
+
+const { entries, previous, next } = Astro.props;
+const { Content: ZhCNContent } = await render(entries['zh-CN']);
+const { Content: ZhTWContent } = await render(entries['zh-TW']);
+const { Content: EnContent } = await render(entries.en);
+const contents = { 'zh-CN': ZhCNContent, 'zh-TW': ZhTWContent, en: EnContent };
+const base = entries['zh-CN'].data;
+const titles = Object.fromEntries(locales.map((locale) => [locale, `${entries[locale].data.title}${locale === 'en' ? ' | ' : '｜'}Steeefanie`])) as Localized<string>;
+const descriptions = Object.fromEntries(locales.map((locale) => [locale, entries[locale].data.description])) as Localized<string>;
+---
+
+<BaseLayout activeNav="recipes" titles={titles} descriptions={descriptions}>
+  <article>
+    <header class="article-header">
+      <div class="reading-shell">
+        <a class="text-link" href="/recipes/"><LocalizedText value={text('返回食谱', '返回食譜', 'Back to Recipes')} /></a>
+        <h1>{locales.map((locale) => <span data-lang={locale}>{entries[locale].data.title}</span>)}</h1>
+        <p class="article-deck">{locales.map((locale) => <span data-lang={locale}>{entries[locale].data.description}</span>)}</p>
+        <div class="article-meta">
+          <span class="status">{locales.map((locale) => <span data-lang={locale}>{ui.category[base.category][locale]}</span>)}</span>
+          {locales.map((locale) => <span data-lang={locale}>{entries[locale].data.prepTime}</span>)}
+          {locales.map((locale) => <span data-lang={locale}>{entries[locale].data.servings}</span>)}
+          <span class="tag-list">{locales.map((locale) => <span data-lang={locale}>{entries[locale].data.tags.map((tag) => <span class="tag">#{tag.label}</span>)}</span>)}</span>
+        </div>
+      </div>
+    </header>
+    <ProseLayout>
+      {locales.map((locale) => {
+        const Content = contents[locale];
+        return <div data-lang={locale}><Content /></div>;
+      })}
+    </ProseLayout>
+    {(previous || next) && (
+      <nav class="reading-shell article-pager" aria-label="Adjacent recipes">
+        {previous && <div class="pager-slot pager-slot--previous"><a class="pager-link" href={`/recipes/${previous.slug}/`}><span class="pager-label"><LocalizedText value={text('上一篇', '上一篇', 'Previous')} /></span><span class="pager-title">{locales.map((locale) => <span data-lang={locale}>{previous.titles[locale]}</span>)}</span></a></div>}
+        {next && <div class="pager-slot pager-slot--next"><a class="pager-link" href={`/recipes/${next.slug}/`}><span class="pager-label"><LocalizedText value={text('下一篇', '下一篇', 'Next')} /></span><span class="pager-title">{locales.map((locale) => <span data-lang={locale}>{next.titles[locale]}</span>)}</span></a></div>}
+      </nav>
+    )}
+  </article>
+</BaseLayout>

@@ -1,0 +1,201 @@
+---
+import LocalizedText from './LocalizedText.astro';
+import { ui } from '../lib/i18n';
+
+type SearchScope = 'all' | 'blog' | 'projects' | 'recipes';
+interface Props { defaultScope?: SearchScope }
+
+const { defaultScope = 'all' } = Astro.props;
+
+const scopes = [
+  { id: 'all', label: ui.common.all },
+  { id: 'blog', label: ui.nav.blog },
+  { id: 'projects', label: ui.nav.projects },
+  { id: 'recipes', label: ui.nav.recipes },
+] as const;
+---
+
+<section id="search-panel" class="header-panel search-panel" data-panel="search" data-default-scope={defaultScope} aria-labelledby="search-panel-title" hidden>
+  <div class="site-shell panel-inner search-panel-inner">
+    <div class="search-field-wrap">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.75" cy="10.75" r="6.75" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="m15.7 15.7 4.05 4.05" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+      <label id="search-panel-title" class="sr-only" for="site-search"><LocalizedText value={ui.search.label} /></label>
+      <input
+        id="site-search"
+        type="search"
+        autocomplete="off"
+        aria-autocomplete="list"
+        aria-controls="search-results"
+        data-placeholder-zh-cn={ui.search.placeholder['zh-CN']}
+        data-placeholder-zh-tw={ui.search.placeholder['zh-TW']}
+        data-placeholder-en={ui.search.placeholder.en}
+        placeholder={ui.search.placeholder['zh-CN']}
+      />
+    </div>
+    <div class="filter-options search-scopes" role="group" aria-label="Search section">
+      {scopes.map((scope) => (
+        <button type="button" class="filter-chip" data-search-scope={scope.id} aria-pressed={scope.id === defaultScope ? 'true' : 'false'}>
+          <LocalizedText value={scope.label} />
+        </button>
+      ))}
+    </div>
+    <p id="search-status" class="search-status" aria-live="polite"></p>
+    <ol id="search-results" class="search-results" role="listbox" aria-label="Search results"></ol>
+  </div>
+</section>
+
+<script>
+  type Locale = 'zh-CN' | 'zh-TW' | 'en';
+  type Section = 'blog' | 'projects' | 'recipes';
+  type SearchScope = 'all' | Section;
+  interface SearchRecord {
+    id: string;
+    section: Section;
+    url: string;
+    publishDate: string;
+    locales: Record<Locale, { title: string; description: string; keywords: string[] }>;
+  }
+
+  const panel = document.querySelector<HTMLElement>('[data-panel="search"]');
+  const input = panel?.querySelector<HTMLInputElement>('#site-search');
+  const results = panel?.querySelector<HTMLOListElement>('#search-results');
+  const status = panel?.querySelector<HTMLElement>('#search-status');
+  const scopeButtons = [...(panel?.querySelectorAll<HTMLButtonElement>('[data-search-scope]') ?? [])];
+  const scopeCandidate = panel?.dataset.defaultScope;
+  const defaultScope: SearchScope = scopeCandidate === 'blog' || scopeCandidate === 'projects' || scopeCandidate === 'recipes'
+    ? scopeCandidate
+    : 'all';
+  let index: SearchRecord[] | null = null;
+  let scope: SearchScope = defaultScope;
+  let activeIndex = -1;
+
+  const messages = {
+    none: { 'zh-CN': '没有找到匹配内容。', 'zh-TW': '找不到符合的內容。', en: 'No matching results.' },
+    count: {
+      'zh-CN': (value: number) => `找到 ${value} 条内容。`,
+      'zh-TW': (value: number) => `找到 ${value} 筆內容。`,
+      en: (value: number) => `${value} ${value === 1 ? 'result' : 'results'}.`,
+    },
+    sections: {
+      blog: { 'zh-CN': '随笔', 'zh-TW': '隨筆', en: 'Blog' },
+      projects: { 'zh-CN': '项目', 'zh-TW': '專案', en: 'Projects' },
+      recipes: { 'zh-CN': '食谱', 'zh-TW': '食譜', en: 'Recipes' },
+    },
+  } as const;
+
+  const getLocale = (): Locale => {
+    const value = document.documentElement.dataset.language;
+    return value === 'zh-TW' || value === 'en' ? value : 'zh-CN';
+  };
+  const normalize = (value: string) => value.normalize('NFKC').toLocaleLowerCase(getLocale());
+
+  const loadIndex = async () => {
+    if (index) return index;
+    try {
+      const response = await fetch('/search-index.json');
+      if (!response.ok) throw new Error(`Search index request failed: ${response.status}`);
+      index = await response.json() as SearchRecord[];
+    } catch (error) {
+      console.error(error);
+      index = [];
+    }
+    return index;
+  };
+
+  const setActive = (next: number) => {
+    const links = [...(results?.querySelectorAll<HTMLAnchorElement>('a[role="option"]') ?? [])];
+    if (!links.length) {
+      activeIndex = -1;
+      input?.removeAttribute('aria-activedescendant');
+      return;
+    }
+    activeIndex = (next + links.length) % links.length;
+    links.forEach((link, index) => link.classList.toggle('is-active', index === activeIndex));
+    input?.setAttribute('aria-activedescendant', links[activeIndex].id);
+    links[activeIndex].scrollIntoView({ block: 'nearest' });
+  };
+
+  const renderResults = async () => {
+    if (!input || !results || !status) return;
+    const query = normalize(input.value.trim());
+    results.replaceChildren();
+    activeIndex = -1;
+    input.removeAttribute('aria-activedescendant');
+    if (!query) {
+      status.textContent = '';
+      return;
+    }
+
+    const records = await loadIndex();
+    const locale = getLocale();
+    const matches = records
+      .filter((record) => scope === 'all' || record.section === scope)
+      .map((record) => {
+        const value = record.locales[locale];
+        const title = normalize(value.title);
+        const description = normalize(value.description);
+        const keywords = normalize(value.keywords.join(' '));
+        let score = 0;
+        if (title.includes(query)) score += 30 + (title.startsWith(query) ? 8 : 0);
+        if (description.includes(query)) score += 10;
+        if (keywords.includes(query)) score += 3;
+        return { record, value, score };
+      })
+      .filter((item) => item.score > 0)
+      .sort((a, b) => b.score - a.score || Date.parse(b.record.publishDate) - Date.parse(a.record.publishDate));
+
+    status.textContent = matches.length ? messages.count[locale](matches.length) : messages.none[locale];
+    matches.forEach(({ record, value }, index) => {
+      const item = document.createElement('li');
+      const link = document.createElement('a');
+      link.id = `search-result-${index}`;
+      link.href = record.url;
+      link.role = 'option';
+      link.className = 'search-result-link';
+      const sectionLabel = document.createElement('span');
+      sectionLabel.className = 'search-result-section';
+      sectionLabel.textContent = messages.sections[record.section][locale];
+      const title = document.createElement('strong');
+      title.textContent = value.title;
+      const description = document.createElement('span');
+      description.className = 'search-result-description';
+      description.textContent = value.description;
+      link.append(sectionLabel, title, description);
+      item.append(link);
+      results.append(item);
+    });
+  };
+
+  input?.addEventListener('input', () => { void renderResults(); });
+  input?.addEventListener('keydown', (event) => {
+    if (event.key === 'ArrowDown') { event.preventDefault(); setActive(activeIndex + 1); }
+    if (event.key === 'ArrowUp') { event.preventDefault(); setActive(activeIndex - 1); }
+    if (event.key === 'Enter' && activeIndex >= 0) {
+      const links = results?.querySelectorAll<HTMLAnchorElement>('a[role="option"]');
+      links?.[activeIndex]?.click();
+    }
+  });
+
+  const selectScope = (next: SearchScope) => {
+    scope = next;
+    scopeButtons.forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.searchScope === next)));
+  };
+
+  scopeButtons.forEach((button) => button.addEventListener('click', () => {
+    const next = button.dataset.searchScope;
+    selectScope(next === 'blog' || next === 'projects' || next === 'recipes' ? next : 'all');
+    void renderResults();
+  }));
+
+  window.addEventListener('site:panel-opened', (event) => {
+    if ((event as CustomEvent).detail?.panel !== 'search') return;
+    const locale = getLocale();
+    const suffix = locale === 'zh-CN' ? 'ZhCn' : locale === 'zh-TW' ? 'ZhTw' : 'En';
+    selectScope(defaultScope);
+    if (input) input.placeholder = input.dataset[`placeholder${suffix}`] ?? '';
+    requestAnimationFrame(() => input?.focus());
+    void renderResults();
+    void loadIndex();
+  });
+  window.addEventListener('site:language-change', () => { void renderResults(); });
+</script>

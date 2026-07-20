@@ -1,0 +1,30 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import RecipeListItem from '../../components/RecipeListItem.astro';
+import ListingFilters from '../../components/ListingFilters.astro';
+import ListingPagination from '../../components/ListingPagination.astro';
+import { pairEntries } from '../../lib/content';
+import { locales, text, ui } from '../../lib/i18n';
+
+const entries = await getCollection('recipes', ({ data }) => !data.draft);
+const recipes = pairEntries(entries);
+---
+
+<BaseLayout activeNav="recipes" titles={text('食谱｜Steeefanie', '食譜｜Steeefanie', 'Recipes | Steeefanie')} descriptions={text('记录做过的菜、调过的酒，以及值得在下一次调整的细节。', '記錄做過的菜、調過的酒，以及下次值得調整的細節。', 'Dishes I’ve cooked, drinks I’ve mixed, and the details worth adjusting next time.')}>
+  <div class="site-shell">
+    <section class="listing-section" aria-label="Recipes">
+      <ListingFilters showLabels={false} groups={[
+        { key: 'category', param: 'category', label: ui.filters.category, options: [
+          { value: 'home-cooking', label: ui.category['home-cooking'] },
+          { value: 'flour', label: ui.category.flour },
+          { value: 'cocktail', label: ui.category.cocktail },
+        ] },
+      ]} />
+      <ul class="content-list">
+        {recipes.map((recipe) => <RecipeListItem slug={recipe.slug} locales={Object.fromEntries(locales.map((locale) => [locale, recipe.locales[locale].data])) as any} />)}
+      </ul>
+      <ListingPagination pageSize={20} />
+    </section>
+  </div>
+</BaseLayout>

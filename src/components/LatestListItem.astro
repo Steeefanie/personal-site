@@ -1,0 +1,28 @@
+---
+import { localeDateFormats, locales, ui, type Locale, type Localized } from '../lib/i18n';
+
+interface LatestContent { title: string; description: string; attribution?: string }
+interface Props {
+  section: 'blog' | 'projects' | 'recipes';
+  href: string;
+  date: Date;
+  content: Localized<LatestContent>;
+}
+
+const { section, href, date, content } = Astro.props;
+const labels = section === 'blog' ? ui.nav.blog : section === 'projects' ? ui.nav.projects : ui.nav.recipes;
+const formatDate = (locale: Locale) => new Intl.DateTimeFormat(localeDateFormats[locale], {
+  year: 'numeric', month: locale === 'en' ? 'short' : 'long', day: 'numeric',
+}).format(date);
+---
+
+<li class="content-list-item latest-list-item">
+  <a href={href}>
+    <div>
+      <p class="latest-section">{locales.map((locale) => <span data-lang={locale}>{labels[locale]}</span>)}</p>
+      <h3 class="item-title">{locales.map((locale) => <span data-lang={locale}>{content[locale].title}</span>)}</h3>
+      <p class="item-description">{locales.map((locale) => <span data-lang={locale}>{content[locale].attribution && <span class="content-attribution">{content[locale].attribution}</span>}{content[locale].description}</span>)}</p>
+    </div>
+    <div class="item-meta"><time datetime={date.toISOString()}>{locales.map((locale) => <span data-lang={locale}>{formatDate(locale)}</span>)}</time></div>
+  </a>
+</li>

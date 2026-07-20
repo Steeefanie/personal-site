@@ -1,0 +1,36 @@
+---
+import { locales, ui, type Localized } from '../lib/i18n';
+
+interface Tag { id: string; label: string }
+interface LocalizedRecipe {
+  title: string;
+  description: string;
+  publishDate: Date;
+  category: 'home-cooking' | 'flour' | 'cocktail';
+  prepTime: string;
+  servings: string;
+  tags: Tag[];
+}
+
+interface Props {
+  slug: string;
+  locales: Localized<LocalizedRecipe>;
+}
+
+const { slug, locales: entries } = Astro.props;
+const base = entries['zh-CN'];
+---
+
+<li class="content-list-item" data-filter-item data-category={base.category}>
+  <a href={`/recipes/${slug}/`}>
+    <div>
+      <h2 class="item-title">{locales.map((locale) => <span data-lang={locale}>{entries[locale].title}</span>)}</h2>
+      <p class="item-description">{locales.map((locale) => <span data-lang={locale}>{entries[locale].description}</span>)}</p>
+    </div>
+    <div class="item-meta">
+      <span class="status">{locales.map((locale) => <span data-lang={locale}>{ui.category[base.category][locale]}</span>)}</span>
+      {locales.map((locale) => <span data-lang={locale}>{entries[locale].prepTime} · {entries[locale].servings}</span>)}
+      <span class="tag-list">{locales.map((locale) => <span data-lang={locale}>{entries[locale].tags.map((tag) => <span class="tag">#{tag.label}</span>)}</span>)}</span>
+    </div>
+  </a>
+</li>

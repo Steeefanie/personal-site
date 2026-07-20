@@ -1,0 +1,205 @@
+---
+import LocalizedText from './LocalizedText.astro';
+import { ui } from '../lib/i18n';
+
+interface Props {
+  pageSize?: number;
+}
+
+const { pageSize = 20 } = Astro.props;
+---
+
+<nav
+  class="listing-pagination"
+  data-listing-pagination
+  data-page-size={pageSize}
+  data-label-zh-cn={ui.common.pagination['zh-CN']}
+  data-label-zh-tw={ui.common.pagination['zh-TW']}
+  data-label-en={ui.common.pagination.en}
+  aria-label={ui.common.pagination['zh-CN']}
+  hidden
+>
+  <button type="button" class="pagination-button pagination-direction" data-page-previous>
+    <LocalizedText value={ui.common.previousPage} />
+  </button>
+  <div class="pagination-pages" data-page-numbers></div>
+  <button type="button" class="pagination-button pagination-direction" data-page-next>
+    <LocalizedText value={ui.common.nextPage} />
+  </button>
+</nav>
+
+<script>
+  type Locale = 'zh-CN' | 'zh-TW' | 'en';
+
+  const paginationRoots = document.querySelectorAll<HTMLElement>('[data-listing-pagination]');
+
+  paginationRoots.forEach((pagination) => {
+    const section = pagination.closest<HTMLElement>('.listing-section');
+    const items = [...(section?.querySelectorAll<HTMLElement>('.content-list-item') ?? [])];
+    const filters = section?.querySelector<HTMLElement>('[data-listing-filters]');
+    const groups = [...(filters?.querySelectorAll<HTMLFieldSetElement>('[data-filter-group]') ?? [])];
+    const empty = filters?.querySelector<HTMLElement>('[data-filter-empty]');
+    const clear = filters?.querySelector<HTMLButtonElement>('[data-clear-filters]');
+    const previous = pagination.querySelector<HTMLButtonElement>('[data-page-previous]');
+    const next = pagination.querySelector<HTMLButtonElement>('[data-page-next]');
+    const numbers = pagination.querySelector<HTMLElement>('[data-page-numbers]');
+    const pageSize = Math.max(1, Number(pagination.dataset.pageSize) || 20);
+    let currentPage = 1;
+
+    const selectedFilters = () => Object.fromEntries(groups.map((group) => {
+      const button = group.querySelector<HTMLButtonElement>('[aria-pressed="true"]');
+      return [group.dataset.filterGroup ?? '', button?.dataset.filterValue ?? ''];
+    }));
+
+    const matchesFilters = (item: HTMLElement, values: Record<string, string>) => Object.entries(values).every(([key, value]) => (
+      !value || (item.dataset[key] ?? '') === value
+    ));
+
+    const getLocale = (): Locale => {
+      const locale = document.documentElement.dataset.language;
+      return locale === 'zh-TW' || locale === 'en' ? locale : 'zh-CN';
+    };
+
+    const pageAriaLabel = (page: number) => {
+      const locale = getLocale();
+      if (locale === 'en') return `Page ${page}`;
+      return locale === 'zh-TW' ? `第 ${page} 頁` : `第 ${page} 页`;
+    };
+
+    const createPageButton = (page: number) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'pagination-button pagination-number';
+      button.dataset.page = String(page);
+      button.textContent = String(page);
+      button.setAttribute('aria-label', pageAriaLabel(page));
+      if (page === currentPage) button.setAttribute('aria-current', 'page');
+      return button;
+    };
+
+    const renderNumbers = (totalPages: number) => {
+      if (!numbers) return;
+      numbers.replaceChildren();
+      const candidates = new Set([1, totalPages, currentPage - 1, currentPage, currentPage + 1]);
+      const pages = [...candidates].filter((page) => page >= 1 && page <= totalPages).sort((a, b) => a - b);
+      let previousPage = 0;
+      pages.forEach((page) => {
+        if (previousPage && page - previousPage > 1) {
+          const ellipsis = document.createElement('span');
+          ellipsis.className = 'pagination-ellipsis';
+          ellipsis.textContent = '…';
+          ellipsis.setAttribute('aria-hidden', 'true');
+          numbers.append(ellipsis);
+        }
+        numbers.append(createPageButton(page));
+        previousPage = page;
+      });
+    };
+
+    const updatePaginationLabel = () => {
+      const locale = getLocale();
+      const suffix = locale === 'zh-CN' ? 'labelZhCn' : locale === 'zh-TW' ? 'labelZhTw' : 'labelEn';
+      pagination.setAttribute('aria-label', pagination.dataset[suffix] ?? '');
+    };
+
+    const render = () => {
+      const values = selectedFilters();
+      const matching = items.filter((item) => matchesFilters(item, values));
+      const totalPages = Math.max(1, Math.ceil(matching.length / pageSize));
+      currentPage = Math.min(Math.max(1, currentPage), totalPages);
+      const start = (currentPage - 1) * pageSize;
+      const pageItems = new Set(matching.slice(start, start + pageSize));
+
+      items.forEach((item) => { item.hidden = !pageItems.has(item); });
+      if (empty) empty.hidden = matching.length > 0;
+      pagination.hidden = matching.length === 0 || totalPages <= 1;
+      if (previous) previous.disabled = currentPage <= 1;
+      if (next) next.disabled = currentPage >= totalPages;
+      updatePaginationLabel();
+      renderNumbers(totalPages);
+      return totalPages;
+    };
+
+    const writeUrl = () => {
+      const params = new URLSearchParams(location.search);
+      groups.forEach((group) => {
+        const param = group.dataset.filterParam ?? '';
+        const value = group.querySelector<HTMLButtonElement>('[aria-pressed="true"]')?.dataset.filterValue ?? '';
+        if (value) params.set(param, value); else params.delete(param);
+      });
+      if (currentPage > 1) params.set('page', String(currentPage)); else params.delete('page');
+      const query = params.toString();
+      history.pushState(null, '', `${location.pathname}${query ? `?${query}` : ''}${location.hash}`);
+    };
+
+    const syncFromUrl = () => {
+      const params = new URLSearchParams(location.search);
+      groups.forEach((group) => {
+        const value = params.get(group.dataset.filterParam ?? '') ?? '';
+        const buttons = [...group.querySelectorAll<HTMLButtonElement>('[data-filter-value]')];
+        const target = buttons.find((button) => button.dataset.filterValue === value) ?? buttons[0];
+        buttons.forEach((button) => button.setAttribute('aria-pressed', String(button === target)));
+      });
+      const requested = Number(params.get('page') ?? '1');
+      currentPage = Number.isInteger(requested) && requested > 0 ? requested : 1;
+      const totalPages = render();
+      if (requested > totalPages || !Number.isInteger(requested) || requested < 1) {
+        const normalized = new URLSearchParams(location.search);
+        if (currentPage > 1) normalized.set('page', String(currentPage)); else normalized.delete('page');
+        const query = normalized.toString();
+        history.replaceState(null, '', `${location.pathname}${query ? `?${query}` : ''}${location.hash}`);
+      }
+    };
+
+    const scrollToList = () => section?.scrollIntoView({
+      behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+      block: 'start',
+    });
+
+    groups.forEach((group) => group.addEventListener('click', (event) => {
+      const button = (event.target as HTMLElement).closest<HTMLButtonElement>('[data-filter-value]');
+      if (!button) return;
+      group.querySelectorAll('[data-filter-value]').forEach((candidate) => candidate.setAttribute('aria-pressed', String(candidate === button)));
+      currentPage = 1;
+      writeUrl();
+      render();
+    }));
+
+    clear?.addEventListener('click', () => {
+      groups.forEach((group) => group.querySelectorAll<HTMLButtonElement>('[data-filter-value]').forEach((button) => {
+        button.setAttribute('aria-pressed', String(button.dataset.filterValue === ''));
+      }));
+      currentPage = 1;
+      writeUrl();
+      render();
+    });
+
+    previous?.addEventListener('click', () => {
+      if (currentPage <= 1) return;
+      currentPage -= 1;
+      writeUrl();
+      render();
+      scrollToList();
+    });
+
+    next?.addEventListener('click', () => {
+      currentPage += 1;
+      writeUrl();
+      render();
+      scrollToList();
+    });
+
+    numbers?.addEventListener('click', (event) => {
+      const button = (event.target as HTMLElement).closest<HTMLButtonElement>('[data-page]');
+      if (!button) return;
+      currentPage = Number(button.dataset.page) || 1;
+      writeUrl();
+      render();
+      scrollToList();
+    });
+
+    addEventListener('popstate', syncFromUrl);
+    addEventListener('site:language-change', () => { render(); });
+    syncFromUrl();
+  });
+</script>

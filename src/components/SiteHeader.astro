@@ -1,0 +1,287 @@
+---
+import LanguageSwitcher from './LanguageSwitcher.astro';
+import ThemeSwitcher from './ThemeSwitcher.astro';
+import SearchPanel from './SearchPanel.astro';
+import LocalizedText from './LocalizedText.astro';
+import { localeNames, locales, ui } from '../lib/i18n';
+
+interface Props {
+  activeNav: 'home' | 'blog' | 'projects' | 'recipes';
+}
+
+const { activeNav } = Astro.props;
+const navItems = [
+  { key: 'home', href: '/', label: ui.nav.home },
+  { key: 'blog', href: '/blog/', label: ui.nav.blog },
+  { key: 'projects', href: '/projects/', label: ui.nav.projects },
+  { key: 'recipes', href: '/recipes/', label: ui.nav.recipes },
+] as const;
+---
+
+<div class="top-chrome" data-top-chrome>
+  <div class="top-chrome-surface" aria-hidden="true"></div>
+  <header class="site-header">
+    <div class="site-shell header-inner">
+      <a class="site-name" href="/" aria-label="Steeefanie">
+        <span class="site-name-mark" aria-hidden="true">
+          <img class="site-name-mark-image site-name-mark-image--light" src="/brand/favicon-light-nobg.svg" alt="" width="27" height="27" decoding="sync" draggable="false" />
+          <img class="site-name-mark-image site-name-mark-image--dark" src="/brand/favicon-dark-nobg.svg" alt="" width="27" height="27" decoding="sync" draggable="false" />
+        </span>
+        <span class="site-name-text">teeefanie</span>
+      </a>
+      <div class="header-actions">
+        <nav class="primary-nav" aria-label="主要导航 / Primary navigation">
+          {navItems.map((item) => (
+            <a class="nav-link" href={item.href} aria-current={activeNav === item.key ? 'page' : undefined}>
+              <LocalizedText value={item.label} />
+            </a>
+          ))}
+        </nav>
+        <button
+          class="utility-button search-switcher"
+          type="button"
+          data-panel-trigger="search"
+          aria-controls="search-panel"
+          aria-expanded="false"
+          aria-label="搜索"
+          data-label-zh-cn="搜索"
+          data-label-zh-tw="搜尋"
+          data-label-en="Search"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.75" cy="10.75" r="6.75" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="m15.7 15.7 4.05 4.05" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        </button>
+        <ThemeSwitcher />
+        <LanguageSwitcher />
+        <button
+          class="utility-button menu-switcher"
+          type="button"
+          data-panel-trigger="navigation"
+          aria-controls="navigation-panel"
+          aria-expanded="false"
+          aria-label="打开导航菜单"
+          data-label-zh-cn="打开导航菜单"
+          data-label-zh-tw="開啟導覽選單"
+          data-label-en="Open navigation menu"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8.5h14M5 15.5h14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <SearchPanel defaultScope={activeNav === 'home' ? 'all' : activeNav} />
+
+  <section id="language-panel" class="header-panel language-panel" data-panel="language" aria-label="Language" hidden>
+    <div class="site-shell panel-inner language-panel-inner">
+      {locales.map((locale) => (
+        <button class="language-option" type="button" data-language-option={locale} aria-pressed="false">
+          <span>{localeNames[locale]}</span>
+        </button>
+      ))}
+    </div>
+  </section>
+
+  <nav id="navigation-panel" class="header-panel navigation-panel" data-panel="navigation" aria-label="Mobile navigation" hidden>
+    <div class="site-shell panel-inner mobile-nav-list">
+      {navItems.map((item) => (
+        <a class="mobile-nav-link" href={item.href} aria-current={activeNav === item.key ? 'page' : undefined}>
+          <LocalizedText value={item.label} />
+        </a>
+      ))}
+    </div>
+  </nav>
+</div>
+
+<script>
+  type PanelName = 'search' | 'language' | 'navigation';
+  type Locale = 'zh-CN' | 'zh-TW' | 'en';
+  const topChrome = document.querySelector<HTMLElement>('[data-top-chrome]');
+  const header = topChrome?.querySelector<HTMLElement>('.site-header');
+  const triggers = [...(topChrome?.querySelectorAll<HTMLButtonElement>('[data-panel-trigger]') ?? [])];
+  const panels = [...(topChrome?.querySelectorAll<HTMLElement>('[data-panel]') ?? [])];
+  let openPanelName: PanelName | null = null;
+  let closeTimer = 0;
+  let panelAnimationTimer = 0;
+  let surfaceCloseTimer = 0;
+  let lockedScrollY = 0;
+  let previousY = window.scrollY;
+  let headerFrame = 0;
+
+  const currentLocale = (): Locale => {
+    const value = document.documentElement.dataset.language;
+    return value === 'zh-TW' || value === 'en' ? value : 'zh-CN';
+  };
+
+  const updateButtonLabels = () => {
+    const locale = currentLocale();
+    const suffix = locale === 'zh-CN' ? 'ZhCn' : locale === 'zh-TW' ? 'ZhTw' : 'En';
+    triggers.forEach((button) => {
+      const label = button.dataset[`label${suffix}`];
+      if (label) button.setAttribute('aria-label', label);
+    });
+    topChrome?.querySelectorAll<HTMLButtonElement>('[data-language-option]').forEach((button) => {
+      button.setAttribute('aria-pressed', String(button.dataset.languageOption === locale));
+    });
+  };
+
+  const updateSurfaceHeight = () => {
+    if (!topChrome) return;
+    const panel = openPanelName ? topChrome.querySelector<HTMLElement>(`[data-panel="${openPanelName}"]`) : null;
+    const height = (header?.offsetHeight ?? 0) + (panel?.scrollHeight ?? 0);
+    topChrome.style.setProperty('--top-chrome-open-height', `${height}px`);
+  };
+
+  const lockSearchScroll = () => {
+    const root = document.documentElement;
+    if (root.classList.contains('search-panel-open')) return;
+    lockedScrollY = window.scrollY;
+    root.style.setProperty('--search-scroll-offset', `${-lockedScrollY}px`);
+    root.classList.add('search-panel-open');
+  };
+
+  const unlockSearchScroll = () => {
+    const root = document.documentElement;
+    if (!root.classList.contains('search-panel-open')) return;
+    const inlineScrollBehavior = root.style.scrollBehavior;
+    root.style.scrollBehavior = 'auto';
+    root.classList.remove('search-panel-open');
+    root.style.removeProperty('--search-scroll-offset');
+    // Ensure the document regains its scrollable height before restoring the offset.
+    void document.body.offsetHeight;
+    window.scrollTo(0, lockedScrollY);
+    previousY = lockedScrollY;
+    requestAnimationFrame(() => {
+      if (inlineScrollBehavior) root.style.scrollBehavior = inlineScrollBehavior;
+      else root.style.removeProperty('scroll-behavior');
+    });
+  };
+
+  const closePanel = (restoreFocus = false) => {
+    if (!openPanelName) return;
+    const previousName = openPanelName;
+    const trigger = triggers.find((item) => item.dataset.panelTrigger === previousName);
+    const panel = panels.find((item) => item.dataset.panel === previousName);
+    panels.forEach((item) => {
+      if (item === panel) return;
+      item.hidden = true;
+      item.classList.remove('is-closing');
+    });
+    triggers.forEach((button) => button.setAttribute('aria-expanded', 'false'));
+    openPanelName = null;
+    window.clearTimeout(panelAnimationTimer);
+    window.clearTimeout(surfaceCloseTimer);
+    const collapseSurface = () => {
+      topChrome?.removeAttribute('data-panel-open');
+      topChrome?.style.removeProperty('--top-chrome-open-height');
+    };
+    const finishClose = () => {
+      if (previousName === 'search') unlockSearchScroll();
+      if (!panel) return;
+      panel.hidden = true;
+      panel.classList.remove('is-closing');
+    };
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      collapseSurface();
+      finishClose();
+    }
+    else {
+      panel?.classList.add('is-closing');
+      surfaceCloseTimer = window.setTimeout(collapseSurface, 48);
+      panelAnimationTimer = window.setTimeout(finishClose, 400);
+    }
+    if (restoreFocus) trigger?.focus();
+  };
+
+  const openPanel = (name: PanelName) => {
+    window.clearTimeout(closeTimer);
+    window.clearTimeout(panelAnimationTimer);
+    window.clearTimeout(surfaceCloseTimer);
+    panels.forEach((panel) => {
+      panel.classList.remove('is-closing');
+      panel.hidden = panel.dataset.panel !== name;
+    });
+    if (name === 'search') lockSearchScroll();
+    else unlockSearchScroll();
+    triggers.forEach((button) => button.setAttribute('aria-expanded', String(button.dataset.panelTrigger === name)));
+    openPanelName = name;
+    header?.classList.remove('is-hidden');
+    topChrome?.setAttribute('data-panel-open', name);
+    requestAnimationFrame(() => {
+      updateSurfaceHeight();
+      window.dispatchEvent(new CustomEvent('site:panel-opened', { detail: { panel: name } }));
+    });
+  };
+
+  triggers.forEach((trigger) => {
+    const name = trigger.dataset.panelTrigger as PanelName;
+    trigger.addEventListener('click', () => {
+      const usesHover = name !== 'search' && hoverQuery.matches;
+      if (usesHover) openPanel(name);
+      else if (openPanelName === name) closePanel();
+      else openPanel(name);
+    });
+    if (name === 'language' || name === 'navigation') {
+      trigger.addEventListener('focus', () => {
+        if (trigger.matches(':focus-visible')) openPanel(name);
+      });
+    }
+  });
+
+  const hoverQuery = matchMedia('(hover: hover) and (pointer: fine)');
+  const scheduleClose = () => {
+    if (!hoverQuery.matches) return;
+    closeTimer = window.setTimeout(() => closePanel(), 150);
+  };
+  const cancelClose = () => window.clearTimeout(closeTimer);
+  triggers.filter((trigger) => trigger.dataset.panelTrigger !== 'search').forEach((trigger) => {
+    trigger.addEventListener('pointerenter', () => {
+      if (hoverQuery.matches && trigger.offsetParent !== null) openPanel(trigger.dataset.panelTrigger as PanelName);
+    });
+    trigger.addEventListener('pointerleave', scheduleClose);
+  });
+  panels.filter((panel) => panel.dataset.panel !== 'search').forEach((panel) => {
+    panel.addEventListener('pointerenter', cancelClose);
+    panel.addEventListener('pointerleave', scheduleClose);
+  });
+
+  topChrome?.querySelectorAll<HTMLButtonElement>('[data-language-option]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const locale = button.dataset.languageOption as Locale;
+      document.documentElement.dataset.language = locale;
+      document.documentElement.lang = locale;
+      try { localStorage.setItem('language', locale); } catch (_) { /* Storage may be unavailable. */ }
+      updateButtonLabels();
+      window.dispatchEvent(new CustomEvent('site:language-change', { detail: { language: locale } }));
+      closePanel();
+    });
+  });
+
+  panels.forEach((panel) => panel.addEventListener('click', (event) => {
+    if ((event.target as HTMLElement).closest('a')) closePanel();
+  }));
+  document.addEventListener('pointerdown', (event) => {
+    if (openPanelName && !topChrome?.contains(event.target as Node)) closePanel();
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && openPanelName) { event.preventDefault(); closePanel(true); }
+  });
+
+  const updateHeader = () => {
+    headerFrame = 0;
+    if (!header || openPanelName) return;
+    const currentY = Math.max(0, window.scrollY);
+    const delta = currentY - previousY;
+    if (currentY < 72 || delta < -10) header.classList.remove('is-hidden');
+    else if (delta > 10) header.classList.add('is-hidden');
+    if (Math.abs(delta) > 10) previousY = currentY;
+  };
+  addEventListener('scroll', () => {
+    if (!headerFrame) headerFrame = requestAnimationFrame(updateHeader);
+  }, { passive: true });
+  addEventListener('resize', () => {
+    if (openPanelName === 'navigation' && innerWidth > 720) closePanel();
+    else updateSurfaceHeight();
+  }, { passive: true });
+
+  updateButtonLabels();
+</script>
