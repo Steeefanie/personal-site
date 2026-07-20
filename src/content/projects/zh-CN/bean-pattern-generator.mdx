@@ -1,0 +1,116 @@
+---
+title: 拼豆图纸生成器
+description: 将图片转换为带坐标、色号和用量统计的拼豆图纸，并以五档彩色减色与黑白模式控制制作难度。
+attribution: ChatGPT 辅助整理
+publishDate: 2026-07-19
+lang: zh-CN
+stack: [Python, Pillow, NumPy, CIELAB]
+repositoryUrl: https://github.com/Steeefanie/fuse-bead-pattern-generator
+featured: false
+draft: false
+---
+
+import peopleSource from '../../../assets/projects/bean-pattern-generator/people-source.jpg';
+import rabbitSource from '../../../assets/projects/bean-pattern-generator/rabbit-source.png';
+import peopleBW from '../../../assets/projects/bean-pattern-generator/people-source_200x200_BW.png';
+import peopleCL from '../../../assets/projects/bean-pattern-generator/people-source_200x200_CL.png';
+import peopleCLM from '../../../assets/projects/bean-pattern-generator/people-source_200x200_CLM.png';
+import peopleCM from '../../../assets/projects/bean-pattern-generator/people-source_200x200_CM.png';
+import peopleCMS from '../../../assets/projects/bean-pattern-generator/people-source_200x200_CMS.png';
+import peopleCS from '../../../assets/projects/bean-pattern-generator/people-source_200x200_CS.png';
+import rabbitBW from '../../../assets/projects/bean-pattern-generator/rabbit-source_32x50_BW.png';
+import rabbitCL from '../../../assets/projects/bean-pattern-generator/rabbit-source_32x50_CL.png';
+import rabbitCLM from '../../../assets/projects/bean-pattern-generator/rabbit-source_32x50_CLM.png';
+import rabbitCM from '../../../assets/projects/bean-pattern-generator/rabbit-source_32x50_CM.png';
+import rabbitCMS from '../../../assets/projects/bean-pattern-generator/rabbit-source_32x50_CMS.png';
+import rabbitCS from '../../../assets/projects/bean-pattern-generator/rabbit-source_32x50_CS.png';
+
+## 用途
+
+拼豆图纸生成器把普通图片转换为可以照着摆放的拼豆图纸。输出保留四周坐标、每格色号、五格粗线和颜色用量统计，不只是像素风预览。使用时可以指定宽度或高度，另一边按原图比例自动计算；带透明通道的图片会先裁掉外围透明区域，再缩放到目标网格。
+
+彩色模式按 `CL → CLM → CM → CMS → CS` 逐步减少颜色种类。颜色越少，需要准备、分拣和摆放的拼豆越简单，但与原图的细微色彩差异也会增加。`BW` 最多使用八种预设中性色，目的同样是降低制作难度；它放弃原图色相，因此只参与速度测试，不与彩色模式比较颜色压缩率和色差。
+
+## 处理思路
+
+脚本先读取图片。若图片带 Alpha 通道，就以默认阈值忽略 Alpha 值不高于 1 的近透明噪点，按可见内容的包围盒裁切；兔子图正是经过这一步，从接近整张的 1024×1024 画布收紧到主体范围。随后根据固定的一边计算另一边尺寸，以 LANCZOS 重采样缩放，并把透明主体按原比例居中放入目标网格。
+
+彩色量化不直接比较 sRGB 数值，而是把图像像素和拼豆色卡转换到 CIELAB 空间。`CL` 为每个像素选择色卡中距离最近的颜色；其余四档先统计图像中的颜色及权重，再用贪心前向选择建立候选路径，通过确定性的交换优化收敛到指定大小的色卡子集，最后重新映射全部像素。优化版使用 NumPy 共享 Lab 转换、距离矩阵和选择路径，一次运行多个模式时不重复计算相同的中间结果。
+
+## 测试设置
+
+本次只使用两张指定图片。人物照片为 2000×2000，按高度 200 输出为 200×200；兔子插画为 1024×1024，先裁除透明外围，再按高度 50 输出为 32×50。两张原图如下。
+
+<div className="project-gallery">
+  <figure className="project-figure"><a href={peopleSource.src} target="_blank" rel="noreferrer"><img src={peopleSource.src} alt="People 人物照片测试原图" loading="lazy" decoding="async" /></a><figcaption>People 原图：2000×2000；测试网格：200×200。</figcaption></figure>
+  <figure className="project-figure"><a href={rabbitSource.src} target="_blank" rel="noreferrer"><img src={rabbitSource.src} alt="兔子插画测试原图" loading="lazy" decoding="async" /></a><figcaption>Rabbit 原图：1024×1024；裁切后测试网格：32×50。</figcaption></figure>
+</div>
+
+测试环境为 Windows 11、Python 3.12.13、Pillow 12.3.0 和 NumPy 2.5.1，处理器为 16 逻辑核心的 AMD64。量化时间是在完成图片读取、裁切和缩放之后开始计时，到生成色号网格为止；每个模式预热一次后运行三次并取中位数，不包含图纸绘制和 PNG 写盘。完整耗时则包含六种模式的量化、图纸绘制、纯像素预览和文件写入。
+
+## 颜色数量与压缩率
+
+以同一张图片的 `CL` 实际颜色数为 100%，其余彩色模式的比例按“该模式颜色数 ÷ CL 颜色数”计算。People 在 `CL` 下使用 50 色，降到 `CS` 后为 11 色；Rabbit 从 36 色降到 8 色。模式档位不是简单删除低频颜色，而是重新选择更适合当前图片的代表色。
+
+| 测试图 | 网格 | CL | CLM | CM | CMS | CS |
+|---|---:|---:|---:|---:|---:|---:|
+| People | 200×200 | 50（100%） | 40（80.0%） | 30（60.0%） | 20（40.0%） | 11（22.0%） |
+| Rabbit | 32×50 | 36（100%） | 29（80.6%） | 22（61.1%） | 15（41.7%） | 8（22.2%） |
+
+## 色差
+
+色差使用原图像素与量化后色卡颜色之间的平均 CIE76 距离。数值越小，表示在 CIELAB 空间中越接近原图；它适合比较同一张图的不同档位，不应直接当作两张不同图片之间的画质排名。
+
+| 测试图 | CL | CLM | CM | CMS | CS |
+|---|---:|---:|---:|---:|---:|
+| People | 9.05 | 9.05 | 9.06 | 9.22 | 9.73 |
+| Rabbit | 3.40 | 3.41 | 3.45 | 3.76 | 5.08 |
+
+People 从 50 色压到 30 色时，平均色差只由 9.05 变为 9.06；继续压到 11 色后为 9.73。Rabbit 的主体颜色更少、边缘和粉色细节更集中，压到 15 色时仍为 3.76，压到 8 色后上升到 5.08。结果说明各档位的颜色数量按计划递减，同时没有出现减色后平均色差反而明显失控的情况。
+
+## 性能
+
+| 测试图 | CL | CLM | CM | CMS | CS | BW | 六模式完整输出 |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| People 200×200 | 0.082 s | 0.541 s | 0.416 s | 0.309 s | 0.219 s | 0.022 s | 13.558 s |
+| Rabbit 32×50 | 0.004 s | 0.009 s | 0.008 s | 0.006 s | 0.005 s | 0.001 s | 0.590 s |
+
+`CL` 和 `BW` 只需要最近色匹配，所以量化时间最短。四个减色模式还要选择和优化色卡子集，其中 `CLM` 保留的候选色最多，耗时也最高。People 的六模式完整输出明显慢于量化本身，主要时间用于绘制 200×200 的坐标网格、逐格色号、图例并编码大尺寸 PNG。
+
+## People 200×200 输出
+
+<div className="project-gallery">
+  <figure className="project-figure"><a href={peopleCL.src} target="_blank" rel="noreferrer"><img src={peopleCL.src} alt="People 200×200 CL 拼豆图纸" loading="lazy" decoding="async" /></a><figcaption>CL · 50 色 · 平均 CIE76 9.05</figcaption></figure>
+  <figure className="project-figure"><a href={peopleCLM.src} target="_blank" rel="noreferrer"><img src={peopleCLM.src} alt="People 200×200 CLM 拼豆图纸" loading="lazy" decoding="async" /></a><figcaption>CLM · 40 色 · CL 的 80.0%</figcaption></figure>
+  <figure className="project-figure"><a href={peopleCM.src} target="_blank" rel="noreferrer"><img src={peopleCM.src} alt="People 200×200 CM 拼豆图纸" loading="lazy" decoding="async" /></a><figcaption>CM · 30 色 · CL 的 60.0%</figcaption></figure>
+  <figure className="project-figure"><a href={peopleCMS.src} target="_blank" rel="noreferrer"><img src={peopleCMS.src} alt="People 200×200 CMS 拼豆图纸" loading="lazy" decoding="async" /></a><figcaption>CMS · 20 色 · CL 的 40.0%</figcaption></figure>
+  <figure className="project-figure"><a href={peopleCS.src} target="_blank" rel="noreferrer"><img src={peopleCS.src} alt="People 200×200 CS 拼豆图纸" loading="lazy" decoding="async" /></a><figcaption>CS · 11 色 · CL 的 22.0%</figcaption></figure>
+  <figure className="project-figure"><a href={peopleBW.src} target="_blank" rel="noreferrer"><img src={peopleBW.src} alt="People 200×200 BW 拼豆图纸" loading="lazy" decoding="async" /></a><figcaption>BW · 仅用于低难度黑白图纸与速度测试</figcaption></figure>
+</div>
+
+## Rabbit 32×50 输出
+
+<div className="project-gallery">
+  <figure className="project-figure"><a href={rabbitCL.src} target="_blank" rel="noreferrer"><img src={rabbitCL.src} alt="Rabbit 32×50 CL 拼豆图纸" loading="lazy" decoding="async" /></a><figcaption>CL · 36 色 · 平均 CIE76 3.40</figcaption></figure>
+  <figure className="project-figure"><a href={rabbitCLM.src} target="_blank" rel="noreferrer"><img src={rabbitCLM.src} alt="Rabbit 32×50 CLM 拼豆图纸" loading="lazy" decoding="async" /></a><figcaption>CLM · 29 色 · CL 的 80.6%</figcaption></figure>
+  <figure className="project-figure"><a href={rabbitCM.src} target="_blank" rel="noreferrer"><img src={rabbitCM.src} alt="Rabbit 32×50 CM 拼豆图纸" loading="lazy" decoding="async" /></a><figcaption>CM · 22 色 · CL 的 61.1%</figcaption></figure>
+  <figure className="project-figure"><a href={rabbitCMS.src} target="_blank" rel="noreferrer"><img src={rabbitCMS.src} alt="Rabbit 32×50 CMS 拼豆图纸" loading="lazy" decoding="async" /></a><figcaption>CMS · 15 色 · CL 的 41.7%</figcaption></figure>
+  <figure className="project-figure"><a href={rabbitCS.src} target="_blank" rel="noreferrer"><img src={rabbitCS.src} alt="Rabbit 32×50 CS 拼豆图纸" loading="lazy" decoding="async" /></a><figcaption>CS · 8 色 · CL 的 22.2%</figcaption></figure>
+  <figure className="project-figure"><a href={rabbitBW.src} target="_blank" rel="noreferrer"><img src={rabbitBW.src} alt="Rabbit 32×50 BW 拼豆图纸" loading="lazy" decoding="async" /></a><figcaption>BW · 仅用于低难度黑白图纸与速度测试</figcaption></figure>
+</div>
+
+## 使用方式
+
+脚本需要 Python 3.10 或更高版本、Pillow 10–12 和 NumPy 2.x。下面两条命令对应本次测试尺寸，宽度会自动按有效内容的比例计算。
+
+```bash
+python fuse_bead_pattern_generator.py people-source.jpg --width auto --height 200 --mode cl clm cm cms cs bw --output-dir output
+python fuse_bead_pattern_generator.py rabbit-source.png --width auto --height 50 --mode cl clm cm cms cs bw --output-dir output
+```
+
+加上 `--pure` 可以输出不带坐标、网格、色号和图例的纯像素预览。完整复测可运行 `benchmark.py`，结果会写入 `benchmark-results.json`。
+
+## 已知边界
+
+- 内置色卡的固定 RGB 值采用网络数据，和一些拼豆品牌或批次可能有细微差异。
+- 平均 CIE76 只衡量逐像素 Lab 距离，不会判断主体是否易辨认、边缘是否平滑或某种颜色是否容易购买。

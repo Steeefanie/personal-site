@@ -1,0 +1,11 @@
+---
+import { locales, type Localized } from '../lib/i18n';
+
+interface Props {
+  value: Localized<string>;
+}
+
+const { value } = Astro.props;
+---
+
+{locales.map((locale) => <span data-lang={locale}>{value[locale]}</span>)}

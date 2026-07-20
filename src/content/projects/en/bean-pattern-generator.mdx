@@ -1,0 +1,116 @@
+---
+title: Fuse-bead Pattern Generator
+description: Converts images into fuse-bead charts with coordinates, colour codes, and counts, with five staged colour modes and a monochrome mode for controlling build difficulty.
+attribution: ChatGPT-assisted
+publishDate: 2026-07-19
+lang: en
+stack: [Python, Pillow, NumPy, CIELAB]
+repositoryUrl: https://github.com/Steeefanie/fuse-bead-pattern-generator
+featured: false
+draft: false
+---
+
+import peopleSource from '../../../assets/projects/bean-pattern-generator/people-source.jpg';
+import rabbitSource from '../../../assets/projects/bean-pattern-generator/rabbit-source.png';
+import peopleBW from '../../../assets/projects/bean-pattern-generator/people-source_200x200_BW.png';
+import peopleCL from '../../../assets/projects/bean-pattern-generator/people-source_200x200_CL.png';
+import peopleCLM from '../../../assets/projects/bean-pattern-generator/people-source_200x200_CLM.png';
+import peopleCM from '../../../assets/projects/bean-pattern-generator/people-source_200x200_CM.png';
+import peopleCMS from '../../../assets/projects/bean-pattern-generator/people-source_200x200_CMS.png';
+import peopleCS from '../../../assets/projects/bean-pattern-generator/people-source_200x200_CS.png';
+import rabbitBW from '../../../assets/projects/bean-pattern-generator/rabbit-source_32x50_BW.png';
+import rabbitCL from '../../../assets/projects/bean-pattern-generator/rabbit-source_32x50_CL.png';
+import rabbitCLM from '../../../assets/projects/bean-pattern-generator/rabbit-source_32x50_CLM.png';
+import rabbitCM from '../../../assets/projects/bean-pattern-generator/rabbit-source_32x50_CM.png';
+import rabbitCMS from '../../../assets/projects/bean-pattern-generator/rabbit-source_32x50_CMS.png';
+import rabbitCS from '../../../assets/projects/bean-pattern-generator/rabbit-source_32x50_CS.png';
+
+## Purpose
+
+The fuse-bead pattern generator turns an ordinary image into a working chart that can be followed bead by bead. The output includes coordinates on all four edges, a code in every occupied cell, heavier five-cell guides, and a legend with bead counts. One dimension can be fixed while the other is calculated from the source aspect ratio. Images with alpha data are trimmed to their visible bounds before being fitted to the target grid.
+
+The colour modes progressively reduce the available colours in the order `CL → CLM → CM → CMS → CS`. Fewer colours mean fewer bead bags to prepare, sort, and place, at the cost of some fine colour distinctions. `BW` uses no more than eight predefined neutral colours for the same difficulty-reduction goal. Because it discards the source hues, BW is included only in output and speed testing, not in colour-retention or colour-error comparisons.
+
+## Approach
+
+The script first loads the source image. For an alpha image, values no greater than 1 are treated as near-transparent noise while the visible bounding box is calculated. This step tightens the rabbit from its nearly full 1024×1024 canvas to the subject itself. The remaining content is resized with LANCZOS resampling; the second dimension is derived from the requested one, and a transparent subject is fitted proportionally and centred in the grid.
+
+Colour matching is performed in CIELAB rather than directly on sRGB channel values. `CL` assigns every pixel to its nearest catalogue colour. The other four colour modes first aggregate source colours and their weights, build a candidate path through greedy forward selection, refine a fixed-size subset through deterministic swaps, and then remap every visible pixel. The optimised implementation uses NumPy to share the Lab conversion, distance matrix, and greedy path across several modes generated in one run.
+
+## Test setup
+
+Only the two specified images were used. People is a 2000×2000 photograph and was generated at a height of 200, giving a 200×200 grid. Rabbit is a 1024×1024 illustration; after its transparent margins were trimmed, a height of 50 produced a 32×50 grid.
+
+<div className="project-gallery">
+  <figure className="project-figure"><a href={peopleSource.src} target="_blank" rel="noreferrer"><img src={peopleSource.src} alt="People test source photograph" loading="lazy" decoding="async" /></a><figcaption>People source: 2000×2000; test grid: 200×200.</figcaption></figure>
+  <figure className="project-figure"><a href={rabbitSource.src} target="_blank" rel="noreferrer"><img src={rabbitSource.src} alt="Rabbit test source illustration" loading="lazy" decoding="async" /></a><figcaption>Rabbit source: 1024×1024; grid after alpha trimming: 32×50.</figcaption></figure>
+</div>
+
+The benchmark ran on Windows 11 with Python 3.12.13, Pillow 12.3.0, NumPy 2.5.1, and a 16-logical-core AMD64 processor. Quantisation timing starts after image loading, trimming, and resizing, and ends when the palette-code grid has been produced. Each mode is warmed once and then measured three times; the median excludes chart rendering and PNG writing. The end-to-end figure includes quantisation, six full charts, six pure previews, and file output.
+
+## Colour counts and retention
+
+For each image, the actual `CL` colour count is treated as 100%. Every other percentage is its own colour count divided by the CL count. People falls from 50 colours in CL to 11 in CS; Rabbit falls from 36 to 8. A reduced mode does not merely remove the least frequent colours: it chooses a new representative subset for the current image.
+
+| Image | Grid | CL | CLM | CM | CMS | CS |
+|---|---:|---:|---:|---:|---:|---:|
+| People | 200×200 | 50 (100%) | 40 (80.0%) | 30 (60.0%) | 20 (40.0%) | 11 (22.0%) |
+| Rabbit | 32×50 | 36 (100%) | 29 (80.6%) | 22 (61.1%) | 15 (41.7%) | 8 (22.2%) |
+
+## Colour error
+
+Colour error is the mean CIE76 distance between every source pixel and its assigned catalogue colour. A lower value is closer in CIELAB space. It is useful for comparing modes on the same image, but it is not a general quality ranking between two unrelated images.
+
+| Image | CL | CLM | CM | CMS | CS |
+|---|---:|---:|---:|---:|---:|
+| People | 9.05 | 9.05 | 9.06 | 9.22 | 9.73 |
+| Rabbit | 3.40 | 3.41 | 3.45 | 3.76 | 5.08 |
+
+Reducing People from 50 to 30 colours changes its mean distance only from 9.05 to 9.06; the 11-colour CS result reaches 9.73. Rabbit has a smaller and more concentrated set of subject colours: it remains at 3.76 with 15 colours, then reaches 5.08 with 8. The results confirm that the colour counts decrease in the intended order without an abrupt uncontrolled increase in mean error.
+
+## Performance
+
+| Image | CL | CLM | CM | CMS | CS | BW | All six, end to end |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| People 200×200 | 0.082 s | 0.541 s | 0.416 s | 0.309 s | 0.219 s | 0.022 s | 13.558 s |
+| Rabbit 32×50 | 0.004 s | 0.009 s | 0.008 s | 0.006 s | 0.005 s | 0.001 s | 0.590 s |
+
+`CL` and `BW` only need nearest-colour assignment, so their quantisation is shortest. The four reduced colour modes must also select and refine a subset; `CLM` retains the largest candidate set and takes the longest. For People, end-to-end output is much slower than quantisation because the script must draw a 200×200 coordinate grid, place 40000 cell codes, build the legend, and encode large PNG files.
+
+## People 200×200 outputs
+
+<div className="project-gallery">
+  <figure className="project-figure"><a href={peopleCL.src} target="_blank" rel="noreferrer"><img src={peopleCL.src} alt="People 200 by 200 CL fuse-bead chart" loading="lazy" decoding="async" /></a><figcaption>CL · 50 colours · mean CIE76 9.05</figcaption></figure>
+  <figure className="project-figure"><a href={peopleCLM.src} target="_blank" rel="noreferrer"><img src={peopleCLM.src} alt="People 200 by 200 CLM fuse-bead chart" loading="lazy" decoding="async" /></a><figcaption>CLM · 40 colours · 80.0% of CL</figcaption></figure>
+  <figure className="project-figure"><a href={peopleCM.src} target="_blank" rel="noreferrer"><img src={peopleCM.src} alt="People 200 by 200 CM fuse-bead chart" loading="lazy" decoding="async" /></a><figcaption>CM · 30 colours · 60.0% of CL</figcaption></figure>
+  <figure className="project-figure"><a href={peopleCMS.src} target="_blank" rel="noreferrer"><img src={peopleCMS.src} alt="People 200 by 200 CMS fuse-bead chart" loading="lazy" decoding="async" /></a><figcaption>CMS · 20 colours · 40.0% of CL</figcaption></figure>
+  <figure className="project-figure"><a href={peopleCS.src} target="_blank" rel="noreferrer"><img src={peopleCS.src} alt="People 200 by 200 CS fuse-bead chart" loading="lazy" decoding="async" /></a><figcaption>CS · 11 colours · 22.0% of CL</figcaption></figure>
+  <figure className="project-figure"><a href={peopleBW.src} target="_blank" rel="noreferrer"><img src={peopleBW.src} alt="People 200 by 200 BW fuse-bead chart" loading="lazy" decoding="async" /></a><figcaption>BW · monochrome low-difficulty output and speed test only</figcaption></figure>
+</div>
+
+## Rabbit 32×50 outputs
+
+<div className="project-gallery">
+  <figure className="project-figure"><a href={rabbitCL.src} target="_blank" rel="noreferrer"><img src={rabbitCL.src} alt="Rabbit 32 by 50 CL fuse-bead chart" loading="lazy" decoding="async" /></a><figcaption>CL · 36 colours · mean CIE76 3.40</figcaption></figure>
+  <figure className="project-figure"><a href={rabbitCLM.src} target="_blank" rel="noreferrer"><img src={rabbitCLM.src} alt="Rabbit 32 by 50 CLM fuse-bead chart" loading="lazy" decoding="async" /></a><figcaption>CLM · 29 colours · 80.6% of CL</figcaption></figure>
+  <figure className="project-figure"><a href={rabbitCM.src} target="_blank" rel="noreferrer"><img src={rabbitCM.src} alt="Rabbit 32 by 50 CM fuse-bead chart" loading="lazy" decoding="async" /></a><figcaption>CM · 22 colours · 61.1% of CL</figcaption></figure>
+  <figure className="project-figure"><a href={rabbitCMS.src} target="_blank" rel="noreferrer"><img src={rabbitCMS.src} alt="Rabbit 32 by 50 CMS fuse-bead chart" loading="lazy" decoding="async" /></a><figcaption>CMS · 15 colours · 41.7% of CL</figcaption></figure>
+  <figure className="project-figure"><a href={rabbitCS.src} target="_blank" rel="noreferrer"><img src={rabbitCS.src} alt="Rabbit 32 by 50 CS fuse-bead chart" loading="lazy" decoding="async" /></a><figcaption>CS · 8 colours · 22.2% of CL</figcaption></figure>
+  <figure className="project-figure"><a href={rabbitBW.src} target="_blank" rel="noreferrer"><img src={rabbitBW.src} alt="Rabbit 32 by 50 BW fuse-bead chart" loading="lazy" decoding="async" /></a><figcaption>BW · monochrome low-difficulty output and speed test only</figcaption></figure>
+</div>
+
+## Usage
+
+The script requires Python 3.10 or later, Pillow 10–12, and NumPy 2.x. These commands reproduce the requested dimensions; the width is calculated from the effective source bounds.
+
+```bash
+python fuse_bead_pattern_generator.py people-source.jpg --width auto --height 200 --mode cl clm cm cms cs bw --output-dir output
+python fuse_bead_pattern_generator.py rabbit-source.png --width auto --height 50 --mode cl clm cm cms cs bw --output-dir output
+```
+
+Add `--pure` for a pixel-only preview without coordinates, grid lines, cell codes, or a legend. Run `benchmark.py` for the complete benchmark; its measurements are saved in `benchmark-results.json`.
+
+## Known limits
+
+- The embedded catalogue uses fixed RGB values collected from online data, so some bead brands or production batches may differ slightly.
+- Mean CIE76 measures pixel-wise Lab distance only. It does not judge subject recognition, edge smoothness, or whether a bead colour is easy to buy.
