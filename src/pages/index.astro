@@ -5,7 +5,7 @@ import GuestbookDialog from '../components/GuestbookDialog.astro';
 import LatestListItem from '../components/LatestListItem.astro';
 import LocalizedText from '../components/LocalizedText.astro';
 import { pairEntries } from '../lib/content';
-import { locales, ui } from '../lib/i18n';
+import { locales, text, ui } from '../lib/i18n';
 
 const [blogEntries, projectEntries, recipeEntries] = await Promise.all([
   getCollection('blog', ({ data }) => !data.draft),
@@ -85,6 +85,134 @@ const latest = [
         ))}
       </ul>
     </section>
+
+    <section class="section services-section" aria-labelledby="services-heading">
+      <div class="section-heading">
+        <h2 id="services-heading"><LocalizedText value={ui.home.services} /></h2>
+      </div>
+      <div class="service-grid">
+        <a class="service-app" href="/services/fuse-bead-generator/" data-service-link aria-labelledby="fuse-bead-service-label">
+          <span class="service-card-icon service-card-icon--bead" aria-hidden="true">
+            <span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span>
+          </span>
+          <span class="service-app-label" id="fuse-bead-service-label"><LocalizedText value={text('拼豆图纸生成器', '拼豆圖紙生成器', 'Fuse-bead pattern generator')} /></span>
+        </a>
+      </div>
+    </section>
   </div>
   <GuestbookDialog />
 </BaseLayout>
+
+<style>
+  .services-section {
+    padding-top: 72px;
+  }
+
+  .service-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 104px);
+    gap: 28px 24px;
+    align-items: start;
+  }
+
+  .service-app {
+    display: grid;
+    width: 104px;
+    justify-items: center;
+    gap: 9px;
+    color: var(--text);
+    text-decoration: none;
+  }
+
+  .service-app:focus-visible {
+    outline: none;
+  }
+
+  .service-app-label {
+    display: block;
+    width: 100%;
+    color: var(--text);
+    font-size: .78rem;
+    font-weight: 500;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+    text-align: center;
+    text-wrap: balance;
+    white-space: normal;
+  }
+
+  .service-card-icon {
+    position: relative;
+    display: grid;
+    width: 72px;
+    aspect-ratio: 1;
+    overflow: hidden;
+    border-radius: 16px;
+    transition: transform var(--motion-fast) ease;
+  }
+
+  .service-app:hover .service-card-icon {
+    transform: translateY(-2px) scale(1.015);
+  }
+
+  .service-app:focus-visible .service-card-icon {
+    outline: 2px solid var(--brand-interactive);
+    outline-offset: 3px;
+  }
+
+  .service-card-icon--bead {
+    grid-template-columns: repeat(4, 9px);
+    grid-auto-rows: 9px;
+    place-content: center;
+    gap: 3px;
+    background: var(--surface-raised);
+  }
+
+  .service-card-icon--bead span {
+    border-radius: 2px;
+    background: var(--brand-interactive);
+    opacity: .24;
+  }
+
+  .service-card-icon--bead span:nth-child(3n + 1),
+  .service-card-icon--bead span:nth-child(7) {
+    opacity: .8;
+  }
+
+  @media (max-width: 520px) {
+    .service-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 24px 10px;
+    }
+
+    .service-app { width: 100%; }
+
+    .service-card-icon {
+      width: clamp(56px, 18vw, 68px);
+      border-radius: clamp(13px, 4.2vw, 15px);
+    }
+
+    .service-app-label { max-width: 84px; font-size: .72rem; }
+  }
+</style>
+
+<script>
+  const serviceLink = document.querySelector<HTMLAnchorElement>('[data-service-link]');
+  serviceLink?.addEventListener('click', () => {
+    try { sessionStorage.setItem('home-service-scroll-y', String(window.scrollY)); } catch (_) { /* Storage may be unavailable. */ }
+  });
+
+  const restoreHomeScroll = () => {
+    try {
+      if (sessionStorage.getItem('restore-home-service-scroll') !== 'true') return;
+      sessionStorage.removeItem('restore-home-service-scroll');
+      const savedY = Number(sessionStorage.getItem('home-service-scroll-y'));
+      if (Number.isFinite(savedY)) requestAnimationFrame(() => window.scrollTo({ top: savedY, behavior: 'auto' }));
+    } catch (_) { /* Storage may be unavailable. */ }
+  };
+  restoreHomeScroll();
+  window.addEventListener('pageshow', restoreHomeScroll);
+</script>

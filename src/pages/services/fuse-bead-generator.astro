@@ -1,0 +1,391 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import LocalizedText from '../../components/LocalizedText.astro';
+import { text } from '../../lib/i18n';
+
+const pageTitle = text('拼豆图纸生成器', '拼豆圖紙生成器', 'Fuse-bead pattern generator');
+const pageDescription = text(
+  '上传一张图片，按指定尺寸和颜色模式生成带坐标、色号和用量统计的拼豆图纸。',
+  '上傳一張圖片，依指定尺寸與色彩模式產生含座標、色號與用量統計的拼豆圖紙。',
+  'Upload an image and create a fuse-bead pattern with coordinates, colour codes, and bead counts.',
+);
+---
+
+<BaseLayout activeNav="home" titles={pageTitle} descriptions={pageDescription}>
+  <div class="site-shell service-page">
+    <a class="service-back" href="/#services-heading" data-service-back><span aria-hidden="true">←</span><LocalizedText value={text('返回主页', '返回首頁', 'Back to home')} /></a>
+
+    <header class="service-header">
+      <h1><LocalizedText value={pageTitle} /></h1>
+    </header>
+
+    <section class="generator-shell" aria-label="拼豆图纸生成工具">
+      <form class="generator-form" data-generator-form>
+        <fieldset class="form-group upload-group">
+          <legend><span>1</span><LocalizedText value={text('上传图片', '上傳圖片', 'Upload image')} /></legend>
+          <label class="upload-zone" data-upload-zone>
+            <input type="file" name="image" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" data-file-input required />
+            <span class="upload-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M5 14.5v3A2.5 2.5 0 0 0 7.5 20h9a2.5 2.5 0 0 0 2.5-2.5v-3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <span class="upload-copy">
+              <strong><LocalizedText value={text('点击选择或将图片拖到这里', '點擊選擇或將圖片拖到這裡', 'Choose an image or drop it here')} /></strong>
+              <span>JPEG、PNG、WebP 或 HEIF · <LocalizedText value={text('最大 20 MB', '最大 20 MB', 'Up to 20 MB')} /></span>
+            </span>
+          </label>
+          <div class="file-summary" data-file-summary hidden>
+            <span class="file-summary-name" data-file-name></span><span data-file-meta></span>
+            <button type="button" data-file-remove><LocalizedText value={text('移除', '移除', 'Remove')} /></button>
+          </div>
+          <p class="upload-privacy"><LocalizedText value={text('图片仅用于本次生成，处理完成后即删除。', '圖片僅用於本次產生，處理完成後即刪除。', 'Your image is used only for this request and deleted after processing.')} /></p>
+        </fieldset>
+
+        <fieldset class="form-group">
+          <legend><span>2</span><LocalizedText value={text('设置图纸尺寸', '設定圖紙尺寸', 'Set pattern size')} /></legend>
+          <div class="size-row">
+            <div class="side-switch" role="radiogroup" aria-label="固定宽度或高度">
+              <label><input type="radio" name="fixed_side" value="width" /><span><LocalizedText value={text('按宽度', '依寬度', 'By width')} /></span></label>
+              <label><input type="radio" name="fixed_side" value="height" checked /><span><LocalizedText value={text('按高度', '依高度', 'By height')} /></span></label>
+            </div>
+            <label class="size-input"><input type="number" name="size" min="1" max="200000" step="1" value="50" inputmode="numeric" required data-size-input /><span><LocalizedText value={text('格', '格', 'cells')} /></span></label>
+          </div>
+          <p class="form-help"><LocalizedText value={text('另一边按原图比例自动计算，图纸总格数不超过 200,000。', '另一邊依原圖比例自動計算，圖紙總格數不超過 200,000。', 'The other side is calculated automatically. Patterns are limited to 200,000 cells.')} /></p>
+          <p class="size-estimate" data-size-estimate hidden></p>
+        </fieldset>
+
+        <fieldset class="form-group">
+          <legend><span>3</span><LocalizedText value={text('选择颜色模式', '選擇色彩模式', 'Choose colour mode')} /></legend>
+          <div class="mode-grid">
+            <label class="mode-option"><input type="radio" name="mode" value="cm" /><span><strong><LocalizedText value={text('多色', '多色', 'More colours')} /></strong><small>CM</small></span></label>
+            <label class="mode-option"><input type="radio" name="mode" value="cms" checked /><span><strong><LocalizedText value={text('适中', '適中', 'Balanced')} /></strong><small>CMS</small></span></label>
+            <label class="mode-option"><input type="radio" name="mode" value="cs" /><span><strong><LocalizedText value={text('少色', '少色', 'Fewer colours')} /></strong><small>CS</small></span></label>
+            <label class="mode-option"><input type="radio" name="mode" value="bw" /><span><strong><LocalizedText value={text('黑白', '黑白', 'Monochrome')} /></strong><small>BW</small></span></label>
+          </div>
+        </fieldset>
+
+        <div class="form-submit-row">
+          <button class="generate-button" type="submit" disabled data-generate-button><span data-button-label><LocalizedText value={text('生成图纸', '產生圖紙', 'Generate pattern')} /></span><span aria-hidden="true">→</span></button>
+        </div>
+        <p class="form-message" role="status" aria-live="polite" data-form-message hidden></p>
+      </form>
+
+      <section class="preview-panel" aria-labelledby="preview-heading">
+        <div class="preview-heading-row">
+          <div><p><LocalizedText value={text('预览', '預覽', 'Preview')} /></p><h2 id="preview-heading" data-preview-title><LocalizedText value={text('等待上传图片', '等待上傳圖片', 'Waiting for an image')} /></h2></div>
+          <span class="preview-mode" data-preview-mode>CMS</span>
+        </div>
+        <div class="preview-stage">
+          <div class="preview-empty" data-preview-empty><p><LocalizedText value={text('上传后可在这里检查原图和生成结果。', '上傳後可在這裡檢查原圖與產生結果。', 'Your source image and generated result will appear here.')} /></p></div>
+          <img data-preview-image alt="" hidden />
+          <div class="preview-loading" data-preview-loading hidden><span aria-hidden="true"></span><p><LocalizedText value={text('正在生成图纸……', '正在產生圖紙……', 'Generating pattern…')} /></p></div>
+        </div>
+        <dl class="result-meta" data-result-meta hidden>
+          <div><dt><LocalizedText value={text('图纸尺寸', '圖紙尺寸', 'Pattern size')} /></dt><dd data-result-size>—</dd></div>
+          <div><dt><LocalizedText value={text('颜色模式', '色彩模式', 'Colour mode')} /></dt><dd data-result-mode>—</dd></div>
+          <div><dt><LocalizedText value={text('色号总数', '色號總數', 'Colour count')} /></dt><dd data-result-count>—</dd></div>
+        </dl>
+        <a class="download-button" href="#" download hidden data-download-button><LocalizedText value={text('下载 PNG 图纸', '下載 PNG 圖紙', 'Download PNG pattern')} /><span aria-hidden="true">↓</span></a>
+      </section>
+    </section>
+
+    <aside class="service-note">
+      <strong><LocalizedText value={text('生成说明', '產生說明', 'About the generator')} /></strong>
+      <p><LocalizedText value={text('透明图片会先裁去外围透明区域，再按可见内容的比例生成图纸。色卡与实际拼豆品牌、批次可能存在色差。', '透明圖片會先裁去外圍透明區域，再依可見內容的比例產生圖紙。色卡與實際拼豆品牌、批次可能存在色差。', 'Transparent margins are trimmed before sizing. Palette colours may differ slightly from physical beads across brands and production batches.')} /></p>
+      <a href="/projects/fuse-bead-pattern-generator/"><LocalizedText value={text('查看算法与测试结果', '查看演算法與測試結果', 'View algorithm and test results')} /> ↗</a>
+    </aside>
+  </div>
+</BaseLayout>
+
+<script>
+  type Locale = 'zh-CN' | 'zh-TW' | 'en';
+  const form = document.querySelector<HTMLFormElement>('[data-generator-form]');
+  const fileInput = document.querySelector<HTMLInputElement>('[data-file-input]');
+  const uploadZone = document.querySelector<HTMLElement>('[data-upload-zone]');
+  const fileSummary = document.querySelector<HTMLElement>('[data-file-summary]');
+  const fileName = document.querySelector<HTMLElement>('[data-file-name]');
+  const fileMeta = document.querySelector<HTMLElement>('[data-file-meta]');
+  const removeButton = document.querySelector<HTMLButtonElement>('[data-file-remove]');
+  const sizeInput = document.querySelector<HTMLInputElement>('[data-size-input]');
+  const sizeEstimate = document.querySelector<HTMLElement>('[data-size-estimate]');
+  const generateButton = document.querySelector<HTMLButtonElement>('[data-generate-button]');
+  const buttonLabel = document.querySelector<HTMLElement>('[data-button-label]');
+  const formMessage = document.querySelector<HTMLElement>('[data-form-message]');
+  const previewEmpty = document.querySelector<HTMLElement>('[data-preview-empty]');
+  const previewImage = document.querySelector<HTMLImageElement>('[data-preview-image]');
+  const previewLoading = document.querySelector<HTMLElement>('[data-preview-loading]');
+  const previewTitle = document.querySelector<HTMLElement>('[data-preview-title]');
+  const previewMode = document.querySelector<HTMLElement>('[data-preview-mode]');
+  const resultMeta = document.querySelector<HTMLElement>('[data-result-meta]');
+  const resultSize = document.querySelector<HTMLElement>('[data-result-size]');
+  const resultMode = document.querySelector<HTMLElement>('[data-result-mode]');
+  const resultCount = document.querySelector<HTMLElement>('[data-result-count]');
+  const downloadButton = document.querySelector<HTMLAnchorElement>('[data-download-button]');
+  let selectedFile: File | null = null;
+  let sourceWidth = 0;
+  let sourceHeight = 0;
+  let sourceUrl = '';
+  let resultUrl = '';
+  const copy = {
+    invalidType: { 'zh-CN': '请上传 JPEG、PNG、WebP 或 HEIF 图片。', 'zh-TW': '請上傳 JPEG、PNG、WebP 或 HEIF 圖片。', en: 'Please upload a JPEG, PNG, WebP, or HEIF image.' },
+    tooLarge: { 'zh-CN': '图片不能超过 20 MB。', 'zh-TW': '圖片不能超過 20 MB。', en: 'The image must be no larger than 20 MB.' },
+    invalidImage: { 'zh-CN': '无法读取这张图片，请更换文件。', 'zh-TW': '無法讀取這張圖片，請更換檔案。', en: 'This image could not be read. Please choose another file.' },
+    tooManyCells: { 'zh-CN': '按当前比例计算后超出图纸尺寸限制，请减小格数。', 'zh-TW': '依目前比例計算後超出圖紙尺寸限制，請減少格數。', en: 'The calculated pattern exceeds the size limit. Please use fewer cells.' },
+    serviceUnavailable: { 'zh-CN': '生成接口尚未启动，当前可先查看页面与参数交互。', 'zh-TW': '產生介面尚未啟動，目前可先查頁面與參數互。', en: 'The generation API is not running yet. You can still review the page and parameter interactions.' },
+    failed: { 'zh-CN': '生成失败，请稍后重试。', 'zh-TW': '產生失敗，請稍後重試。', en: 'Generation failed. Please try again later.' },
+    generating: { 'zh-CN': '正在生成……', 'zh-TW': '正在產生……', en: 'Generating…' },
+    generate: { 'zh-CN': '生成图纸', 'zh-TW': '產生圖紙', en: 'Generate pattern' },
+    sourcePreview: { 'zh-CN': '原图预览', 'zh-TW': '原圖預覽', en: 'Source preview' },
+    resultPreview: { 'zh-CN': '图纸预览', 'zh-TW': '圖紙預覽', en: 'Pattern preview' },
+    estimate: { 'zh-CN': '预计图纸', 'zh-TW': '預計圖紙', en: 'Estimated pattern' },
+  } as const;
+  const locale = (): Locale => { const value = document.documentElement.dataset.language; return value === 'zh-TW' || value === 'en' ? value : 'zh-CN'; };
+  const t = (key: keyof typeof copy) => copy[key][locale()];
+  const showMessage = (message: string) => { if (formMessage) { formMessage.textContent = message; formMessage.hidden = false; } };
+  const clearMessage = () => { if (formMessage) formMessage.hidden = true; };
+  const selectedSide = () => form?.querySelector<HTMLInputElement>('input[name="fixed_side"]:checked')?.value ?? 'height';
+  const selectedMode = () => form?.querySelector<HTMLInputElement>('input[name="mode"]:checked')?.value.toUpperCase() ?? 'CMS';
+  const maxGridCells = 200_000;
+  const timestamp12 = (date: Date) => [
+    String(date.getFullYear()).slice(-2),
+    String(date.getMonth() + 1).padStart(2, '0'),
+    String(date.getDate()).padStart(2, '0'),
+    String(date.getHours()).padStart(2, '0'),
+    String(date.getMinutes()).padStart(2, '0'),
+    String(date.getSeconds()).padStart(2, '0'),
+  ].join('');
+  const calculatedSize = () => {
+    const fixed = Number(sizeInput?.value ?? 50);
+    if (!sourceWidth || !sourceHeight || !Number.isFinite(fixed)) return null;
+    const width = selectedSide() === 'width' ? fixed : Math.max(1, Math.round(sourceWidth * fixed / sourceHeight));
+    const height = selectedSide() === 'height' ? fixed : Math.max(1, Math.round(sourceHeight * fixed / sourceWidth));
+    return { width, height, count: width * height, valid: Number.isInteger(fixed) && fixed >= 1 && width * height <= maxGridCells };
+  };
+  const formatEstimate = (width: number, height: number, count: number) => {
+    if (locale() === 'en') return `Estimated pattern: ${width} × ${height} cells · ${count.toLocaleString('en-US')} total`;
+    if (locale() === 'zh-TW') return `預計圖紙：${width} × ${height} 格 · 共 ${count.toLocaleString('zh-TW')} 格`;
+    return `预计图纸：${width} × ${height} 格 · 共 ${count.toLocaleString('zh-CN')} 格`;
+  };
+  const updateEstimate = () => {
+    const estimate = calculatedSize();
+    if (previewMode) previewMode.textContent = selectedMode();
+    if (!estimate || !sizeEstimate) return;
+    sizeEstimate.hidden = false;
+    sizeEstimate.textContent = formatEstimate(estimate.width, estimate.height, estimate.count);
+    sizeEstimate.dataset.valid = String(estimate.valid);
+    if (generateButton) generateButton.disabled = !selectedFile || !estimate.valid;
+    if (!estimate.valid) showMessage(t('tooManyCells')); else clearMessage();
+  };
+  const resetResult = () => {
+    if (resultUrl) URL.revokeObjectURL(resultUrl);
+    resultUrl = '';
+    if (resultMeta) resultMeta.hidden = true;
+    if (downloadButton) downloadButton.hidden = true;
+  };
+  const resetFile = () => {
+    selectedFile = null; sourceWidth = 0; sourceHeight = 0;
+    if (sourceUrl) URL.revokeObjectURL(sourceUrl);
+    sourceUrl = ''; resetResult();
+    if (fileInput) fileInput.value = '';
+    if (fileSummary) fileSummary.hidden = true;
+    if (previewImage) { previewImage.hidden = true; previewImage.removeAttribute('src'); }
+    if (previewEmpty) previewEmpty.hidden = false;
+    if (previewTitle) previewTitle.textContent = t('sourcePreview');
+    if (sizeEstimate) sizeEstimate.hidden = true;
+    if (generateButton) generateButton.disabled = true;
+    clearMessage();
+  };
+  const isHeifFile = (file: File) => /\.(?:heic|heif)$/i.test(file.name) || ['image/heic', 'image/heif', 'image/heic-sequence', 'image/heif-sequence'].includes(file.type);
+  const canvasBlob = (canvas: HTMLCanvasElement, type: string, quality?: number) => new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error('Image conversion failed')), type, quality);
+  });
+  const setFile = async (file: File) => {
+    clearMessage(); resetResult();
+    const acceptedType = ['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || isHeifFile(file);
+    if (!acceptedType) { showMessage(t('invalidType')); return; }
+    if (file.size > 20 * 1024 * 1024) { showMessage(t('tooLarge')); return; }
+    if (sourceUrl) URL.revokeObjectURL(sourceUrl);
+    let decodedSize: { width: number; height: number } | null = null;
+    try {
+      if (isHeifFile(file)) {
+        const { heicTo } = await import('heic-to/next');
+        const bitmap = await heicTo({ blob: file, type: 'bitmap' });
+        decodedSize = { width: bitmap.width, height: bitmap.height };
+        const maxPreviewEdge = 1600;
+        const scale = Math.min(1, maxPreviewEdge / Math.max(bitmap.width, bitmap.height));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.floor(bitmap.width * scale));
+        canvas.height = Math.max(1, Math.floor(bitmap.height * scale));
+        const context = canvas.getContext('2d');
+        if (!context) { bitmap.close(); throw new Error('Canvas is unavailable'); }
+        context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+        bitmap.close();
+        const converted = await canvasBlob(canvas, 'image/jpeg', .86);
+        sourceUrl = URL.createObjectURL(converted);
+      } else {
+        sourceUrl = URL.createObjectURL(file);
+      }
+    } catch (error) {
+      console.error('HEIF preview conversion failed', error instanceof Error ? error.message : error);
+      showMessage(t('invalidImage'));
+      return;
+    }
+    const probe = new Image();
+    probe.onload = () => {
+      selectedFile = file;
+      sourceWidth = decodedSize?.width ?? probe.naturalWidth;
+      sourceHeight = decodedSize?.height ?? probe.naturalHeight;
+      if (fileName) fileName.textContent = file.name;
+      if (fileMeta) fileMeta.textContent = `${sourceWidth} × ${sourceHeight} · ${(file.size / 1024 / 1024).toFixed(2)} MB`;
+      if (fileSummary) fileSummary.hidden = false;
+      if (previewImage) { previewImage.src = sourceUrl; previewImage.alt = file.name; previewImage.hidden = false; }
+      if (previewEmpty) previewEmpty.hidden = true;
+      if (previewTitle) previewTitle.textContent = t('sourcePreview');
+      updateEstimate();
+    };
+    probe.onerror = () => { URL.revokeObjectURL(sourceUrl); sourceUrl = ''; showMessage(t('invalidImage')); };
+    probe.src = sourceUrl;
+  };
+  fileInput?.addEventListener('change', () => { const file = fileInput.files?.[0]; if (file) void setFile(file); });
+  removeButton?.addEventListener('click', resetFile);
+  form?.querySelectorAll<HTMLInputElement>('input[name="fixed_side"], input[name="mode"]').forEach((input) => input.addEventListener('change', updateEstimate));
+  sizeInput?.addEventListener('input', updateEstimate);
+  ['dragenter', 'dragover'].forEach((name) => uploadZone?.addEventListener(name, (event) => { event.preventDefault(); uploadZone.dataset.dragging = 'true'; }));
+  ['dragleave', 'drop'].forEach((name) => uploadZone?.addEventListener(name, (event) => { event.preventDefault(); delete uploadZone.dataset.dragging; }));
+  uploadZone?.addEventListener('drop', (event) => { const file = event.dataTransfer?.files?.[0]; if (file) void setFile(file); });
+  form?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const estimate = calculatedSize();
+    if (!selectedFile || !estimate?.valid || !generateButton) return;
+    clearMessage(); resetResult(); generateButton.disabled = true; generateButton.dataset.loading = 'true';
+    if (buttonLabel) buttonLabel.textContent = t('generating');
+    if (previewLoading) previewLoading.hidden = false;
+    const payload = new FormData(); payload.set('image', selectedFile); payload.set('fixed_side', selectedSide()); payload.set('size', String(sizeInput?.value ?? 50)); payload.set('mode', selectedMode().toLowerCase());
+    try {
+      const response = await fetch('/api/v1/fuse-bead/generate', { method: 'POST', body: payload });
+      if (!response.ok) {
+        let detail = '';
+        try { detail = (await response.json()).detail ?? ''; } catch (_) { /* The proxy may return HTML. */ }
+        throw new Error(detail || (response.status === 404 || response.status === 502 ? t('serviceUnavailable') : t('failed')));
+      }
+      const blob = await response.blob(); resultUrl = URL.createObjectURL(blob);
+      if (previewImage) { previewImage.src = resultUrl; previewImage.alt = t('resultPreview'); previewImage.hidden = false; }
+      if (previewEmpty) previewEmpty.hidden = true;
+      if (previewTitle) previewTitle.textContent = t('resultPreview');
+      if (resultMeta) resultMeta.hidden = false;
+      if (resultSize) resultSize.textContent = `${response.headers.get('X-Pattern-Width') ?? estimate.width} × ${response.headers.get('X-Pattern-Height') ?? estimate.height}`;
+      if (resultMode) resultMode.textContent = selectedMode();
+      if (resultCount) resultCount.textContent = response.headers.get('X-Colour-Count') ?? '—';
+      if (downloadButton) {
+        downloadButton.href = resultUrl;
+        downloadButton.download = `${selectedFile.name.replace(/\.[^.]+$/, '')}_${timestamp12(new Date())}.png`;
+        downloadButton.hidden = false;
+      }
+    } catch (error) {
+      showMessage(error instanceof Error ? error.message : t('failed'));
+      if (previewImage && sourceUrl) previewImage.src = sourceUrl;
+      if (previewTitle) previewTitle.textContent = t('sourcePreview');
+    } finally {
+      if (previewLoading) previewLoading.hidden = true;
+      delete generateButton.dataset.loading; generateButton.disabled = false;
+      if (buttonLabel) buttonLabel.textContent = t('generate');
+    }
+  });
+  window.addEventListener('site:language-change', () => { if (selectedFile && previewTitle) previewTitle.textContent = resultUrl ? t('resultPreview') : t('sourcePreview'); if (buttonLabel && !generateButton?.dataset.loading) buttonLabel.textContent = t('generate'); updateEstimate(); });
+  document.querySelector<HTMLAnchorElement>('[data-service-back]')?.addEventListener('click', (event) => {
+    try { sessionStorage.setItem('restore-home-service-scroll', 'true'); } catch (_) { /* Storage may be unavailable. */ }
+    if (document.referrer) {
+      const referrer = new URL(document.referrer);
+      if (referrer.origin === location.origin && referrer.pathname === '/') {
+        event.preventDefault();
+        history.back();
+      }
+    }
+  });
+  addEventListener('beforeunload', () => { if (sourceUrl) URL.revokeObjectURL(sourceUrl); if (resultUrl) URL.revokeObjectURL(resultUrl); });
+</script>
+
+<style>
+  .service-page { padding-top: 36px; padding-bottom: 112px; }
+  .service-back { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: .84rem; text-decoration: none; }
+  .service-back:hover { color: var(--brand-interactive); }
+  .service-header { max-width: 760px; padding: 48px 0 32px; }
+  .service-header h1 { margin: 16px 0 0; font-size: var(--font-size-section-title); font-weight: 600; letter-spacing: -.035em; line-height: 1.25; }
+  .generator-shell { display: grid; grid-template-columns: minmax(340px, .82fr) minmax(0, 1.18fr); overflow: hidden; border: 1px solid var(--border); border-radius: 18px; background: var(--surface); }
+  .generator-form { padding: 36px; border-right: 1px solid var(--border); }
+  .form-group { margin: 0; padding: 0 0 28px; border: 0; }
+  .form-group + .form-group { padding-top: 0; }
+  .form-group legend { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; padding: 0; color: var(--text); font-size: .92rem; font-weight: 600; }
+  .form-group legend > span:first-child { min-width: 24px; color: var(--brand-interactive); font-size: 1.55rem; font-weight: 500; line-height: 1; }
+  .upload-zone { display: flex; align-items: center; gap: 16px; padding: 22px; border: 1px dashed color-mix(in srgb, var(--muted) 48%, transparent); border-radius: var(--radius-lg); background: color-mix(in srgb, var(--surface-raised) 44%, transparent); cursor: pointer; transition: border-color var(--motion-fast) ease, background var(--motion-fast) ease; }
+  .upload-zone:hover, .upload-zone[data-dragging='true'] { border-color: var(--brand-interactive); background: var(--brand-soft); }
+  .upload-zone input { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
+  .upload-zone:focus-within { outline: 2px solid var(--focus); outline-offset: 3px; }
+  .upload-icon { display: grid; width: 42px; height: 42px; flex: 0 0 42px; place-items: center; border-radius: 10px; background: var(--surface); color: var(--brand-interactive); }
+  .upload-icon svg { width: 22px; height: 22px; }
+  .upload-copy { display: grid; gap: 5px; }
+  .upload-copy strong { font-size: .86rem; font-weight: 600; }
+  .upload-copy > span { color: var(--muted); font-size: .72rem; }
+  .file-summary { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; margin-top: 12px; padding: 12px 14px; border-radius: var(--radius-md); background: var(--surface-raised); font-size: .75rem; }
+  .file-summary[hidden] { display: none; }
+  .file-summary-name { overflow: hidden; color: var(--text); font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+  .file-summary > span:nth-child(2) { grid-column: 1; color: var(--muted); }
+  .file-summary button { grid-column: 2; grid-row: 1 / span 2; border: 0; background: none; color: var(--muted); cursor: pointer; }
+  .file-summary button:hover { color: var(--brand-interactive); }
+  .upload-privacy { margin: 11px 2px 0; color: var(--muted); font-size: .68rem; line-height: 1.5; }
+  .size-row { display: grid; grid-template-columns: minmax(0, 1fr) 94px; gap: 12px; }
+  .side-switch { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 3px; border-radius: var(--radius-md); background: var(--surface-raised); }
+  .side-switch label, .mode-option { position: relative; }
+  .side-switch input, .mode-option input { position: absolute; opacity: 0; pointer-events: none; }
+  .side-switch span { display: grid; min-height: 42px; place-items: center; border-radius: 6px; color: var(--muted); font-size: .8rem; cursor: pointer; }
+  .side-switch input:checked + span { background: var(--surface); color: var(--text); box-shadow: 0 1px 4px rgba(0, 0, 0, .08); }
+  .side-switch input:focus-visible + span, .mode-option input:focus-visible + span { outline: 2px solid var(--focus); outline-offset: 1px; }
+  .size-input { display: flex; align-items: center; min-height: 48px; padding: 0 10px 0 12px; border: 1px solid var(--border); border-radius: var(--radius-md); }
+  .size-input:focus-within { border-color: var(--brand-interactive); outline: 2px solid var(--brand-soft); }
+  .size-input input { width: 100%; border: 0; outline: 0; background: transparent; color: var(--text); font: inherit; font-weight: 600; }
+  .size-input span { color: var(--muted); font-size: .72rem; }
+  .form-help { margin: 11px 0 0; color: var(--muted); font-size: .72rem; line-height: 1.55; }
+  .size-estimate { margin: 10px 0 0; color: var(--brand-readable); font-family: inherit; font-size: .78rem; font-variant-numeric: tabular-nums; }
+  .size-estimate[data-valid='false'] { color: #bd3c32; }
+  .mode-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+  .mode-option > span { display: grid; min-height: 70px; place-content: center; gap: 5px; border: 1px solid var(--border); border-radius: var(--radius-md); text-align: center; cursor: pointer; transition: border-color var(--motion-fast) ease, background var(--motion-fast) ease; }
+  .mode-option strong { font-size: .78rem; font-weight: 600; }
+  .mode-option small { color: var(--muted); font-family: var(--font-mono); font-size: .62rem; }
+  .mode-option input:checked + span { border-color: var(--brand-interactive); background: var(--brand-soft); color: var(--brand-readable); }
+  .form-submit-row { padding-top: 4px; }
+  .generate-button { display: flex; width: 100%; min-height: 50px; align-items: center; justify-content: space-between; padding: 0 18px; border: 0; border-radius: var(--radius-md); background: var(--brand-interactive); color: var(--page); font: inherit; font-size: .88rem; font-weight: 600; cursor: pointer; transition: opacity var(--motion-fast) ease, transform var(--motion-fast) ease; }
+  :root[data-theme='dark'] .generate-button { color: #141414; }
+  .generate-button:not(:disabled):hover { transform: translateY(-1px); }
+  .generate-button:disabled { cursor: not-allowed; opacity: .38; }
+  .generate-button[data-loading='true'] { cursor: wait; opacity: .65; }
+  .form-message { margin: 16px 0 0; padding: 11px 13px; border-radius: var(--radius-md); background: color-mix(in srgb, #bd3c32 10%, transparent); color: #a8322a; font-size: .76rem; line-height: 1.55; }
+  :root[data-theme='dark'] .form-message { color: #f08d84; }
+  .preview-panel { display: flex; min-width: 0; min-height: 720px; flex-direction: column; padding: 36px; background: color-mix(in srgb, var(--surface-raised) 42%, var(--surface)); }
+  .preview-heading-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+  .preview-heading-row p { margin: 0 0 5px; color: var(--muted); font-size: .68rem; letter-spacing: .08em; text-transform: uppercase; }
+  .preview-heading-row h2 { margin: 0; font-size: 1.03rem; font-weight: 600; }
+  .preview-mode { padding: 5px 8px; border-radius: 5px; background: var(--surface); color: var(--brand-readable); font-family: var(--font-mono); font-size: .68rem; }
+  .preview-stage { position: relative; display: grid; min-height: 440px; flex: 1; overflow: hidden; place-items: center; border: 1px solid var(--border); border-radius: var(--radius-lg); background-color: var(--surface); background-image: linear-gradient(45deg, var(--surface-raised) 25%, transparent 25%), linear-gradient(-45deg, var(--surface-raised) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, var(--surface-raised) 75%), linear-gradient(-45deg, transparent 75%, var(--surface-raised) 75%); background-position: 0 0, 0 8px, 8px -8px, -8px 0; background-size: 16px 16px; }
+  .preview-stage img { display: block; width: 100%; height: 100%; max-height: 560px; padding: 20px; object-fit: contain; }
+  .preview-stage img[hidden], .preview-empty[hidden], .preview-loading[hidden], .result-meta[hidden], .download-button[hidden] { display: none; }
+  .preview-empty { display: grid; place-items: center; padding: 20px; text-align: center; }
+  .preview-empty p { margin: 0; color: var(--muted); font-size: .78rem; line-height: 1.6; white-space: nowrap; }
+  .preview-loading { position: absolute; inset: 0; display: grid; place-content: center; place-items: center; gap: 14px; background: color-mix(in srgb, var(--surface) 82%, transparent); backdrop-filter: blur(4px); }
+  .preview-loading span { width: 28px; height: 28px; border: 2px solid var(--border); border-top-color: var(--brand-interactive); border-radius: 50%; animation: spin .7s linear infinite; }
+  .preview-loading p { margin: 0; color: var(--muted); font-size: .78rem; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .result-meta { display: grid; grid-template-columns: repeat(3, 1fr); margin: 16px 0 0; padding: 15px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .result-meta div { padding: 0 14px; }
+  .result-meta div:first-child { padding-left: 0; }
+  .result-meta div + div { border-left: 1px solid var(--border); }
+  .result-meta dt { color: var(--muted); font-size: .65rem; }
+  .result-meta dd { margin: 5px 0 0; font-family: var(--font-mono); font-size: .78rem; }
+  .download-button { display: flex; align-items: center; justify-content: space-between; margin-top: 14px; padding: 14px 16px; border: 1px solid var(--border); border-radius: var(--radius-md); color: var(--text); font-size: .8rem; font-weight: 600; text-decoration: none; }
+  .download-button:hover { border-color: var(--brand-interactive); color: var(--brand-interactive); }
+  .service-note { display: grid; grid-template-columns: 150px minmax(0, 1fr) auto; gap: 28px; margin-top: 20px; padding: 24px 4px; color: var(--muted); font-size: .76rem; line-height: 1.65; }
+  .service-note strong { color: var(--text); font-weight: 600; }
+  .service-note p { max-width: 680px; margin: 0; }
+  .service-note a { color: var(--muted); text-decoration: none; white-space: nowrap; }
+  .service-note a:hover { color: var(--brand-interactive); }
+  @media (max-width: 900px) { .generator-shell { grid-template-columns: 1fr; } .generator-form { border-right: 0; border-bottom: 1px solid var(--border); } .preview-panel { min-height: 620px; } .service-note { grid-template-columns: 1fr; gap: 8px; } }
+  @media (max-width: 560px) { .service-page { padding-top: 24px; padding-bottom: 72px; } .service-header { padding: 32px 0; } .generator-form, .preview-panel { padding: 24px 20px; } .generator-shell { border-radius: var(--radius-lg); } .size-row { grid-template-columns: 1fr; } .mode-grid { grid-template-columns: repeat(2, 1fr); } .preview-panel { min-height: 520px; } .preview-stage { min-height: 340px; } .result-meta { grid-template-columns: 1fr; gap: 12px; } .result-meta div { padding: 0; } .result-meta div + div { padding-top: 12px; border-top: 1px solid var(--border); border-left: 0; } }
+  @media (max-width: 420px) { .preview-empty p { white-space: normal; } }
+  @media (prefers-reduced-motion: reduce) { .preview-loading span { animation-duration: 1.5s; } }
+</style>
