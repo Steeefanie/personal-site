@@ -13,7 +13,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import Response
-from PIL import Image, UnidentifiedImageError
+from PIL import Image, ImageOps, UnidentifiedImageError
 from pillow_heif import register_heif_opener
 
 
@@ -22,7 +22,7 @@ register_heif_opener()
 
 MAX_UPLOAD_BYTES = 20 * 1024 * 1024
 MIN_FIXED_SIZE = 1
-MAX_GRID_CELLS = 200_000
+MAX_GRID_CELLS = 20_000
 GENERATION_TIMEOUT_SECONDS = 30
 ALLOWED_MODES = {"cm", "cms", "cs", "bw"}
 ALLOWED_FORMATS = {"JPEG": ".jpg", "PNG": ".png", "WEBP": ".webp", "HEIF": ".heif"}
@@ -58,7 +58,7 @@ def python_executable() -> str:
     raise HTTPException(status_code=503, detail="未找到可用的 Python 解释器。")
 
 
-def inspect_image(data: bytes) -> tuple[str, int, int]:
+def inspect_image(data: bytes) -> tuple[str, int, int, bool]:
     try:
         with Image.open(io.BytesIO(data)) as image:
             if getattr(image, "is_animated", False) and getattr(image, "n_frames", 1) > 1:
@@ -66,15 +66,22 @@ def inspect_image(data: bytes) -> tuple[str, int, int]:
             image_format = (image.format or "").upper()
             if image_format not in ALLOWED_FORMATS:
                 raise HTTPException(status_code=400, detail="仅支持 JPEG、PNG、WebP 和 HEIF 图片。")
-            source_width, source_height = image.size
+            orientation = image.getexif().get(274, 1)
+            oriented_image = ImageOps.exif_transpose(image)
+            source_width, source_height = oriented_image.size
             effective_width, effective_height = source_width, source_height
-            if "A" in image.getbands():
-                alpha = image.getchannel("A")
+            if "A" in oriented_image.getbands():
+                alpha = oriented_image.getchannel("A")
                 visible_bounds = alpha.point(lambda value: 255 if value > 1 else 0).getbbox()
                 if visible_bounds:
                     effective_width = visible_bounds[2] - visible_bounds[0]
                     effective_height = visible_bounds[3] - visible_bounds[1]
-            return ALLOWED_FORMATS[image_format], effective_width, effective_height
+            return (
+                ALLOWED_FORMATS[image_format],
+                effective_width,
+                effective_height,
+                orientation not in (None, 1),
+            )
     except HTTPException:
         raise
     except (UnidentifiedImageError, OSError, Image.DecompressionBombError) as exc:
@@ -97,6 +104,7 @@ def resolve_grid(fixed_side: str, size: int, source_width: int, source_height: i
 def run_generator(
     source_data: bytes,
     suffix: str,
+    normalise_orientation: bool,
     fixed_side: str,
     size: int,
     mode: str,
@@ -114,7 +122,12 @@ def run_generator(
             temp_dir = Path(temp_dir_name)
             input_path = temp_dir / f"source{suffix}"
             output_dir = temp_dir / "output"
-            input_path.write_bytes(source_data)
+            if normalise_orientation:
+                input_path = temp_dir / "source.png"
+                with Image.open(io.BytesIO(source_data)) as image:
+                    ImageOps.exif_transpose(image).save(input_path, format="PNG")
+            else:
+                input_path.write_bytes(source_data)
             width_arg = str(size) if fixed_side == "width" else "auto"
             height_arg = str(size) if fixed_side == "height" else "auto"
             runner = Path(__file__).with_name("runner.py")
@@ -188,7 +201,7 @@ async def generate(
     if not source_data:
         raise HTTPException(status_code=400, detail="上传图片为空。")
 
-    suffix, source_width, source_height = inspect_image(source_data)
+    suffix, source_width, source_height, normalise_orientation = inspect_image(source_data)
     resolved_width, resolved_height = resolve_grid(
         fixed_side,
         size,
@@ -199,6 +212,7 @@ async def generate(
         run_generator,
         source_data,
         suffix,
+        normalise_orientation,
         fixed_side,
         size,
         mode,

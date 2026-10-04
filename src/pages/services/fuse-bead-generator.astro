@@ -45,9 +45,9 @@ const pageDescription = text(
               <label><input type="radio" name="fixed_side" value="width" /><span><LocalizedText value={text('按宽度', '依寬度', 'By width')} /></span></label>
               <label><input type="radio" name="fixed_side" value="height" checked /><span><LocalizedText value={text('按高度', '依高度', 'By height')} /></span></label>
             </div>
-            <label class="size-input"><input type="number" name="size" min="1" max="200000" step="1" value="50" inputmode="numeric" required data-size-input /><span><LocalizedText value={text('格', '格', 'cells')} /></span></label>
+            <label class="size-input"><input type="number" name="size" min="1" max="20000" step="1" value="50" inputmode="numeric" required data-size-input /><span><LocalizedText value={text('格', '格', 'cells')} /></span></label>
           </div>
-          <p class="form-help"><LocalizedText value={text('另一边按原图比例自动计算，图纸总格数不超过 200,000。', '另一邊依原圖比例自動計算，圖紙總格數不超過 200,000。', 'The other side is calculated automatically. Patterns are limited to 200,000 cells.')} /></p>
+          <p class="form-help"><LocalizedText value={text('另一边按原图比例自动计算，图纸总格数不超过 20,000。', '另一邊依原圖比例自動計算，圖紙總格數不超過 20,000。', 'The other side is calculated automatically. Patterns are limited to 20,000 cells.')} /></p>
           <p class="size-estimate" data-size-estimate hidden></p>
         </fieldset>
 
@@ -142,7 +142,7 @@ const pageDescription = text(
   const clearMessage = () => { if (formMessage) formMessage.hidden = true; };
   const selectedSide = () => form?.querySelector<HTMLInputElement>('input[name="fixed_side"]:checked')?.value ?? 'height';
   const selectedMode = () => form?.querySelector<HTMLInputElement>('input[name="mode"]:checked')?.value.toUpperCase() ?? 'CMS';
-  const maxGridCells = 200_000;
+  const maxGridCells = 20_000;
   const timestamp12 = (date: Date) => [
     String(date.getFullYear()).slice(-2),
     String(date.getMonth() + 1).padStart(2, '0'),
