@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "./tokens.css";
 @import "./prose.css";
+@import "./guestbook.css";
 
 @property --panel-reveal {
   syntax: '<length-percentage>';
@@ -52,14 +53,14 @@ body {
   transition: background-color 180ms ease, color 180ms ease;
 }
 
-html.search-panel-open {
+html.page-scroll-locked {
   overflow: hidden;
   overscroll-behavior: none;
 }
 
-html.search-panel-open body {
+html.page-scroll-locked body {
   position: fixed;
-  top: var(--search-scroll-offset, 0);
+  top: var(--page-scroll-offset, 0);
   right: 0;
   left: 0;
   width: 100%;
@@ -709,17 +710,20 @@ html[lang='zh-TW'] .hero h1 {
   padding-left: var(--radius-lg);
 }
 
-.hero-github {
+.hero-contact-button {
   color: var(--muted);
+  border: 0;
+  background: transparent;
+  cursor: pointer;
   text-decoration: none;
   transition: color 150ms ease, transform 140ms ease;
 }
 
-.hero-github:hover {
+.hero-contact-button:hover {
   color: var(--brand-interactive);
 }
 
-.hero-github:active {
+.hero-contact-button:active {
   transform: translateY(1px);
 }
 
@@ -728,7 +732,12 @@ html[lang='zh-TW'] .hero h1 {
   font-size: 0.82rem;
 }
 
-.hero-github {
+.hero-contact-actions {
+  display: flex;
+  align-items: center;
+}
+
+.hero-contact-button {
   display: grid;
   width: 44px;
   height: 44px;
@@ -736,7 +745,7 @@ html[lang='zh-TW'] .hero h1 {
   place-items: center;
 }
 
-.hero-github svg {
+.hero-contact-button svg {
   width: 20px;
   height: 20px;
 }

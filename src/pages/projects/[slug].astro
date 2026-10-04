@@ -1,19 +1,39 @@
 ---
 import { getCollection, render, type CollectionEntry } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import ArticleComments from '../../components/ArticleComments.astro';
 import ProseLayout from '../../components/ProseLayout.astro';
 import LocalizedText from '../../components/LocalizedText.astro';
 import { pairEntries } from '../../lib/content';
 import { localeDateFormats, locales, text, type Localized } from '../../lib/i18n';
 
-interface Props { entries: Localized<CollectionEntry<'projects'>> }
+interface Adjacent { slug: string; titles: Localized<string> }
+interface Props {
+  entries: Localized<CollectionEntry<'projects'>>;
+  previous?: Adjacent;
+  next?: Adjacent;
+}
 
 export async function getStaticPaths() {
   const entries = await getCollection('projects', ({ data }) => !data.draft);
-  return pairEntries(entries).map((group) => ({ params: { slug: group.slug }, props: { entries: group.locales } }));
+  const groups = pairEntries(entries);
+  return groups.map((group, index) => ({
+    params: { slug: group.slug },
+    props: {
+      entries: group.locales,
+      previous: index < groups.length - 1 ? {
+        slug: groups[index + 1].slug,
+        titles: Object.fromEntries(locales.map((locale) => [locale, groups[index + 1].locales[locale].data.title])),
+      } : undefined,
+      next: index > 0 ? {
+        slug: groups[index - 1].slug,
+        titles: Object.fromEntries(locales.map((locale) => [locale, groups[index - 1].locales[locale].data.title])),
+      } : undefined,
+    },
+  }));
 }
 
-const { entries } = Astro.props;
+const { entries, previous, next } = Astro.props;
 const { Content: ZhCNContent } = await render(entries['zh-CN']);
 const { Content: ZhTWContent } = await render(entries['zh-TW']);
 const { Content: EnContent } = await render(entries.en);
@@ -29,7 +49,7 @@ const dates = Object.fromEntries(locales.map((locale) => {
 ---
 
 <BaseLayout activeNav="projects" titles={titles} descriptions={descriptions}>
-  <article>
+  <article class="article-with-comments">
     <header class="article-header">
       <div class="reading-shell">
         <a class="text-link" href="/projects/"><LocalizedText value={text('返回项目', '返回專案', 'Back to Projects')} /></a>
@@ -57,5 +77,12 @@ const dates = Object.fromEntries(locales.map((locale) => {
         return <div data-lang={locale}><Content /></div>;
       })}
     </ProseLayout>
+    {(previous || next) && (
+      <nav class="reading-shell article-pager" aria-label="Adjacent projects">
+        {previous && <div class="pager-slot pager-slot--previous"><a class="pager-link" href={`/projects/${previous.slug}/`}><span class="pager-label"><LocalizedText value={text('上一篇', '上一篇', 'Previous')} /></span><span class="pager-title">{locales.map((locale) => <span data-lang={locale}>{previous.titles[locale]}</span>)}</span></a></div>}
+        {next && <div class="pager-slot pager-slot--next"><a class="pager-link" href={`/projects/${next.slug}/`}><span class="pager-label"><LocalizedText value={text('下一篇', '下一篇', 'Next')} /></span><span class="pager-title">{locales.map((locale) => <span data-lang={locale}>{next.titles[locale]}</span>)}</span></a></div>}
+      </nav>
+    )}
+    <ArticleComments />
   </article>
 </BaseLayout>

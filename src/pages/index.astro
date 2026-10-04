@@ -1,6 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
+import GuestbookDialog from '../components/GuestbookDialog.astro';
 import LatestListItem from '../components/LatestListItem.astro';
 import LocalizedText from '../components/LocalizedText.astro';
 import { pairEntries } from '../lib/content';
@@ -38,12 +39,27 @@ const latest = [
         </div>
         <div class="hero-contact">
           <span class="hero-email">Contact: taichieh3@gmail.com</span>
-          <a class="hero-github" href="https://github.com/Steeefanie" target="_blank" rel="noreferrer" aria-label="GitHub">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3.28-.36 6.72-1.61 6.72-7a5.4 5.4 0 0 0-1.42-3.73 5 5 0 0 0-.08-3S17.06.4 14 2.25a13.38 13.38 0 0 0-7 0C3.94.4 2.78.77 2.78.77a5 5 0 0 0-.08 3A5.4 5.4 0 0 0 1.28 7.5c0 5.42 3.44 6.67 6.72 7C7.31 15.1 6.69 16.25 7 17.5V22" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" />
-              <path d="M7 18c-4.51 2-5-2-7-2" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
-          </a>
+          <div class="hero-contact-actions">
+            <button
+              class="hero-contact-button"
+              type="button"
+              data-guestbook-open
+              aria-label={ui.guestbook.open['zh-CN']}
+              data-label-zh-cn={ui.guestbook.open['zh-CN']}
+              data-label-zh-tw={ui.guestbook.open['zh-TW']}
+              data-label-en={ui.guestbook.open.en}
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M5.5 5.5h13a2 2 0 0 1 2 2v7.5a2 2 0 0 1-2 2H11l-4.7 3.2.85-3.2H5.5a2 2 0 0 1-2-2V7.5a2 2 0 0 1 2-2Z" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </button>
+            <a class="hero-contact-button" href="https://github.com/Steeefanie" target="_blank" rel="noreferrer" aria-label="GitHub">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3.28-.36 6.72-1.61 6.72-7a5.4 5.4 0 0 0-1.42-3.73 5 5 0 0 0-.08-3S17.06.4 14 2.25a13.38 13.38 0 0 0-7 0C3.94.4 2.78.77 2.78.77a5 5 0 0 0-.08 3A5.4 5.4 0 0 0 1.28 7.5c0 5.42 3.44 6.67 6.72 7C7.31 15.1 6.69 16.25 7 17.5V22" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M7 18c-4.51 2-5-2-7-2" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </a>
+          </div>
         </div>
       </div>
     </section>
@@ -70,4 +86,5 @@ const latest = [
       </ul>
     </section>
   </div>
+  <GuestbookDialog />
 </BaseLayout>

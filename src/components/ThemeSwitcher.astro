@@ -53,6 +53,7 @@
       : '/brand/favicon-light-nobg.svg');
     try { localStorage.setItem('theme', theme); } catch (_) { /* Storage may be unavailable. */ }
     updateThemeLabel();
+    window.dispatchEvent(new CustomEvent('site:theme-change', { detail: { theme } }));
   };
 
   const releaseThemeLock = () => {

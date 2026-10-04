@@ -1,0 +1,200 @@
+---
+import LocalizedText from './LocalizedText.astro';
+import { giscusConfig, isGiscusConfigured } from '../lib/giscus';
+import { text } from '../lib/i18n';
+
+interface Props {
+  mode: 'guestbook' | 'article';
+}
+
+const { mode } = Astro.props;
+const loadingText = text('正在加载评论…', '正在載入評論…', 'Loading comments…');
+const errorText = text(
+  '留言暂时无法加载，可前往 GitHub Discussions 查看。',
+  '留言暫時無法載入，可前往 GitHub Discussions 查看。',
+  'Comments could not be loaded. View them on GitHub Discussions.',
+);
+---
+
+<div
+  class="giscus-comments"
+  data-giscus-root
+  data-giscus-mode={mode}
+  data-giscus-ready={String(isGiscusConfigured)}
+  data-repo={giscusConfig.repo}
+  data-repo-id={giscusConfig.repoId}
+  data-category={giscusConfig.category}
+  data-category-id={giscusConfig.categoryId}
+  data-discussion-number={String(giscusConfig.guestbookDiscussionNumber)}
+  data-theme-light={giscusConfig.themes.light}
+  data-theme-dark={giscusConfig.themes.dark}
+  data-theme-local-light={giscusConfig.themes.localLight}
+  data-theme-local-dark={giscusConfig.themes.localDark}
+>
+  <p class="giscus-status" data-giscus-status role="status">
+    <LocalizedText value={loadingText} />
+  </p>
+  <div class="giscus" data-giscus-mount></div>
+  <p class="giscus-error" data-giscus-error hidden>
+    {(['zh-CN', 'zh-TW', 'en'] as const).map((locale) => (
+      <span data-lang={locale}>
+        {errorText[locale]}
+        {' '}
+        <a href={giscusConfig.discussionsUrl} target="_blank" rel="noreferrer">GitHub Discussions</a>
+      </span>
+    ))}
+  </p>
+</div>
+
+<script>
+  type Locale = 'zh-CN' | 'zh-TW' | 'en';
+  type Theme = 'light' | 'dark';
+
+  const roots = [...document.querySelectorAll<HTMLElement>('[data-giscus-root]')];
+  const localThemeCache = new Map<string, Promise<string>>();
+
+  const currentLocale = (): Locale => {
+    const value = document.documentElement.dataset.language;
+    return value === 'zh-TW' || value === 'en' ? value : 'zh-CN';
+  };
+
+  const currentTheme = (): Theme => document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
+
+  const encodeTheme = (source: string): string => {
+    const compact = source
+      .replace(/\s+/g, ' ')
+      .replace(/\s*([{}:;,])\s*/g, '$1')
+      .trim();
+    const bytes = new TextEncoder().encode(compact);
+    let binary = '';
+    bytes.forEach((byte) => { binary += String.fromCharCode(byte); });
+    return `data:text/css;base64,${window.btoa(binary)}`;
+  };
+
+  const themeFor = async (root: HTMLElement, theme: Theme): Promise<string> => {
+    const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+    if (isLocal) {
+      const localTheme = theme === 'dark'
+        ? root.dataset.themeLocalDark ?? '/giscus-dark.css'
+        : root.dataset.themeLocalLight ?? '/giscus-light.css';
+      const url = new URL(localTheme, location.origin).href;
+      const fallback = theme === 'dark' ? 'noborder_dark' : 'noborder_light';
+
+      if (!localThemeCache.has(url)) {
+        localThemeCache.set(url, fetch(url)
+          .then((response) => {
+            if (!response.ok) throw new Error(`Theme request failed: ${response.status}`);
+            return response.text();
+          })
+          .then(encodeTheme)
+          .catch(() => fallback));
+      }
+
+      return localThemeCache.get(url) ?? fallback;
+    }
+    return theme === 'dark'
+      ? root.dataset.themeDark ?? 'dark'
+      : root.dataset.themeLight ?? 'light';
+  };
+
+  const showError = (root: HTMLElement) => {
+    root.querySelector<HTMLElement>('[data-giscus-status]')?.setAttribute('hidden', '');
+    root.querySelector<HTMLElement>('[data-giscus-error]')?.removeAttribute('hidden');
+  };
+
+  const showFrame = (root: HTMLElement) => {
+    root.querySelector<HTMLElement>('[data-giscus-status]')?.setAttribute('hidden', '');
+    root.querySelector<HTMLElement>('[data-giscus-error]')?.setAttribute('hidden', '');
+  };
+
+  const sendConfig = (root: HTMLElement, config: { theme?: string; lang?: Locale }) => {
+    const iframe = root.querySelector<HTMLIFrameElement>('iframe.giscus-frame');
+    iframe?.contentWindow?.postMessage({ giscus: { setConfig: config } }, 'https://giscus.app');
+  };
+
+  const mountGiscus = async (root: HTMLElement) => {
+    if (root.dataset.initialized === 'true') return;
+    root.dataset.initialized = 'true';
+
+    if (root.dataset.giscusReady !== 'true') {
+      showError(root);
+      return;
+    }
+
+    const mount = root.querySelector<HTMLElement>('[data-giscus-mount]');
+    if (!mount) {
+      showError(root);
+      return;
+    }
+
+    const observer = new MutationObserver(() => {
+      if (!root.querySelector('iframe.giscus-frame')) return;
+      showFrame(root);
+      observer.disconnect();
+    });
+    observer.observe(mount, { childList: true, subtree: true });
+
+    const script = document.createElement('script');
+    script.src = 'https://giscus.app/client.js';
+    script.async = true;
+    script.crossOrigin = 'anonymous';
+    script.dataset.repo = root.dataset.repo ?? '';
+    script.dataset.repoId = root.dataset.repoId ?? '';
+    script.dataset.category = root.dataset.category ?? '';
+    script.dataset.categoryId = root.dataset.categoryId ?? '';
+    script.dataset.reactionsEnabled = '1';
+    script.dataset.emitMetadata = '0';
+    script.dataset.inputPosition = 'top';
+    script.dataset.theme = await themeFor(root, currentTheme());
+    script.dataset.lang = currentLocale();
+
+    if (root.dataset.giscusMode === 'guestbook') {
+      script.dataset.mapping = 'number';
+      script.dataset.term = root.dataset.discussionNumber ?? '';
+      script.dataset.strict = '0';
+    } else {
+      script.dataset.mapping = 'pathname';
+      script.dataset.strict = '1';
+      script.dataset.loading = 'lazy';
+    }
+
+    script.addEventListener('error', () => {
+      observer.disconnect();
+      showError(root);
+    }, { once: true });
+    mount.append(script);
+
+    window.setTimeout(() => {
+      if (!root.querySelector('iframe.giscus-frame')) showError(root);
+    }, 12000);
+  };
+
+  roots.forEach((root) => {
+    if (root.dataset.giscusMode === 'article') void mountGiscus(root);
+  });
+
+  window.addEventListener('site:guestbook-open', () => {
+    roots
+      .filter((root) => root.dataset.giscusMode === 'guestbook')
+      .forEach((root) => { void mountGiscus(root); });
+  });
+  window.addEventListener('site:theme-change', () => {
+    const theme = currentTheme();
+    roots.forEach((root) => {
+      void themeFor(root, theme).then((value) => sendConfig(root, { theme: value }));
+    });
+  });
+  window.addEventListener('site:language-change', () => {
+    const lang = currentLocale();
+    roots.forEach((root) => sendConfig(root, { lang }));
+  });
+  window.addEventListener('message', (event) => {
+    if (event.origin !== 'https://giscus.app' || !event.data?.giscus?.error) return;
+    const error = String(event.data.giscus.error).toLowerCase();
+    if (error.includes('discussion not found')) return;
+    roots.forEach((root) => {
+      const iframe = root.querySelector<HTMLIFrameElement>('iframe.giscus-frame');
+      if (iframe?.contentWindow === event.source) showError(root);
+    });
+  });
+</script>

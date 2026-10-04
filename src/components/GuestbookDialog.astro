@@ -1,0 +1,111 @@
+---
+import GiscusComments from './GiscusComments.astro';
+import LocalizedText from './LocalizedText.astro';
+import { ui } from '../lib/i18n';
+---
+
+<dialog
+  class="guestbook-dialog"
+  data-guestbook-dialog
+  aria-labelledby="guestbook-title"
+  aria-describedby="guestbook-intro guestbook-privacy guestbook-login"
+>
+  <div class="guestbook-shell">
+    <header class="guestbook-header">
+      <button
+        type="button"
+        class="guestbook-close"
+        data-guestbook-close
+        aria-label={ui.guestbook.close['zh-CN']}
+        data-label-zh-cn={ui.guestbook.close['zh-CN']}
+        data-label-zh-tw={ui.guestbook.close['zh-TW']}
+        data-label-en={ui.guestbook.close.en}
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M6 6L18 18M18 6L6 18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+        </svg>
+      </button>
+    </header>
+    <div class="guestbook-scroll">
+      <div class="guestbook-layout">
+        <aside class="guestbook-info">
+          <h2 id="guestbook-title"><LocalizedText value={ui.guestbook.title} /></h2>
+          <p id="guestbook-intro"><LocalizedText value={ui.guestbook.intro} /></p>
+          <div class="guestbook-notes">
+            <p id="guestbook-privacy"><LocalizedText value={ui.guestbook.privacy} /></p>
+            <p id="guestbook-login"><LocalizedText value={ui.guestbook.login} /></p>
+          </div>
+        </aside>
+        <main class="guestbook-comments">
+          <GiscusComments mode="guestbook" />
+        </main>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<script>
+  import { lockPageScroll, unlockPageScroll } from '../lib/scroll-lock';
+
+  type Locale = 'zh-CN' | 'zh-TW' | 'en';
+  const dialog = document.querySelector<HTMLDialogElement>('[data-guestbook-dialog]');
+  const openButton = document.querySelector<HTMLButtonElement>('[data-guestbook-open]');
+  const closeButton = dialog?.querySelector<HTMLButtonElement>('[data-guestbook-close]');
+  let closeTimer = 0;
+
+  const locale = (): Locale => {
+    const value = document.documentElement.dataset.language;
+    return value === 'zh-TW' || value === 'en' ? value : 'zh-CN';
+  };
+
+  const updateLabels = () => {
+    const current = locale();
+    const suffix = current === 'zh-CN' ? 'ZhCn' : current === 'zh-TW' ? 'ZhTw' : 'En';
+    const openLabel = openButton?.dataset[`label${suffix}`];
+    const closeLabel = closeButton?.dataset[`label${suffix}`];
+    if (openLabel) openButton?.setAttribute('aria-label', openLabel);
+    if (closeLabel) closeButton?.setAttribute('aria-label', closeLabel);
+  };
+
+  const finishClose = () => {
+    if (!dialog?.open) return;
+    dialog.close();
+    dialog.classList.remove('is-closing');
+    document.documentElement.classList.remove('guestbook-open');
+    unlockPageScroll('guestbook');
+    openButton?.focus({ preventScroll: true });
+  };
+
+  const requestClose = () => {
+    if (!dialog?.open || dialog.classList.contains('is-closing')) return;
+    dialog.classList.add('is-closing');
+    window.clearTimeout(closeTimer);
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) finishClose();
+    else closeTimer = window.setTimeout(finishClose, 200);
+  };
+
+  openButton?.addEventListener('click', () => {
+    if (!dialog || dialog.open) return;
+    window.dispatchEvent(new CustomEvent('site:close-panels'));
+    lockPageScroll('guestbook');
+    document.documentElement.classList.add('guestbook-open');
+    try {
+      dialog.showModal();
+    } catch (error) {
+      document.documentElement.classList.remove('guestbook-open');
+      unlockPageScroll('guestbook');
+      console.error(error);
+      return;
+    }
+    window.dispatchEvent(new CustomEvent('site:guestbook-open'));
+    requestAnimationFrame(() => closeButton?.focus({ preventScroll: true }));
+  });
+
+  closeButton?.addEventListener('click', requestClose);
+  dialog?.addEventListener('cancel', (event) => {
+    event.preventDefault();
+    requestClose();
+  });
+  window.addEventListener('site:language-change', updateLabels);
+  updateLabels();
+</script>

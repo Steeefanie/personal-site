@@ -65,6 +65,29 @@ export const ui = {
     ),
     latest: text('最近更新', '最新動態', 'Latest'),
   },
+  guestbook: {
+    title: text('留言', '留言', 'Guestbook'),
+    intro: text(
+      '欢迎留下问题、建议，或者简单打个招呼。',
+      '歡迎留下問題、建議，或只是打個招呼。',
+      'Feel free to leave a question, suggestion, or just say hello.',
+    ),
+    privacy: text(
+      '留言将公开显示，请勿填写个人隐私或敏感信息。',
+      '留言將公開顯示，請勿填寫個人隱私或敏感資訊。',
+      'Messages are public. Please do not include private or sensitive information.',
+    ),
+    login: text(
+      '发表留言需要登录 GitHub。',
+      '發表留言需要登入 GitHub。',
+      'A GitHub account is required to post.',
+    ),
+    open: text('打开留言', '開啟留言', 'Open guestbook'),
+    close: text('关闭留言', '關閉留言', 'Close guestbook'),
+  },
+  comments: {
+    title: text('留言', '留言', 'Comments'),
+  },
   search: {
     placeholder: text('搜索标题、摘要或标签', '搜尋標題、摘要或標籤', 'Search titles, summaries, or tags'),
     label: text('站内搜索', '站內搜尋', 'Site search'),
