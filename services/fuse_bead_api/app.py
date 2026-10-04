@@ -9,8 +9,9 @@ import shutil
 import subprocess
 import sys
 import tempfile
-import threading
+from contextlib import asynccontextmanager
 from pathlib import Path
+from typing import AsyncIterator
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import Response
@@ -25,6 +26,8 @@ MAX_UPLOAD_BYTES = 20 * 1024 * 1024
 MIN_FIXED_SIZE = 1
 MAX_GRID_CELLS = 20_000
 MAX_GRID_EDGE = 400
+MAX_PREVIEW_EDGE = 1600
+MAX_QUEUED_GENERATIONS = 5
 GENERATION_TIMEOUT_SECONDS = 30
 ALLOWED_MODES = {"cm", "cms", "cs", "bw"}
 ALLOWED_FORMATS = {"JPEG": ".jpg", "PNG": ".png", "WEBP": ".webp", "HEIF": ".heif"}
@@ -37,7 +40,9 @@ DEFAULT_GENERATOR_PATH = (
 )
 
 app = FastAPI(title="Fuse-bead Pattern API", docs_url=None, redoc_url=None)
-generation_lock = threading.Lock()
+generation_slot = asyncio.Semaphore(1)
+queue_state_lock = asyncio.Lock()
+waiting_generations = 0
 
 
 def generator_path() -> Path:
@@ -72,17 +77,20 @@ def inspect_image(data: bytes) -> tuple[str, int, int, bool]:
             oriented_image = ImageOps.exif_transpose(image)
             source_width, source_height = oriented_image.size
             effective_width, effective_height = source_width, source_height
+            needs_preparation = orientation not in (None, 1) or image_format == "HEIF"
             if "A" in oriented_image.getbands():
                 alpha = oriented_image.getchannel("A")
                 visible_bounds = alpha.point(lambda value: 255 if value > 1 else 0).getbbox()
-                if visible_bounds:
-                    effective_width = visible_bounds[2] - visible_bounds[0]
-                    effective_height = visible_bounds[3] - visible_bounds[1]
+                if not visible_bounds:
+                    raise HTTPException(status_code=400, detail="图片没有可见内容。")
+                effective_width = visible_bounds[2] - visible_bounds[0]
+                effective_height = visible_bounds[3] - visible_bounds[1]
+                needs_preparation = needs_preparation or visible_bounds != (0, 0, source_width, source_height)
             return (
                 ALLOWED_FORMATS[image_format],
                 effective_width,
                 effective_height,
-                orientation not in (None, 1),
+                needs_preparation,
             )
     except HTTPException:
         raise
@@ -108,7 +116,7 @@ def resolve_grid(fixed_side: str, size: int, source_width: int, source_height: i
 def run_generator(
     source_data: bytes,
     suffix: str,
-    normalise_orientation: bool,
+    prepare_source: bool,
     fixed_side: str,
     size: int,
     mode: str,
@@ -118,70 +126,155 @@ def run_generator(
     script = generator_path()
     if not script.is_file():
         raise HTTPException(status_code=503, detail="生成器源码尚未配置。")
-    if not generation_lock.acquire(blocking=False):
-        raise HTTPException(status_code=429, detail="当前有图纸正在生成，请稍后重试。")
+    with tempfile.TemporaryDirectory(prefix="fuse-bead-") as temp_dir_name:
+        temp_dir = Path(temp_dir_name)
+        input_path = temp_dir / f"source{suffix}"
+        output_dir = temp_dir / "output"
+        if prepare_source:
+            input_path = temp_dir / "source.png"
+            with Image.open(io.BytesIO(source_data)) as image:
+                prepared = ImageOps.exif_transpose(image).copy()
+            if "A" in prepared.getbands():
+                alpha = prepared.getchannel("A")
+                visible_bounds = alpha.point(lambda value: 255 if value > 1 else 0).getbbox()
+                if not visible_bounds:
+                    raise HTTPException(status_code=400, detail="图片没有可见内容。")
+                prepared = prepared.crop(visible_bounds)
+            prepared.save(input_path, format="PNG")
+        else:
+            input_path.write_bytes(source_data)
+        width_arg = str(size) if fixed_side == "width" else "auto"
+        height_arg = str(size) if fixed_side == "height" else "auto"
+        runner = Path(__file__).with_name("runner.py")
+        command = [
+            python_executable(),
+            str(runner),
+            "--generator",
+            str(script),
+            "--input",
+            str(input_path),
+            "--width",
+            width_arg,
+            "--height",
+            height_arg,
+            "--mode",
+            mode,
+            "--output-dir",
+            str(output_dir),
+        ]
+        try:
+            completed = subprocess.run(
+                command,
+                cwd=script.parent,
+                capture_output=True,
+                text=True,
+                timeout=GENERATION_TIMEOUT_SECONDS,
+                check=False,
+                shell=False,
+            )
+        except subprocess.TimeoutExpired as exc:
+            raise HTTPException(status_code=504, detail="生成超时，请减小图纸尺寸。") from exc
 
+        if completed.returncode != 0:
+            raise HTTPException(status_code=500, detail="生成器执行失败。")
+        try:
+            metadata = json.loads(completed.stdout.strip().splitlines()[-1])
+            colour_count = int(metadata["colour_count"])
+            output_path = Path(metadata["output_path"])
+        except (IndexError, KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
+            raise HTTPException(status_code=500, detail="无法读取生成结果统计。") from exc
+        if not output_path.is_file():
+            raise HTTPException(status_code=500, detail="未找到生成结果。")
+        return output_path.read_bytes(), colour_count
+
+
+def render_heif_preview(data: bytes) -> tuple[bytes, int, int, int, int]:
     try:
-        with tempfile.TemporaryDirectory(prefix="fuse-bead-") as temp_dir_name:
-            temp_dir = Path(temp_dir_name)
-            input_path = temp_dir / f"source{suffix}"
-            output_dir = temp_dir / "output"
-            if normalise_orientation:
-                input_path = temp_dir / "source.png"
-                with Image.open(io.BytesIO(source_data)) as image:
-                    ImageOps.exif_transpose(image).save(input_path, format="PNG")
-            else:
-                input_path.write_bytes(source_data)
-            width_arg = str(size) if fixed_side == "width" else "auto"
-            height_arg = str(size) if fixed_side == "height" else "auto"
-            runner = Path(__file__).with_name("runner.py")
-            command = [
-                python_executable(),
-                str(runner),
-                "--generator",
-                str(script),
-                "--input",
-                str(input_path),
-                "--width",
-                width_arg,
-                "--height",
-                height_arg,
-                "--mode",
-                mode,
-                "--output-dir",
-                str(output_dir),
-            ]
-            try:
-                completed = subprocess.run(
-                    command,
-                    cwd=script.parent,
-                    capture_output=True,
-                    text=True,
-                    timeout=GENERATION_TIMEOUT_SECONDS,
-                    check=False,
-                    shell=False,
-                )
-            except subprocess.TimeoutExpired as exc:
-                raise HTTPException(status_code=504, detail="生成超时，请减小图纸尺寸。") from exc
+        with Image.open(io.BytesIO(data)) as image:
+            if (image.format or "").upper() != "HEIF":
+                raise HTTPException(status_code=400, detail="预览接口仅支持 HEIF 图片。")
+            if getattr(image, "is_animated", False) and getattr(image, "n_frames", 1) > 1:
+                raise HTTPException(status_code=400, detail="不支持动画或多帧图片。")
+            preview = ImageOps.exif_transpose(image).copy()
+        source_width, source_height = preview.size
+        visible_width, visible_height = source_width, source_height
+        if "A" in preview.getbands():
+            alpha = preview.getchannel("A")
+            visible_bounds = alpha.point(lambda value: 255 if value > 1 else 0).getbbox()
+            if not visible_bounds:
+                raise HTTPException(status_code=400, detail="图片没有可见内容。")
+            visible_width = visible_bounds[2] - visible_bounds[0]
+            visible_height = visible_bounds[3] - visible_bounds[1]
+            preview = preview.crop(visible_bounds)
+        preview.thumbnail((MAX_PREVIEW_EDGE, MAX_PREVIEW_EDGE), Image.Resampling.LANCZOS)
+        output = io.BytesIO()
+        preview.save(output, format="PNG", compress_level=6)
+        return output.getvalue(), source_width, source_height, visible_width, visible_height
+    except HTTPException:
+        raise
+    except (UnidentifiedImageError, OSError, Image.DecompressionBombError) as exc:
+        raise HTTPException(status_code=400, detail="无法读取这张图片。") from exc
 
-            if completed.returncode != 0:
-                raise HTTPException(status_code=500, detail="生成器执行失败。")
-            try:
-                metadata = json.loads(completed.stdout.strip().splitlines()[-1])
-                colour_count = int(metadata["colour_count"])
-                output_path = Path(metadata["output_path"])
-            except (IndexError, KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
-                raise HTTPException(status_code=500, detail="无法读取生成结果统计。") from exc
-            if not output_path.is_file():
-                raise HTTPException(status_code=500, detail="未找到生成结果。")
-            return output_path.read_bytes(), colour_count
+
+@asynccontextmanager
+async def generation_queue_slot() -> AsyncIterator[bool]:
+    global waiting_generations
+    queued = False
+    acquired = False
+    removed_from_queue = False
+    async with queue_state_lock:
+        if generation_slot.locked():
+            if waiting_generations >= MAX_QUEUED_GENERATIONS:
+                raise HTTPException(
+                    status_code=429,
+                    detail="当前生成队列已满，请稍后重试。",
+                    headers={"Retry-After": "10"},
+                )
+            waiting_generations += 1
+            queued = True
+    try:
+        await generation_slot.acquire()
+        acquired = True
+        if queued:
+            async with queue_state_lock:
+                waiting_generations -= 1
+                removed_from_queue = True
+        yield queued
     finally:
-        generation_lock.release()
+        if queued and not removed_from_queue:
+            async with queue_state_lock:
+                waiting_generations -= 1
+        if acquired:
+            generation_slot.release()
 
 
 @app.get("/api/v1/fuse-bead/health")
 def health() -> dict[str, str]:
     return {"status": "ok", "generator": "ready" if generator_path().is_file() else "missing"}
+
+
+@app.post("/api/v1/fuse-bead/preview")
+async def preview(image: UploadFile = File(...)) -> Response:
+    source_data = await image.read(MAX_UPLOAD_BYTES + 1)
+    if len(source_data) > MAX_UPLOAD_BYTES:
+        raise HTTPException(status_code=413, detail="图片不能超过 20 MB。")
+    if not source_data:
+        raise HTTPException(status_code=400, detail="上传图片为空。")
+    output_data, source_width, source_height, visible_width, visible_height = await asyncio.to_thread(
+        render_heif_preview,
+        source_data,
+    )
+    return Response(
+        content=output_data,
+        media_type="image/png",
+        headers={
+            "Cache-Control": "no-store",
+            "X-Source-Width": str(source_width),
+            "X-Source-Height": str(source_height),
+            "X-Visible-Width": str(visible_width),
+            "X-Visible-Height": str(visible_height),
+        },
+    )
 
 
 @app.post("/api/v1/fuse-bead/generate")
@@ -199,30 +292,37 @@ async def generate(
     if mode not in ALLOWED_MODES:
         raise HTTPException(status_code=400, detail="颜色模式仅支持 CM、CMS、CS 和 BW。")
 
-    source_data = await image.read(MAX_UPLOAD_BYTES + 1)
-    if len(source_data) > MAX_UPLOAD_BYTES:
-        raise HTTPException(status_code=413, detail="图片不能超过 20 MB。")
-    if not source_data:
-        raise HTTPException(status_code=400, detail="上传图片为空。")
-
-    suffix, source_width, source_height, normalise_orientation = inspect_image(source_data)
-    resolved_width, resolved_height = resolve_grid(
-        fixed_side,
-        size,
-        source_width,
-        source_height,
-    )
-    output_data, colour_count = await asyncio.to_thread(
-        run_generator,
-        source_data,
-        suffix,
-        normalise_orientation,
-        fixed_side,
-        size,
-        mode,
-        resolved_width,
-        resolved_height,
-    )
+    async with generation_queue_slot() as queued:
+        source_data = await image.read(MAX_UPLOAD_BYTES + 1)
+        if len(source_data) > MAX_UPLOAD_BYTES:
+            raise HTTPException(status_code=413, detail="图片不能超过 20 MB。")
+        if not source_data:
+            raise HTTPException(status_code=400, detail="上传图片为空。")
+        suffix, source_width, source_height, prepare_source = inspect_image(source_data)
+        resolved_width, resolved_height = resolve_grid(
+            fixed_side,
+            size,
+            source_width,
+            source_height,
+        )
+        generation_task = asyncio.create_task(
+            asyncio.to_thread(
+                run_generator,
+                source_data,
+                suffix,
+                prepare_source,
+                fixed_side,
+                size,
+                mode,
+                resolved_width,
+                resolved_height,
+            )
+        )
+        try:
+            output_data, colour_count = await asyncio.shield(generation_task)
+        except asyncio.CancelledError:
+            await generation_task
+            raise
     headers = {
         "Cache-Control": "no-store",
         "Content-Disposition": f'attachment; filename="fuse-bead-{resolved_width}x{resolved_height}-{mode}.png"',
@@ -230,5 +330,6 @@ async def generate(
         "X-Pattern-Height": str(resolved_height),
         "X-Grid-Cell-Count": str(resolved_width * resolved_height),
         "X-Colour-Count": str(colour_count),
+        "X-Queue-Waited": "true" if queued else "false",
     }
     return Response(content=output_data, media_type="image/png", headers=headers)

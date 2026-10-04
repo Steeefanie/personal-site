@@ -48,7 +48,7 @@ body {
   background: var(--page);
   color: var(--text);
   font-size: 16px;
-  line-height: 1.7;
+  line-height: 1.62;
   text-rendering: optimizeLegibility;
   transition: background-color 180ms ease, color 180ms ease;
 }
@@ -658,6 +658,7 @@ html.theme-transition::view-transition-new(root) {
   gap: 64px;
   min-height: 430px;
   padding: 62px 0 92px;
+  line-height: 1.7;
 }
 
 .hero h1,
@@ -782,7 +783,7 @@ html[lang='en'] :is(.hero-intro, .hero-about-text) {
 }
 
 .section {
-  padding: 88px 0;
+  padding: 72px 0;
 }
 
 .section-heading {
@@ -790,7 +791,7 @@ html[lang='en'] :is(.hero-intro, .hero-about-text) {
   align-items: baseline;
   justify-content: space-between;
   gap: 24px;
-  margin-bottom: 42px;
+  margin-bottom: 34px;
 }
 
 .section-heading h2 {
@@ -838,8 +839,8 @@ html[lang='en'] :is(.hero-intro, .hero-about-text) {
 .content-list-item > a {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(190px, .3fr);
-  gap: 48px;
-  padding: 32px 0;
+  gap: 38px;
+  padding: 26px 0;
   text-decoration: none;
   transition: padding 180ms ease;
 }
@@ -866,7 +867,7 @@ html[lang='en'] :is(.hero-intro, .hero-about-text) {
   max-width: 680px;
   margin: 0;
   color: var(--muted);
-  line-height: 1.7;
+  line-height: 1.58;
 }
 
 .content-attribution {
@@ -936,13 +937,13 @@ html[lang='zh-TW'] .tag {
 }
 
 .listing-section {
-  padding: 0 0 100px;
+  padding: 0 0 80px;
   scroll-margin-top: calc(var(--header-height) + 24px);
 }
 
 .listing-filters {
-  margin-bottom: 38px;
-  padding-bottom: 26px;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
 }
 
 .filter-group {
@@ -955,7 +956,7 @@ html[lang='zh-TW'] .tag {
 }
 
 .filter-group + .filter-group {
-  margin-top: 14px;
+  margin-top: 10px;
 }
 
 .filter-group legend {
@@ -1052,7 +1053,7 @@ html[lang='zh-TW'] .tag {
   align-items: center;
   justify-content: center;
   gap: 4px;
-  padding-top: 36px;
+  padding-top: 28px;
 }
 
 .listing-pagination[hidden] {
@@ -1107,11 +1108,11 @@ html[lang='zh-TW'] .tag {
 }
 
 .article-header {
-  padding: 48px 0 32px;
+  padding: 38px 0 26px;
 }
 
 .article-header h1 {
-  margin-top: 16px;
+  margin-top: 12px;
   font-size: var(--font-size-section-title);
   letter-spacing: -0.035em;
   line-height: 1.25;
@@ -1121,7 +1122,7 @@ html[lang='zh-TW'] .tag {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-top: 16px;
+  margin-top: 12px;
 }
 
 .article-title-row h1 {
@@ -1152,7 +1153,7 @@ html[lang='zh-TW'] .tag {
 
 .article-deck {
   max-width: 680px;
-  margin: 16px 0 0;
+  margin: 12px 0 0;
   color: var(--muted);
   font-size: 1.08rem;
 }
@@ -1161,8 +1162,8 @@ html[lang='zh-TW'] .tag {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px 22px;
-  margin-top: 20px;
+  gap: 8px 18px;
+  margin-top: 16px;
   color: var(--muted);
   font-size: 0.78rem;
 }
@@ -1178,15 +1179,15 @@ html[lang='zh-TW'] .tag {
 }
 
 .article-body {
-  padding: 32px 0 88px;
+  padding: 24px 0 70px;
 }
 
 .article-pager {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 24px;
+  gap: 20px;
   align-items: start;
-  padding: 34px 0 86px;
+  padding: 26px 0 68px;
 }
 
 .pager-slot {
@@ -1228,7 +1229,7 @@ html[lang='zh-TW'] .tag {
 }
 
 .site-footer {
-  padding: 34px 0 42px;
+  padding: 28px 0 34px;
   color: var(--muted);
   font-size: 0.78rem;
 }
@@ -1243,7 +1244,7 @@ html[lang='zh-TW'] .tag {
   display: grid;
   place-items: center;
   min-height: 320px;
-  margin: 36px 0;
+  margin: 28px 0;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   background:
@@ -1266,8 +1267,8 @@ html[lang='zh-TW'] .tag {
   .nav-link { font-size: 0.82rem; }
   .hero { grid-template-columns: 1fr; gap: 40px; min-height: 0; padding: 50px 0 66px; }
   .hero-aside { max-width: 500px; }
-  .section { padding: 64px 0; }
-  .content-list-item > a { grid-template-columns: 1fr; gap: 16px; padding: 28px 0; }
+  .section { padding: 52px 0; }
+  .content-list-item > a { grid-template-columns: 1fr; gap: 13px; padding: 22px 0; }
   .item-meta { align-items: flex-start; text-align: left; }
   .latest-list-item .item-meta { padding-top: 0; }
   .tag-list { justify-content: flex-start; }

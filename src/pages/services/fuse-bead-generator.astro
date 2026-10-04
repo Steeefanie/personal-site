@@ -75,7 +75,7 @@ const pageDescription = text(
         <div class="preview-stage">
           <div class="preview-empty" data-preview-empty><p><LocalizedText value={text('上传后可在这里检查原图和生成结果。', '上傳後可在這裡檢查原圖與產生結果。', 'Your source image and generated result will appear here.')} /></p></div>
           <img data-preview-image alt="" hidden />
-          <div class="preview-loading" data-preview-loading hidden><span aria-hidden="true"></span><p><LocalizedText value={text('正在生成图纸……', '正在產生圖紙……', 'Generating pattern…')} /></p></div>
+          <div class="preview-loading" data-preview-loading hidden><span aria-hidden="true"></span><p><LocalizedText value={text('正在排队或生成图纸……', '正在排隊或產生圖紙……', 'Queueing or generating pattern…')} /></p></div>
         </div>
         <dl class="result-meta" data-result-meta hidden>
           <div><dt><LocalizedText value={text('图纸尺寸', '圖紙尺寸', 'Pattern size')} /></dt><dd data-result-size>—</dd></div>
@@ -130,7 +130,7 @@ const pageDescription = text(
     tooManyCells: { 'zh-CN': '按当前比例计算后超出图纸尺寸限制，请减小格数。', 'zh-TW': '依目前比例計算後超出圖紙尺寸限制，請減少格數。', en: 'The calculated pattern exceeds the size limit. Please use fewer cells.' },
     serviceUnavailable: { 'zh-CN': '生成接口尚未启动，当前可先查看页面与参数交互。', 'zh-TW': '產生介面尚未啟動，目前可先查頁面與參數互。', en: 'The generation API is not running yet. You can still review the page and parameter interactions.' },
     failed: { 'zh-CN': '生成失败，请稍后重试。', 'zh-TW': '產生失敗，請稍後重試。', en: 'Generation failed. Please try again later.' },
-    generating: { 'zh-CN': '正在生成……', 'zh-TW': '正在產生……', en: 'Generating…' },
+    generating: { 'zh-CN': '排队或生成中……', 'zh-TW': '排隊或產生中……', en: 'Queueing or generating…' },
     generate: { 'zh-CN': '生成图纸', 'zh-TW': '產生圖紙', en: 'Generate pattern' },
     sourcePreview: { 'zh-CN': '原图预览', 'zh-TW': '原圖預覽', en: 'Source preview' },
     resultPreview: { 'zh-CN': '图纸预览', 'zh-TW': '圖紙預覽', en: 'Pattern preview' },
@@ -237,29 +237,45 @@ const pageDescription = text(
     if (!acceptedType) { showMessage(t('invalidType')); return; }
     if (file.size > 20 * 1024 * 1024) { showMessage(t('tooLarge')); return; }
     if (sourceUrl) URL.revokeObjectURL(sourceUrl);
+    let decodedSize: { width: number; height: number } | null = null;
     let visibleSize: { width: number; height: number } | null = null;
     try {
       if (heifFile) {
-        // Safari/WebKit can turn HEIF transparency black when ImageData is
-        // passed through createImageBitmap(). Encode the decoded pixels
-        // directly as PNG instead, preserving the alpha channel.
-        const { heicTo } = await import('heic-to');
-        const converted = await heicTo({ blob: file, type: 'image/png' });
+        const payload = new FormData();
+        payload.set('image', file);
+        let response: Response;
+        try {
+          response = await fetch('/api/v1/fuse-bead/preview', { method: 'POST', body: payload });
+        } catch (_) {
+          throw new Error(t('serviceUnavailable'));
+        }
+        if (!response.ok) {
+          let detail = '';
+          try { detail = (await response.json()).detail ?? ''; } catch (_) { /* The proxy may return HTML. */ }
+          throw new Error(detail || (response.status === 404 || response.status === 502 ? t('serviceUnavailable') : t('invalidImage')));
+        }
+        const sourceHeaderWidth = Number(response.headers.get('X-Source-Width'));
+        const sourceHeaderHeight = Number(response.headers.get('X-Source-Height'));
+        const visibleHeaderWidth = Number(response.headers.get('X-Visible-Width'));
+        const visibleHeaderHeight = Number(response.headers.get('X-Visible-Height'));
+        if (sourceHeaderWidth > 0 && sourceHeaderHeight > 0) decodedSize = { width: sourceHeaderWidth, height: sourceHeaderHeight };
+        if (visibleHeaderWidth > 0 && visibleHeaderHeight > 0) visibleSize = { width: visibleHeaderWidth, height: visibleHeaderHeight };
+        const converted = await response.blob();
         sourceUrl = URL.createObjectURL(converted);
       } else {
         sourceUrl = URL.createObjectURL(file);
       }
     } catch (error) {
       console.error('HEIF preview conversion failed', error instanceof Error ? error.message : error);
-      showMessage(t('invalidImage'));
+      showMessage(error instanceof Error ? error.message : t('invalidImage'));
       return;
     }
     const probe = new Image();
     probe.onload = () => {
       selectedFile = file;
-      const originalWidth = probe.naturalWidth;
-      const originalHeight = probe.naturalHeight;
-      if (!visibleSize && (heifFile || ['image/png', 'image/webp'].includes(file.type))) {
+      const originalWidth = decodedSize?.width ?? probe.naturalWidth;
+      const originalHeight = decodedSize?.height ?? probe.naturalHeight;
+      if (!visibleSize && ['image/png', 'image/webp'].includes(file.type)) {
         visibleSize = visibleContentSize(probe, probe.naturalWidth, probe.naturalHeight);
       }
       sourceWidth = visibleSize?.width ?? originalWidth;
@@ -289,7 +305,9 @@ const pageDescription = text(
     clearMessage(); resetResult(); generateButton.disabled = true; generateButton.dataset.loading = 'true';
     if (buttonLabel) buttonLabel.textContent = t('generating');
     if (previewLoading) previewLoading.hidden = false;
-    const payload = new FormData(); payload.set('image', selectedFile); payload.set('fixed_side', selectedSide()); payload.set('size', String(sizeInput?.value ?? 50)); payload.set('mode', selectedMode().toLowerCase());
+    const payload = new FormData();
+    payload.set('image', selectedFile);
+    payload.set('fixed_side', selectedSide()); payload.set('size', String(sizeInput?.value ?? 50)); payload.set('mode', selectedMode().toLowerCase());
     try {
       const response = await fetch('/api/v1/fuse-bead/generate', { method: 'POST', body: payload });
       if (!response.ok) {
@@ -335,18 +353,18 @@ const pageDescription = text(
 </script>
 
 <style>
-  .service-page { padding-top: 36px; padding-bottom: 112px; }
+  .service-page { padding-top: 30px; padding-bottom: 88px; }
   .service-back { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: .84rem; text-decoration: none; }
   .service-back:hover { color: var(--brand-interactive); }
-  .service-header { max-width: 760px; padding: 48px 0 32px; }
-  .service-header h1 { margin: 16px 0 0; font-size: var(--font-size-section-title); font-weight: 600; letter-spacing: -.035em; line-height: 1.25; }
+  .service-header { max-width: 760px; padding: 38px 0 26px; }
+  .service-header h1 { margin: 12px 0 0; font-size: var(--font-size-section-title); font-weight: 600; letter-spacing: -.035em; line-height: 1.2; }
   .generator-shell { display: grid; grid-template-columns: minmax(340px, .82fr) minmax(0, 1.18fr); overflow: hidden; border: 1px solid var(--border); border-radius: 18px; background: var(--surface); }
-  .generator-form { padding: 36px; border-right: 1px solid var(--border); }
-  .form-group { margin: 0; padding: 0 0 28px; border: 0; }
+  .generator-form { padding: 30px; border-right: 1px solid var(--border); }
+  .form-group { margin: 0; padding: 0 0 22px; border: 0; }
   .form-group + .form-group { padding-top: 0; }
-  .form-group legend { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; padding: 0; color: var(--text); font-size: .92rem; font-weight: 600; }
+  .form-group legend { display: flex; align-items: center; gap: 9px; margin-bottom: 14px; padding: 0; color: var(--text); font-size: .92rem; font-weight: 600; }
   .form-group legend > span:first-child { min-width: 24px; color: var(--brand-interactive); font-size: 1.55rem; font-weight: 500; line-height: 1; }
-  .upload-zone { display: flex; align-items: center; gap: 16px; padding: 22px; border: 1px dashed color-mix(in srgb, var(--muted) 48%, transparent); border-radius: var(--radius-lg); background: color-mix(in srgb, var(--surface-raised) 44%, transparent); cursor: pointer; transition: border-color var(--motion-fast) ease, background var(--motion-fast) ease; }
+  .upload-zone { display: flex; align-items: center; gap: 14px; padding: 18px; border: 1px dashed color-mix(in srgb, var(--muted) 48%, transparent); border-radius: var(--radius-lg); background: color-mix(in srgb, var(--surface-raised) 44%, transparent); cursor: pointer; transition: border-color var(--motion-fast) ease, background var(--motion-fast) ease; }
   .upload-zone:hover, .upload-zone[data-dragging='true'] { border-color: var(--brand-interactive); background: var(--brand-soft); }
   .upload-zone input { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
   .upload-zone:focus-within { outline: 2px solid var(--focus); outline-offset: 3px; }
@@ -361,7 +379,7 @@ const pageDescription = text(
   .file-summary > span:nth-child(2) { grid-column: 1; color: var(--muted); }
   .file-summary button { grid-column: 2; grid-row: 1 / span 2; border: 0; background: none; color: var(--muted); cursor: pointer; }
   .file-summary button:hover { color: var(--brand-interactive); }
-  .upload-privacy { margin: 11px 2px 0; color: var(--muted); font-size: .68rem; line-height: 1.5; }
+  .upload-privacy { margin: 9px 2px 0; color: var(--muted); font-size: .68rem; line-height: 1.42; }
   .size-row { display: grid; grid-template-columns: minmax(0, 1fr) 94px; gap: 12px; }
   .side-switch { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 3px; border-radius: var(--radius-md); background: var(--surface-raised); }
   .side-switch label, .mode-option { position: relative; }
@@ -373,11 +391,11 @@ const pageDescription = text(
   .size-input:focus-within { border-color: var(--brand-interactive); outline: 2px solid var(--brand-soft); }
   .size-input input { width: 100%; border: 0; outline: 0; background: transparent; color: var(--text); font: inherit; font-weight: 600; }
   .size-input span { color: var(--muted); font-size: .72rem; }
-  .form-help { margin: 11px 0 0; color: var(--muted); font-size: .72rem; line-height: 1.55; }
-  .size-estimate { margin: 10px 0 0; color: var(--brand-readable); font-family: inherit; font-size: .78rem; font-variant-numeric: tabular-nums; }
+  .form-help { margin: 9px 0 0; color: var(--muted); font-size: .72rem; line-height: 1.45; }
+  .size-estimate { margin: 8px 0 0; color: var(--brand-readable); font-family: inherit; font-size: .78rem; font-variant-numeric: tabular-nums; }
   .size-estimate[data-valid='false'] { color: #bd3c32; }
   .mode-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
-  .mode-option > span { display: grid; min-height: 70px; place-content: center; gap: 5px; border: 1px solid var(--border); border-radius: var(--radius-md); text-align: center; cursor: pointer; transition: border-color var(--motion-fast) ease, background var(--motion-fast) ease; }
+  .mode-option > span { display: grid; min-height: 64px; place-content: center; gap: 4px; border: 1px solid var(--border); border-radius: var(--radius-md); text-align: center; cursor: pointer; transition: border-color var(--motion-fast) ease, background var(--motion-fast) ease; }
   .mode-option strong { font-size: .78rem; font-weight: 600; }
   .mode-option small { color: var(--muted); font-family: var(--font-mono); font-size: .62rem; }
   .mode-option input:checked + span { border-color: var(--brand-interactive); background: var(--brand-soft); color: var(--brand-readable); }
@@ -387,15 +405,15 @@ const pageDescription = text(
   .generate-button:not(:disabled):hover { transform: translateY(-1px); }
   .generate-button:disabled { cursor: not-allowed; opacity: .38; }
   .generate-button[data-loading='true'] { cursor: wait; opacity: .65; }
-  .form-message { margin: 16px 0 0; padding: 11px 13px; border-radius: var(--radius-md); background: color-mix(in srgb, #bd3c32 10%, transparent); color: #a8322a; font-size: .76rem; line-height: 1.55; }
+  .form-message { margin: 12px 0 0; padding: 10px 12px; border-radius: var(--radius-md); background: color-mix(in srgb, #bd3c32 10%, transparent); color: #a8322a; font-size: .76rem; line-height: 1.45; }
   :root[data-theme='dark'] .form-message { color: #f08d84; }
-  .preview-panel { display: flex; min-width: 0; min-height: 720px; flex-direction: column; padding: 36px; background: color-mix(in srgb, var(--surface-raised) 42%, var(--surface)); }
-  .preview-heading-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+  .preview-panel { display: flex; min-width: 0; min-height: 650px; flex-direction: column; padding: 30px; background: color-mix(in srgb, var(--surface-raised) 42%, var(--surface)); }
+  .preview-heading-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 16px; }
   .preview-heading-row p { margin: 0 0 5px; color: var(--muted); font-size: .68rem; letter-spacing: .08em; text-transform: uppercase; }
   .preview-heading-row h2 { margin: 0; font-size: 1.03rem; font-weight: 600; }
   .preview-mode { padding: 5px 8px; border-radius: 5px; background: var(--surface); color: var(--brand-readable); font-family: var(--font-mono); font-size: .68rem; }
-  .preview-stage { position: relative; display: grid; min-height: 440px; flex: 1; overflow: hidden; place-items: center; border: 1px solid var(--border); border-radius: var(--radius-lg); background-color: var(--surface); background-image: linear-gradient(45deg, var(--surface-raised) 25%, transparent 25%), linear-gradient(-45deg, var(--surface-raised) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, var(--surface-raised) 75%), linear-gradient(-45deg, transparent 75%, var(--surface-raised) 75%); background-position: 0 0, 0 8px, 8px -8px, -8px 0; background-size: 16px 16px; }
-  .preview-stage img { display: block; width: 100%; height: 100%; max-height: 560px; padding: 20px; object-fit: contain; }
+  .preview-stage { position: relative; display: grid; min-height: 400px; flex: 1; overflow: hidden; place-items: center; border: 1px solid var(--border); border-radius: var(--radius-lg); background-color: var(--surface); background-image: linear-gradient(45deg, var(--surface-raised) 25%, transparent 25%), linear-gradient(-45deg, var(--surface-raised) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, var(--surface-raised) 75%), linear-gradient(-45deg, transparent 75%, var(--surface-raised) 75%); background-position: 0 0, 0 8px, 8px -8px, -8px 0; background-size: 16px 16px; }
+  .preview-stage img { display: block; width: 100%; height: 100%; max-height: 520px; padding: 16px; object-fit: contain; }
   .preview-stage img[hidden], .preview-empty[hidden], .preview-loading[hidden], .result-meta[hidden], .download-button[hidden] { display: none; }
   .preview-empty { display: grid; place-items: center; padding: 20px; text-align: center; }
   .preview-empty p { margin: 0; color: var(--muted); font-size: .78rem; line-height: 1.6; white-space: nowrap; }
@@ -403,21 +421,21 @@ const pageDescription = text(
   .preview-loading span { width: 28px; height: 28px; border: 2px solid var(--border); border-top-color: var(--brand-interactive); border-radius: 50%; animation: spin .7s linear infinite; }
   .preview-loading p { margin: 0; color: var(--muted); font-size: .78rem; }
   @keyframes spin { to { transform: rotate(360deg); } }
-  .result-meta { display: grid; grid-template-columns: repeat(3, 1fr); margin: 16px 0 0; padding: 15px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .result-meta { display: grid; grid-template-columns: repeat(3, 1fr); margin: 13px 0 0; padding: 12px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
   .result-meta div { padding: 0 14px; }
   .result-meta div:first-child { padding-left: 0; }
   .result-meta div + div { border-left: 1px solid var(--border); }
   .result-meta dt { color: var(--muted); font-size: .65rem; }
   .result-meta dd { margin: 5px 0 0; font-family: var(--font-mono); font-size: .78rem; }
-  .download-button { display: flex; align-items: center; justify-content: space-between; margin-top: 14px; padding: 14px 16px; border: 1px solid var(--border); border-radius: var(--radius-md); color: var(--text); font-size: .8rem; font-weight: 600; text-decoration: none; }
+  .download-button { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; padding: 12px 15px; border: 1px solid var(--border); border-radius: var(--radius-md); color: var(--text); font-size: .8rem; font-weight: 600; text-decoration: none; }
   .download-button:hover { border-color: var(--brand-interactive); color: var(--brand-interactive); }
-  .service-note { display: grid; grid-template-columns: 150px minmax(0, 1fr) auto; gap: 28px; margin-top: 20px; padding: 24px 4px; color: var(--muted); font-size: .76rem; line-height: 1.65; }
+  .service-note { display: grid; grid-template-columns: 150px minmax(0, 1fr) auto; gap: 22px; margin-top: 16px; padding: 20px 4px; color: var(--muted); font-size: .76rem; line-height: 1.5; }
   .service-note strong { color: var(--text); font-weight: 600; }
   .service-note p { max-width: 680px; margin: 0; }
   .service-note a { color: var(--muted); text-decoration: none; white-space: nowrap; }
   .service-note a:hover { color: var(--brand-interactive); }
-  @media (max-width: 900px) { .generator-shell { grid-template-columns: 1fr; } .generator-form { border-right: 0; border-bottom: 1px solid var(--border); } .preview-panel { min-height: 620px; } .service-note { grid-template-columns: 1fr; gap: 8px; } }
-  @media (max-width: 560px) { .service-page { padding-top: 24px; padding-bottom: 72px; } .service-header { padding: 32px 0; } .generator-form, .preview-panel { padding: 24px 20px; } .generator-shell { border-radius: var(--radius-lg); } .size-row { grid-template-columns: 1fr; } .mode-grid { grid-template-columns: repeat(2, 1fr); } .preview-panel { min-height: 520px; } .preview-stage { min-height: 340px; } .result-meta { grid-template-columns: 1fr; gap: 12px; } .result-meta div { padding: 0; } .result-meta div + div { padding-top: 12px; border-top: 1px solid var(--border); border-left: 0; } }
+  @media (max-width: 900px) { .generator-shell { grid-template-columns: 1fr; } .generator-form { border-right: 0; border-bottom: 1px solid var(--border); } .preview-panel { min-height: 560px; } .service-note { grid-template-columns: 1fr; gap: 7px; } }
+  @media (max-width: 560px) { .service-page { padding-top: 22px; padding-bottom: 56px; } .service-header { padding: 26px 0; } .generator-form, .preview-panel { padding: 22px 18px; } .generator-shell { border-radius: var(--radius-lg); } .size-row { grid-template-columns: 1fr; } .mode-grid { grid-template-columns: repeat(2, 1fr); } .preview-panel { min-height: 470px; } .preview-stage { min-height: 310px; } .result-meta { grid-template-columns: 1fr; gap: 10px; } .result-meta div { padding: 0; } .result-meta div + div { padding-top: 10px; border-top: 1px solid var(--border); border-left: 0; } }
   @media (max-width: 420px) { .preview-empty p { white-space: normal; } }
   @media (prefers-reduced-motion: reduce) { .preview-loading span { animation-duration: 1.5s; } }
 </style>
