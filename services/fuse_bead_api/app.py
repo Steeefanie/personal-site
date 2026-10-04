@@ -27,7 +27,7 @@ MIN_FIXED_SIZE = 1
 MAX_GRID_CELLS = 20_000
 MAX_GRID_EDGE = 400
 MAX_PREVIEW_EDGE = 1600
-MAX_QUEUED_GENERATIONS = 5
+MAX_QUEUED_TASKS = 5
 GENERATION_TIMEOUT_SECONDS = 30
 ALLOWED_MODES = {"cm", "cms", "cs", "bw"}
 ALLOWED_FORMATS = {"JPEG": ".jpg", "PNG": ".png", "WEBP": ".webp", "HEIF": ".heif"}
@@ -40,9 +40,9 @@ DEFAULT_GENERATOR_PATH = (
 )
 
 app = FastAPI(title="Fuse-bead Pattern API", docs_url=None, redoc_url=None)
-generation_slot = asyncio.Semaphore(1)
+processing_slot = asyncio.Semaphore(1)
 queue_state_lock = asyncio.Lock()
-waiting_generations = 0
+waiting_tasks = 0
 
 
 def generator_path() -> Path:
@@ -217,35 +217,35 @@ def render_heif_preview(data: bytes) -> tuple[bytes, int, int, int, int]:
 
 
 @asynccontextmanager
-async def generation_queue_slot() -> AsyncIterator[bool]:
-    global waiting_generations
+async def processing_queue_slot() -> AsyncIterator[bool]:
+    global waiting_tasks
     queued = False
     acquired = False
     removed_from_queue = False
     async with queue_state_lock:
-        if generation_slot.locked():
-            if waiting_generations >= MAX_QUEUED_GENERATIONS:
+        if processing_slot.locked():
+            if waiting_tasks >= MAX_QUEUED_TASKS:
                 raise HTTPException(
                     status_code=429,
-                    detail="当前生成队列已满，请稍后重试。",
+                    detail="当前处理队列已满，请稍后重试。",
                     headers={"Retry-After": "10"},
                 )
-            waiting_generations += 1
+            waiting_tasks += 1
             queued = True
     try:
-        await generation_slot.acquire()
+        await processing_slot.acquire()
         acquired = True
         if queued:
             async with queue_state_lock:
-                waiting_generations -= 1
+                waiting_tasks -= 1
                 removed_from_queue = True
         yield queued
     finally:
         if queued and not removed_from_queue:
             async with queue_state_lock:
-                waiting_generations -= 1
+                waiting_tasks -= 1
         if acquired:
-            generation_slot.release()
+            processing_slot.release()
 
 
 @app.get("/api/v1/fuse-bead/health")
@@ -255,15 +255,16 @@ def health() -> dict[str, str]:
 
 @app.post("/api/v1/fuse-bead/preview")
 async def preview(image: UploadFile = File(...)) -> Response:
-    source_data = await image.read(MAX_UPLOAD_BYTES + 1)
-    if len(source_data) > MAX_UPLOAD_BYTES:
-        raise HTTPException(status_code=413, detail="图片不能超过 20 MB。")
-    if not source_data:
-        raise HTTPException(status_code=400, detail="上传图片为空。")
-    output_data, source_width, source_height, visible_width, visible_height = await asyncio.to_thread(
-        render_heif_preview,
-        source_data,
-    )
+    async with processing_queue_slot() as queued:
+        source_data = await image.read(MAX_UPLOAD_BYTES + 1)
+        if len(source_data) > MAX_UPLOAD_BYTES:
+            raise HTTPException(status_code=413, detail="图片不能超过 20 MB。")
+        if not source_data:
+            raise HTTPException(status_code=400, detail="上传图片为空。")
+        output_data, source_width, source_height, visible_width, visible_height = await asyncio.to_thread(
+            render_heif_preview,
+            source_data,
+        )
     return Response(
         content=output_data,
         media_type="image/png",
@@ -273,6 +274,7 @@ async def preview(image: UploadFile = File(...)) -> Response:
             "X-Source-Height": str(source_height),
             "X-Visible-Width": str(visible_width),
             "X-Visible-Height": str(visible_height),
+            "X-Queue-Waited": "true" if queued else "false",
         },
     )
 
@@ -292,7 +294,7 @@ async def generate(
     if mode not in ALLOWED_MODES:
         raise HTTPException(status_code=400, detail="颜色模式仅支持 CM、CMS、CS 和 BW。")
 
-    async with generation_queue_slot() as queued:
+    async with processing_queue_slot() as queued:
         source_data = await image.read(MAX_UPLOAD_BYTES + 1)
         if len(source_data) > MAX_UPLOAD_BYTES:
             raise HTTPException(status_code=413, detail="图片不能超过 20 MB。")
