@@ -7,6 +7,8 @@ import { ui } from '../lib/i18n';
 <dialog
   class="guestbook-dialog"
   data-guestbook-dialog
+  tabindex="-1"
+  autofocus
   aria-labelledby="guestbook-title"
   aria-describedby="guestbook-intro guestbook-privacy guestbook-login"
 >
@@ -73,7 +75,15 @@ import { ui } from '../lib/i18n';
     dialog.classList.remove('is-closing');
     document.documentElement.classList.remove('guestbook-open');
     unlockPageScroll('guestbook');
-    openButton?.focus({ preventScroll: true });
+    if (openButton) {
+      openButton.classList.add('is-focus-restored');
+      openButton.addEventListener(
+        'blur',
+        () => openButton.classList.remove('is-focus-restored'),
+        { once: true },
+      );
+      openButton.focus({ preventScroll: true });
+    }
   };
 
   const requestClose = () => {
@@ -98,7 +108,7 @@ import { ui } from '../lib/i18n';
       return;
     }
     window.dispatchEvent(new CustomEvent('site:guestbook-open'));
-    requestAnimationFrame(() => closeButton?.focus({ preventScroll: true }));
+    requestAnimationFrame(() => dialog.focus({ preventScroll: true }));
   });
 
   closeButton?.addEventListener('click', requestClose);

@@ -727,6 +727,10 @@ html[lang='zh-TW'] .hero h1 {
   transform: translateY(1px);
 }
 
+.hero-contact-button.is-focus-restored:focus {
+  outline: none;
+}
+
 .hero-email {
   color: var(--muted);
   font-size: 0.82rem;
