@@ -45,7 +45,7 @@ const pageDescription = text(
               <label><input type="radio" name="fixed_side" value="width" /><span><LocalizedText value={text('按宽度', '依寬度', 'By width')} /></span></label>
               <label><input type="radio" name="fixed_side" value="height" checked /><span><LocalizedText value={text('按高度', '依高度', 'By height')} /></span></label>
             </div>
-            <label class="size-input"><input type="number" name="size" min="1" max="20000" step="1" value="50" inputmode="numeric" required data-size-input /><span><LocalizedText value={text('格', '格', 'cells')} /></span></label>
+            <label class="size-input"><input type="number" name="size" min="1" max="400" step="1" value="50" inputmode="numeric" required data-size-input /><span><LocalizedText value={text('格', '格', 'cells')} /></span></label>
           </div>
           <p class="form-help"><LocalizedText value={text('另一边按原图比例自动计算，图纸总格数不超过 20,000。', '另一邊依原圖比例自動計算，圖紙總格數不超過 20,000。', 'The other side is calculated automatically. Patterns are limited to 20,000 cells.')} /></p>
           <p class="size-estimate" data-size-estimate hidden></p>
@@ -88,7 +88,7 @@ const pageDescription = text(
 
     <aside class="service-note">
       <strong><LocalizedText value={text('生成说明', '產生說明', 'About the generator')} /></strong>
-      <p><LocalizedText value={text('透明图片会先裁去外围透明区域，再按可见内容的比例生成图纸。色卡与实际拼豆品牌、批次可能存在色差。', '透明圖片會先裁去外圍透明區域，再依可見內容的比例產生圖紙。色卡與實際拼豆品牌、批次可能存在色差。', 'Transparent margins are trimmed before sizing. Palette colours may differ slightly from physical beads across brands and production batches.')} /></p>
+      <p><LocalizedText value={text('色卡与实际拼豆品牌、批次可能存在色差。', '色卡與實際拼豆品牌、批次可能存在色差。', 'Palette colours may differ slightly from physical beads across brands and production batches.')} /></p>
       <a href="/projects/fuse-bead-pattern-generator/"><LocalizedText value={text('查看算法与测试结果', '查看演算法與測試結果', 'View algorithm and test results')} /> ↗</a>
     </aside>
   </div>
@@ -143,6 +143,7 @@ const pageDescription = text(
   const selectedSide = () => form?.querySelector<HTMLInputElement>('input[name="fixed_side"]:checked')?.value ?? 'height';
   const selectedMode = () => form?.querySelector<HTMLInputElement>('input[name="mode"]:checked')?.value.toUpperCase() ?? 'CMS';
   const maxGridCells = 20_000;
+  const maxGridEdge = 400;
   const timestamp12 = (date: Date) => [
     String(date.getFullYear()).slice(-2),
     String(date.getMonth() + 1).padStart(2, '0'),
@@ -156,7 +157,7 @@ const pageDescription = text(
     if (!sourceWidth || !sourceHeight || !Number.isFinite(fixed)) return null;
     const width = selectedSide() === 'width' ? fixed : Math.max(1, Math.round(sourceWidth * fixed / sourceHeight));
     const height = selectedSide() === 'height' ? fixed : Math.max(1, Math.round(sourceHeight * fixed / sourceWidth));
-    return { width, height, count: width * height, valid: Number.isInteger(fixed) && fixed >= 1 && width * height <= maxGridCells };
+    return { width, height, count: width * height, valid: Number.isInteger(fixed) && fixed >= 1 && width <= maxGridEdge && height <= maxGridEdge && width * height <= maxGridCells };
   };
   const formatEstimate = (width: number, height: number, count: number) => {
     if (locale() === 'en') return `Estimated pattern: ${width} × ${height} cells · ${count.toLocaleString('en-US')} total`;
@@ -196,6 +197,42 @@ const pageDescription = text(
   const canvasBlob = (canvas: HTMLCanvasElement, type: string, quality?: number) => new Promise<Blob>((resolve, reject) => {
     canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error('Image conversion failed')), type, quality);
   });
+  const visibleContentSize = (
+    source: CanvasImageSource,
+    sourceWidth: number,
+    sourceHeight: number,
+  ) => {
+    const maxAnalysisEdge = 1600;
+    const scale = Math.min(1, maxAnalysisEdge / Math.max(sourceWidth, sourceHeight));
+    const width = Math.max(1, Math.floor(sourceWidth * scale));
+    const height = Math.max(1, Math.floor(sourceHeight * scale));
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext('2d', { willReadFrequently: true });
+    if (!context) return { width: sourceWidth, height: sourceHeight };
+    context.drawImage(source, 0, 0, width, height);
+    const pixels = context.getImageData(0, 0, width, height).data;
+    let minX = width;
+    let minY = height;
+    let maxX = -1;
+    let maxY = -1;
+    let hasTransparency = false;
+    for (let y = 0; y < height; y += 1) {
+      for (let x = 0; x < width; x += 1) {
+        const alpha = pixels[(y * width + x) * 4 + 3];
+        if (alpha < 255) hasTransparency = true;
+        if (alpha > 1) {
+          minX = Math.min(minX, x);
+          minY = Math.min(minY, y);
+          maxX = Math.max(maxX, x);
+          maxY = Math.max(maxY, y);
+        }
+      }
+    }
+    if (!hasTransparency || maxX < minX || maxY < minY) return { width: sourceWidth, height: sourceHeight };
+    return { width: maxX - minX + 1, height: maxY - minY + 1 };
+  };
   const setFile = async (file: File) => {
     clearMessage(); resetResult();
     const acceptedType = ['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || isHeifFile(file);
@@ -203,6 +240,7 @@ const pageDescription = text(
     if (file.size > 20 * 1024 * 1024) { showMessage(t('tooLarge')); return; }
     if (sourceUrl) URL.revokeObjectURL(sourceUrl);
     let decodedSize: { width: number; height: number } | null = null;
+    let visibleSize: { width: number; height: number } | null = null;
     try {
       if (isHeifFile(file)) {
         const { heicTo } = await import('heic-to/next');
@@ -216,8 +254,9 @@ const pageDescription = text(
         const context = canvas.getContext('2d');
         if (!context) { bitmap.close(); throw new Error('Canvas is unavailable'); }
         context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+        visibleSize = visibleContentSize(canvas, canvas.width, canvas.height);
         bitmap.close();
-        const converted = await canvasBlob(canvas, 'image/jpeg', .86);
+        const converted = await canvasBlob(canvas, 'image/png');
         sourceUrl = URL.createObjectURL(converted);
       } else {
         sourceUrl = URL.createObjectURL(file);
@@ -230,10 +269,15 @@ const pageDescription = text(
     const probe = new Image();
     probe.onload = () => {
       selectedFile = file;
-      sourceWidth = decodedSize?.width ?? probe.naturalWidth;
-      sourceHeight = decodedSize?.height ?? probe.naturalHeight;
+      const originalWidth = decodedSize?.width ?? probe.naturalWidth;
+      const originalHeight = decodedSize?.height ?? probe.naturalHeight;
+      if (!visibleSize && ['image/png', 'image/webp'].includes(file.type)) {
+        visibleSize = visibleContentSize(probe, probe.naturalWidth, probe.naturalHeight);
+      }
+      sourceWidth = visibleSize?.width ?? originalWidth;
+      sourceHeight = visibleSize?.height ?? originalHeight;
       if (fileName) fileName.textContent = file.name;
-      if (fileMeta) fileMeta.textContent = `${sourceWidth} × ${sourceHeight} · ${(file.size / 1024 / 1024).toFixed(2)} MB`;
+      if (fileMeta) fileMeta.textContent = `${originalWidth} × ${originalHeight} · ${(file.size / 1024 / 1024).toFixed(2)} MB`;
       if (fileSummary) fileSummary.hidden = false;
       if (previewImage) { previewImage.src = sourceUrl; previewImage.alt = file.name; previewImage.hidden = false; }
       if (previewEmpty) previewEmpty.hidden = true;

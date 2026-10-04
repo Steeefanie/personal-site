@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import io
 import json
+import math
 import os
 import shutil
 import subprocess
@@ -23,6 +24,7 @@ register_heif_opener()
 MAX_UPLOAD_BYTES = 20 * 1024 * 1024
 MIN_FIXED_SIZE = 1
 MAX_GRID_CELLS = 20_000
+MAX_GRID_EDGE = 400
 GENERATION_TIMEOUT_SECONDS = 30
 ALLOWED_MODES = {"cm", "cms", "cs", "bw"}
 ALLOWED_FORMATS = {"JPEG": ".jpg", "PNG": ".png", "WEBP": ".webp", "HEIF": ".heif"}
@@ -91,11 +93,13 @@ def inspect_image(data: bytes) -> tuple[str, int, int, bool]:
 def resolve_grid(fixed_side: str, size: int, source_width: int, source_height: int) -> tuple[int, int]:
     if fixed_side == "width":
         width = size
-        height = max(1, round(source_height * size / source_width))
+        height = max(1, math.floor(source_height * size / source_width + 0.5))
     else:
         height = size
-        width = max(1, round(source_width * size / source_height))
+        width = max(1, math.floor(source_width * size / source_height + 0.5))
 
+    if width > MAX_GRID_EDGE or height > MAX_GRID_EDGE:
+        raise HTTPException(status_code=400, detail="图纸任一边不能超过 400 格。")
     if width * height > MAX_GRID_CELLS:
         raise HTTPException(status_code=400, detail="按当前比例计算后超出图纸尺寸限制，请减小格数。")
     return width, height
