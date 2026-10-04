@@ -33,3 +33,7 @@ desktop.ini
 coverage/
 playwright-report/
 test-results/
+
+# Python caches
+__pycache__/
+*.py[cod]

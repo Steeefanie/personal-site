@@ -64,6 +64,7 @@ export const ui = {
       'Engineering background, office-job desk jockey. I’m interested in artificial intelligence, computer networks, and image processing. In my spare time I do a bit of everything—cook, mix drinks, and occasionally tinker with small things.',
     ),
     latest: text('最近更新', '最新動態', 'Latest'),
+    services: text('在线服务', '線上服務', 'Online services'),
   },
   guestbook: {
     title: text('留言', '留言', 'Guestbook'),

@@ -213,7 +213,7 @@ blog/en/palworld-dedicated-server.md
 当前三语言共用的项目图片放在：
 
 ```text
-src/assets/projects/bean-pattern-generator/
+src/assets/projects/fuse-bead-pattern-generator/
 ```
 
 这些图片会被 MDX 导入。Astro 构建时能够读取尺寸、处理文件名并生成最终资源。

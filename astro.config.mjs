@@ -8,5 +8,10 @@ export default defineConfig({
   integrations: [mdx()],
   vite: {
     plugins: [tailwindcss()],
+    server: {
+      proxy: {
+        '/api/v1/fuse-bead': 'http://127.0.0.1:8100',
+      },
+    },
   },
 });
