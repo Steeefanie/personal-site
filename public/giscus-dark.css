@@ -1,0 +1,284 @@
+:host,
+html {
+  --font-family-sans: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  --font-family-default: var(--font-family-sans);
+}
+
+html body main {
+  color-scheme: dark;
+  --color-canvas-default: #141414;
+  --color-canvas-overlay: #1d1d1d;
+  --color-canvas-inset: #0d0d0d;
+  --color-canvas-subtle: #1d1d1d;
+  --color-border-default: #333333;
+  --color-border-muted: #2a2a2a;
+  --color-neutral-muted: rgba(201, 121, 196, 0.16);
+  --color-accent-fg: #c979c4;
+  --color-accent-emphasis: #c979c4;
+  --color-accent-muted: rgba(201, 121, 196, 0.28);
+  --color-accent-subtle: rgba(201, 121, 196, 0.16);
+  --color-success-fg: #7ee787;
+  --color-attention-fg: #d29922;
+  --color-danger-fg: #ff7b72;
+  --color-fg-default: #f2f2f2;
+  --color-fg-muted: #b3b3b3;
+  --color-fg-subtle: #929292;
+  --color-btn-text: #f2f2f2;
+  --color-btn-bg: #262626;
+  --color-btn-border: #3b3b3b;
+  --color-btn-hover-bg: #303030;
+  --color-btn-hover-border: #4a4a4a;
+  --color-btn-active-bg: #383838;
+  --color-btn-selected-bg: #303030;
+  --color-btn-primary-text: #141414;
+  --color-btn-primary-bg: #c979c4;
+  --color-btn-primary-border: #c979c4;
+  --color-btn-primary-hover-bg: #d58bd0;
+  --color-btn-primary-hover-border: #d58bd0;
+  --color-btn-primary-selected-bg: #b96ab4;
+  --color-input-bg: #1d1d1d;
+  --color-input-contrast-bg: #141414;
+  --color-input-border: #333333;
+  --color-primer-shadow-inset: inset 0 0 0 1px rgba(242, 242, 242, 0.05);
+}
+
+html body main .gsc-main,
+html body main .gsc-main .gsc-comment-box,
+html body main .gsc-main .gsc-comment {
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+}
+
+html body main .gsc-main .gsc-header,
+html body main .gsc-main .gsc-reactions {
+  color: var(--color-fg-muted);
+}
+
+html body main .gsc-loading-image {
+  width: 32px !important;
+  height: 32px !important;
+  border-width: 2px !important;
+  border-style: solid !important;
+  border-top-color: var(--color-accent-fg) !important;
+  border-right-color: var(--color-border-default) !important;
+  border-bottom-color: var(--color-border-default) !important;
+  border-left-color: var(--color-border-default) !important;
+  border-radius: 50%;
+  background: none !important;
+  animation: giscus-theme-loading 700ms linear infinite;
+}
+
+html body main .gsc-loading-text {
+  color: var(--color-fg-muted) !important;
+}
+
+html body main .gsc-main .gsc-reactions-count,
+html body main .gsc-main .gsc-comments-count {
+  color: var(--color-fg-muted) !important;
+  font-size: 0.78rem !important;
+  font-weight: 500 !important;
+}
+
+html body main .gsc-main .gsc-comment-box {
+  overflow: hidden;
+  border: 1px solid var(--color-border-default) !important;
+  border-radius: 10px !important;
+  background: var(--color-canvas-overlay) !important;
+  box-shadow: none !important;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+html body main .gsc-main .gsc-comment-box:focus-within {
+  border-color: var(--color-accent-fg) !important;
+  box-shadow: 0 0 0 2px var(--color-accent-subtle) !important;
+}
+
+html body main .gsc-main .gsc-comment-box-tabs {
+  border: 0 !important;
+  border-bottom: 1px solid var(--color-border-muted) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+
+html body main .gsc-main .gsc-comment-box-tabs > div {
+  padding-inline: 10px;
+  margin: 0 !important;
+}
+
+html body main .gsc-main .gsc-comment-box-tabs button {
+  position: relative;
+  padding: 12px 10px 10px !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--color-fg-muted) !important;
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+html body main .gsc-main .gsc-comment-box-tabs button.color-text-primary {
+  color: var(--color-fg-default) !important;
+}
+
+html body main .gsc-main .gsc-comment-box-tabs button.color-text-primary::after {
+  position: absolute;
+  right: 10px;
+  bottom: -1px;
+  left: 10px;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--color-accent-fg);
+  content: '';
+}
+
+html body main .gsc-main .gsc-comment-box-tabs .gsc-comment-box-md-toolbar {
+  display: none !important;
+}
+
+html body main .gsc-main .gsc-reactions-button.gsc-social-reaction-summary-item {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+html body main .gsc-main .gsc-reactions-button.gsc-social-reaction-summary-item:hover {
+  background: var(--color-neutral-muted) !important;
+}
+
+html body main .gsc-main .gsc-comment-box-main,
+html body main .gsc-main .gsc-comment-box-write {
+  background: transparent !important;
+}
+
+html body main .gsc-main .gsc-comment-box-textarea {
+  min-height: 132px !important;
+  padding: 15px 16px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--color-fg-default) !important;
+  font-family: var(--font-family-default) !important;
+  line-height: 1.65;
+}
+
+html body main .gsc-main .gsc-comment-box-textarea:focus {
+  outline: 0 !important;
+}
+
+html body main .gsc-main .gsc-comment-box-textarea-extras {
+  padding: 0 14px 10px !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+html body main .gsc-main .gsc-comment-box-markdown-hint {
+  color: var(--color-fg-subtle) !important;
+  opacity: 0.72;
+}
+
+html body main .gsc-main .gsc-comment-box-bottom {
+  padding: 12px 14px !important;
+  border-top: 1px solid var(--color-border-muted);
+  background: transparent !important;
+}
+
+html body main .gsc-main .gsc-comment-box-is-reply .gsc-comment-box-buttons .btn:not(.btn-primary) {
+  display: none !important;
+}
+
+html body main .gsc-main .gsc-comment-box-is-reply .gsc-comment-box-buttons .btn-primary {
+  margin-left: 0 !important;
+}
+
+html body main .gsc-main .gsc-comment-box-is-reply:not(:focus-within) {
+  border-color: var(--color-border-muted) !important;
+  border-radius: 8px !important;
+}
+
+html body main .gsc-main .gsc-comment-box-is-reply:not(:focus-within) .gsc-comment-box-tabs,
+html body main .gsc-main .gsc-comment-box-is-reply:not(:focus-within) .gsc-comment-box-textarea-extras,
+html body main .gsc-main .gsc-comment-box-is-reply:not(:focus-within) .gsc-comment-box-bottom {
+  display: none !important;
+}
+
+html body main .gsc-main .gsc-comment-box-is-reply:not(:focus-within) .gsc-comment-box-textarea {
+  height: 40px !important;
+  min-height: 40px !important;
+  padding: 8px 12px !important;
+  overflow: hidden !important;
+  resize: none !important;
+  line-height: 24px;
+}
+
+html body main .gsc-main .btn {
+  border-radius: 8px !important;
+  box-shadow: none !important;
+  font-weight: 500 !important;
+}
+
+html body main .gsc-main .btn-primary,
+html body main .gsc-main .btn-primary:hover,
+html body main .gsc-main .btn-primary:focus {
+  box-shadow: none !important;
+}
+
+html body main .gsc-main .gsc-right-header.BtnGroup {
+  overflow: hidden;
+  border: 1px solid var(--color-border-muted) !important;
+  border-radius: 8px !important;
+}
+
+html body main .gsc-main .gsc-right-header .BtnGroup-item {
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+}
+
+html body main .gsc-main .gsc-right-header .BtnGroup-item + .BtnGroup-item {
+  border-left: 1px solid var(--color-border-muted) !important;
+}
+
+html body main .gsc-main .gsc-right-header .btn {
+  border-radius: 0 !important;
+}
+
+html body main .gsc-main .gsc-comment-box-tabs button:focus-visible,
+html body main .gsc-main .btn:focus-visible {
+  outline: 2px solid var(--color-accent-fg) !important;
+  outline-offset: 2px;
+}
+
+html body main .gsc-main .gsc-timeline {
+  border: 0 !important;
+}
+
+html body main .gsc-main .gsc-comment {
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+html body main .gsc-main .gsc-comment > div {
+  overflow: hidden;
+  border: 1px solid var(--color-border-muted) !important;
+  border-radius: 10px !important;
+  background: var(--color-canvas-overlay) !important;
+}
+
+html body main .gsc-main .gsc-comment-content {
+  border-radius: 0 !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html body main .gsc-loading-image {
+    animation: none;
+  }
+}
+
+@keyframes giscus-theme-loading {
+  to { transform: rotate(360deg); }
+}

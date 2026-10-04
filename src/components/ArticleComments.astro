@@ -1,0 +1,12 @@
+---
+import GiscusComments from './GiscusComments.astro';
+import LocalizedText from './LocalizedText.astro';
+import { ui } from '../lib/i18n';
+---
+
+<section class="reading-shell article-comments" aria-labelledby="article-comments-heading">
+  <header class="article-comments-header">
+    <h2 id="article-comments-heading"><LocalizedText value={ui.comments.title} /></h2>
+  </header>
+  <GiscusComments mode="article" />
+</section>

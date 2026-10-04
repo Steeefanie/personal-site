@@ -93,6 +93,8 @@ const navItems = [
 </div>
 
 <script>
+  import { lockPageScroll, unlockPageScroll } from '../lib/scroll-lock';
+
   type PanelName = 'search' | 'language' | 'navigation';
   type Locale = 'zh-CN' | 'zh-TW' | 'en';
   const topChrome = document.querySelector<HTMLElement>('[data-top-chrome]');
@@ -103,7 +105,6 @@ const navItems = [
   let closeTimer = 0;
   let panelAnimationTimer = 0;
   let surfaceCloseTimer = 0;
-  let lockedScrollY = 0;
   let previousY = window.scrollY;
   let headerFrame = 0;
 
@@ -132,28 +133,11 @@ const navItems = [
   };
 
   const lockSearchScroll = () => {
-    const root = document.documentElement;
-    if (root.classList.contains('search-panel-open')) return;
-    lockedScrollY = window.scrollY;
-    root.style.setProperty('--search-scroll-offset', `${-lockedScrollY}px`);
-    root.classList.add('search-panel-open');
+    lockPageScroll('search');
   };
 
   const unlockSearchScroll = () => {
-    const root = document.documentElement;
-    if (!root.classList.contains('search-panel-open')) return;
-    const inlineScrollBehavior = root.style.scrollBehavior;
-    root.style.scrollBehavior = 'auto';
-    root.classList.remove('search-panel-open');
-    root.style.removeProperty('--search-scroll-offset');
-    // Ensure the document regains its scrollable height before restoring the offset.
-    void document.body.offsetHeight;
-    window.scrollTo(0, lockedScrollY);
-    previousY = lockedScrollY;
-    requestAnimationFrame(() => {
-      if (inlineScrollBehavior) root.style.scrollBehavior = inlineScrollBehavior;
-      else root.style.removeProperty('scroll-behavior');
-    });
+    unlockPageScroll('search');
   };
 
   const closePanel = (restoreFocus = false) => {
@@ -264,6 +248,11 @@ const navItems = [
   });
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape' && openPanelName) { event.preventDefault(); closePanel(true); }
+  });
+  window.addEventListener('site:close-panels', () => closePanel());
+  window.addEventListener('site:scroll-unlocked', (event) => {
+    const scrollY = (event as CustomEvent<{ scrollY?: number }>).detail?.scrollY;
+    previousY = typeof scrollY === 'number' ? scrollY : window.scrollY;
   });
 
   const updateHeader = () => {

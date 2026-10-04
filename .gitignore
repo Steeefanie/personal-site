@@ -18,6 +18,9 @@ pnpm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# Local project notes
+CHANGELOG.md
+
 # Editors and operating systems
 .DS_Store
 Thumbs.db
