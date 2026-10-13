@@ -35,7 +35,10 @@ const projects = defineCollection({
     ...shared,
     stack: z.array(z.string()).default([]),
     attribution: z.string().optional(),
-    demoUrl: z.url().optional(),
+    demoUrl: z.union([
+      z.url(),
+      z.string().regex(/^\/(?!\/)/),
+    ]).optional(),
     repositoryUrl: z.url().optional(),
     downloadUrl: z.url().optional(),
   }),

@@ -28,7 +28,7 @@ html.guestbook-open .top-chrome {
 }
 
 .guestbook-dialog[open] {
-  animation: guestbook-enter 200ms ease-out both;
+  animation: guestbook-enter var(--motion-standard) ease-out both;
 }
 
 .guestbook-dialog.is-closing {

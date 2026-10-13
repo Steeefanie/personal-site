@@ -64,7 +64,24 @@ const latest = [
       </div>
     </section>
 
-    <section class="section" aria-labelledby="latest-heading">
+    <section class="services-section" aria-labelledby="services-heading">
+      <div class="section-heading">
+        <h2 id="services-heading"><LocalizedText value={ui.home.services} /></h2>
+      </div>
+      <div class="service-grid">
+        <a class="service-app" href="/services/fuse-bead-generator/" data-service-link aria-labelledby="fuse-bead-service-label">
+          <span class="service-card-icon service-card-icon--bead" aria-hidden="true">
+            <span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span>
+          </span>
+          <span class="service-app-label" id="fuse-bead-service-label"><LocalizedText value={text('拼豆图纸生成器', '拼豆圖紙生成器', 'Fuse-bead pattern generator')} /></span>
+        </a>
+      </div>
+    </section>
+
+    <section class="latest-section-block" aria-labelledby="latest-heading">
       <div class="section-heading">
         <h2 id="latest-heading"><LocalizedText value={ui.home.latest} /></h2>
       </div>
@@ -85,30 +102,23 @@ const latest = [
         ))}
       </ul>
     </section>
-
-    <section class="section services-section" aria-labelledby="services-heading">
-      <div class="section-heading">
-        <h2 id="services-heading"><LocalizedText value={ui.home.services} /></h2>
-      </div>
-      <div class="service-grid">
-        <a class="service-app" href="/services/fuse-bead-generator/" data-service-link aria-labelledby="fuse-bead-service-label">
-          <span class="service-card-icon service-card-icon--bead" aria-hidden="true">
-            <span></span><span></span><span></span><span></span>
-            <span></span><span></span><span></span><span></span>
-            <span></span><span></span><span></span><span></span>
-            <span></span><span></span><span></span><span></span>
-          </span>
-          <span class="service-app-label" id="fuse-bead-service-label"><LocalizedText value={text('拼豆图纸生成器', '拼豆圖紙生成器', 'Fuse-bead pattern generator')} /></span>
-        </a>
-      </div>
-    </section>
   </div>
   <GuestbookDialog />
 </BaseLayout>
 
 <style>
   .services-section {
-    padding-top: 58px;
+    padding-top: var(--space-6);
+    padding-bottom: var(--space-10);
+  }
+
+  .latest-section-block {
+    padding-top: var(--space-10);
+    padding-bottom: var(--space-8);
+  }
+
+  .services-section .section-heading {
+    margin-bottom: var(--space-8);
   }
 
   .service-grid {

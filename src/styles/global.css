@@ -116,12 +116,12 @@ svg {
 }
 
 .site-shell {
-  width: min(calc(100% - 40px), var(--content-wide));
+  width: min(calc(100% - var(--page-gutter) - var(--page-gutter)), var(--content-wide));
   margin-inline: auto;
 }
 
 .reading-shell {
-  width: min(calc(100% - 40px), var(--content-reading));
+  width: min(calc(100% - var(--page-gutter) - var(--page-gutter)), var(--content-reading));
   margin-inline: auto;
 }
 
@@ -431,7 +431,7 @@ svg {
   .search-status,
   .search-results
 ) {
-  animation: panel-item-reveal 200ms cubic-bezier(.2,.72,.2,1) both;
+  animation: panel-item-reveal var(--motion-standard) cubic-bezier(.2,.72,.2,1) both;
   animation-delay: var(--panel-item-delay, 32ms);
 }
 
@@ -655,9 +655,8 @@ html.theme-transition::view-transition-new(root) {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(260px, .48fr);
   align-items: end;
-  gap: 64px;
-  min-height: 430px;
-  padding: 62px 0 92px;
+  gap: var(--space-16);
+  padding: var(--space-8) 0 var(--space-10);
   line-height: 1.7;
 }
 
@@ -672,7 +671,7 @@ html.theme-transition::view-transition-new(root) {
 
 .hero h1 {
   max-width: 840px;
-  font-size: clamp(3.25rem, calc(2.5rem + 3vw), 5rem);
+  font-size: var(--font-size-home-display);
   letter-spacing: -0.04em;
 }
 
@@ -683,9 +682,9 @@ html[lang='zh-TW'] .hero h1 {
 
 .hero-intro {
   max-width: 430px;
-  margin: 32px 0 0;
+  margin: var(--space-8) 0 0;
   color: var(--muted);
-  font-size: clamp(1.04rem, 1.5vw, 1.2rem);
+  font-size: 1rem;
 }
 
 .hero-note {
@@ -712,6 +711,11 @@ html[lang='zh-TW'] .hero h1 {
 }
 
 .hero-contact-button {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  place-items: center;
   color: var(--muted);
   border: 0;
   background: transparent;
@@ -740,14 +744,6 @@ html[lang='zh-TW'] .hero h1 {
 .hero-contact-actions {
   display: flex;
   align-items: center;
-}
-
-.hero-contact-button {
-  display: grid;
-  width: 44px;
-  height: 44px;
-  flex: 0 0 44px;
-  place-items: center;
 }
 
 .hero-contact-button svg {
@@ -782,39 +778,54 @@ html[lang='en'] :is(.hero-intro, .hero-about-text) {
   text-justify: inter-word;
 }
 
-.section {
-  padding: 72px 0;
-}
-
 .section-heading {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
-  gap: 24px;
-  margin-bottom: 34px;
+  gap: var(--space-6);
+  margin-bottom: var(--space-6);
 }
 
 .section-heading h2 {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
   margin: 0;
-  font-size: var(--font-size-section-title);
+  font-size: var(--font-size-home-section-title);
   font-weight: 600;
   letter-spacing: -0.035em;
+  line-height: 1.25;
+}
+
+.section-heading h2::before {
+  width: 3px;
+  height: 0.72em;
+  flex: 0 0 auto;
+  align-self: center;
+  border-radius: 1px;
+  background: var(--brand-interactive);
+  content: '';
+  transform: translateY(1px);
 }
 
 .latest-section {
-  margin: 0 0 8px;
+  margin: 0 0 6px;
   color: var(--brand-interactive);
   font-size: .72rem;
   font-weight: 600;
   letter-spacing: .08em;
+  line-height: 1.35;
   text-transform: uppercase;
 }
 
 .latest-list-item .item-meta {
-  padding-top: calc(1.224rem + 8px);
+  padding-top: 22px;
 }
 
 .text-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   color: var(--muted);
   font-size: 0.86rem;
   text-decoration: none;
@@ -822,10 +833,6 @@ html[lang='en'] :is(.hero-intro, .hero-about-text) {
 
 .text-link:hover {
   color: var(--brand-interactive);
-}
-
-.text-link::after {
-  content: ' ↗';
 }
 
 .content-list {
@@ -840,7 +847,7 @@ html[lang='en'] :is(.hero-intro, .hero-about-text) {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(190px, .3fr);
   gap: 38px;
-  padding: 26px 0;
+  padding: 12px 0;
   text-decoration: none;
   transition: padding 180ms ease;
 }
@@ -1158,6 +1165,24 @@ html[lang='zh-TW'] .tag {
   font-size: 1.08rem;
 }
 
+.project-actions {
+  margin-top: 14px;
+}
+
+.project-demo-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--brand-interactive);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.project-demo-link:hover {
+  text-decoration: underline;
+}
+
 .article-meta {
   display: flex;
   flex-wrap: wrap;
@@ -1229,7 +1254,7 @@ html[lang='zh-TW'] .tag {
 }
 
 .site-footer {
-  padding: 28px 0 34px;
+  padding: var(--space-6) 0 var(--space-8);
   color: var(--muted);
   font-size: 0.78rem;
 }
@@ -1240,35 +1265,15 @@ html[lang='zh-TW'] .tag {
   gap: 24px;
 }
 
-.placeholder-figure {
-  display: grid;
-  place-items: center;
-  min-height: 320px;
-  margin: 28px 0;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  background:
-    linear-gradient(var(--border) 1px, transparent 1px),
-    linear-gradient(90deg, var(--border) 1px, transparent 1px),
-    var(--surface);
-  background-size: 36px 36px;
-  color: var(--muted);
-  font-family: var(--font-mono);
-  font-size: 0.8rem;
-}
-
 @media (max-width: 800px) {
   :root { --header-height: 64px; }
-  .site-shell,
-  .reading-shell { width: min(calc(100% - 28px), var(--content-wide)); }
   .header-inner { gap: 12px; }
   .header-actions { gap: 6px; }
   .primary-nav { gap: 14px; }
   .nav-link { font-size: 0.82rem; }
-  .hero { grid-template-columns: 1fr; gap: 40px; min-height: 0; padding: 50px 0 66px; }
+  .hero { grid-template-columns: 1fr; gap: var(--space-8); }
   .hero-aside { max-width: 500px; }
-  .section { padding: 52px 0; }
-  .content-list-item > a { grid-template-columns: 1fr; gap: 13px; padding: 22px 0; }
+  .content-list-item > a { grid-template-columns: 1fr; gap: 13px; padding: 14px 0; }
   .item-meta { align-items: flex-start; text-align: left; }
   .latest-list-item .item-meta { padding-top: 0; }
   .tag-list { justify-content: flex-start; }
@@ -1278,7 +1283,6 @@ html[lang='zh-TW'] .tag {
   .primary-nav { display: none; }
   .menu-switcher { display: inline-grid; }
   .header-actions { gap: 2px; }
-  .utility-button { min-width: 44px; min-height: 44px; }
   .search-result-link { grid-template-columns: 72px minmax(0, 1fr); gap: 8px 12px; }
   .search-result-description { grid-column: 2; }
   .listing-filters .filter-group { grid-template-columns: max-content minmax(0, 1fr); gap: 2px; }
@@ -1291,7 +1295,6 @@ html[lang='zh-TW'] .tag {
   .content-list-item > a:hover { padding-right: 0; padding-left: 0; }
   .content-list-item > a:active .item-title { color: var(--brand-interactive); }
   .article-header { padding-top: 32px; }
-  .section-heading { align-items: flex-end; }
   .footer-inner { flex-direction: column; gap: 6px; }
   .article-pager { grid-template-columns: 1fr; }
   .pager-slot--previous,

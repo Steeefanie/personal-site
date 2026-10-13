@@ -171,10 +171,3 @@ html[lang='en'] .prose p {
   }
 }
 
-.prose .callout {
-  margin: 1.5em 0;
-  padding: 14px 16px;
-  border-left: 3px solid var(--brand-interactive);
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-  background: var(--brand-soft);
-}

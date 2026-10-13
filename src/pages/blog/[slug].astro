@@ -47,7 +47,7 @@ const descriptions = Object.fromEntries(locales.map((locale) => [locale, entries
   <article class="article-with-comments">
     <header class="article-header">
       <div class="reading-shell">
-        <a class="text-link" href="/blog/"><LocalizedText value={text('返回随笔', '返回隨筆', 'Back to Blog')} /></a>
+        <a class="text-link" href="/blog/"><span aria-hidden="true">←</span><LocalizedText value={text('返回随笔', '返回隨筆', 'Back to Blog')} /></a>
         <h1>{locales.map((locale) => <span data-lang={locale}>{entries[locale].data.title}</span>)}</h1>
         <p class="article-deck">{locales.map((locale) => <span data-lang={locale}>{entries[locale].data.attribution && <span class="content-attribution">{entries[locale].data.attribution}</span>}{entries[locale].data.description}</span>)}</p>
         <div class="article-meta">

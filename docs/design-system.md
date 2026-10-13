@@ -1,8 +1,8 @@
 # Steeefanie Personal Site 设计规范
 
-> 版本：2.31
+> 版本：2.34
 > 状态：当前项目设计基线
-> 更新日期：2026-10-03
+> 更新日期：2026-10-13
 > 适用范围：主页、随笔、项目、食谱、长文详情页及后续轻量工具页面
 
 ## 1. 文档定位
@@ -94,15 +94,21 @@ HEX: #63065F
 
 ```css
 :root {
-  --color-brand: #63065F;
-  --color-brand-interactive: #63065F;
-  --color-focus: #63065F;
+  --brand: #63065f;
+  --brand-interactive: #63065f;
+  --brand-readable: #63065f;
+  --brand-strong: #63065f;
+  --brand-soft: rgba(99, 6, 95, 0.1);
+  --focus: #63065f;
 }
 
 :root[data-theme='dark'] {
-  --color-brand: #C979C4;
-  --color-brand-interactive: #C979C4;
-  --color-focus: #C979C4;
+  --brand: #c979c4;
+  --brand-interactive: #c979c4;
+  --brand-readable: #c979c4;
+  --brand-strong: #c979c4;
+  --brand-soft: rgba(201, 121, 196, 0.16);
+  --focus: #c979c4;
 }
 ```
 
@@ -112,7 +118,7 @@ HEX: #63065F
 - 深色主题切换时，上述所有品牌与交互用途全局替换为备用色 `#C979C4`，不得混用主品牌色；
 - 不再使用 `#B961B4`、`#D28DCE`、`#DC9AD7` 等第三种相近紫色；
 - 需要弱背景时，只能以当前主题生效的品牌色增加透明度，不建立新的实色紫色；
-- 大面积品牌实色按钮使用当前主题的 `--color-brand`，文字使用柔和的近白色；
+- 大面积品牌实色按钮使用当前主题的 `--brand`，文字使用柔和的近白色；
 - `#C979C4` 与深色页面、普通表面和抬升表面的对比度均达到普通文字WCAG AA底线；当前状态仍应同时使用下划线、字重、圆点或 `aria-current` 等非颜色信号。
 
 品牌图标使用同一中心对称 S 形标志：浅色主题固定为 `#63065F`，深色主题固定为 `#C979C4`。标签页图标和导航字标只使用透明底版本，并跟随网站实际主题而不是仅跟随操作系统主题；带白色或深色圆角底板的版本作为后续应用图标资源保留，当前页面不引用。
@@ -123,16 +129,16 @@ HEX: #63065F
 
 ```css
 :root {
-  --color-page: #F5F5F5;
-  --color-surface: #FFFFFF;
-  --color-surface-raised: #ECECEC;
-  --color-text-primary: #171717;
-  --color-text-secondary: #666666;
-  --color-border: #D9D9D9;
-  --color-code-bg: #1F1F1F;
-  --color-code-text: #F0F0F0;
-  --color-header: rgba(255, 255, 255, 0.64);
-  --color-focus: #63065F;
+  --page: #f5f5f5;
+  --surface: #ffffff;
+  --surface-raised: #ececec;
+  --text: #171717;
+  --muted: #666666;
+  --border: #d9d9d9;
+  --code-bg: #1f1f1f;
+  --code-text: #f0f0f0;
+  --header-bg: rgba(255, 255, 255, 0.64);
+  --focus: #63065f;
 }
 ```
 
@@ -142,17 +148,17 @@ HEX: #63065F
 
 ```css
 :root[data-theme='dark'] {
-  --color-page: #141414;
-  --color-surface: #1D1D1D;
-  --color-surface-raised: #262626;
-  --color-text-primary: #F2F2F2;
-  --color-text-secondary: #B3B3B3;
-  --color-border: #333333;
-  --color-code-bg: #0D0D0D;
-  --color-code-text: #F0F0F0;
-  --color-header: rgba(8, 8, 8, 0.64);
-  --color-brand: #C979C4;
-  --color-focus: #C979C4;
+  --page: #141414;
+  --surface: #1d1d1d;
+  --surface-raised: #262626;
+  --text: #f2f2f2;
+  --muted: #b3b3b3;
+  --border: #333333;
+  --code-bg: #0d0d0d;
+  --code-text: #f0f0f0;
+  --header-bg: rgba(8, 8, 8, 0.64);
+  --brand: #c979c4;
+  --focus: #c979c4;
 }
 ```
 
@@ -227,14 +233,13 @@ HEX: #63065F
 
 | 令牌 | 桌面尺寸/行高 | 字重 | 典型用途 |
 |---|---|---:|---|
-| `display` | `clamp(52px, calc(40px + 3vw), 80px)` / 1.06 | 600 | 首页主标题 |
-| `page-title` | `clamp(44px, 6vw, 72px)` / 1.08 | 600 | Blog、Project 页标题 |
-| `section-title` | `clamp(24.8px, 3vw, 35.2px)` | 600 | 首页“最近更新”和所有文档详情标题，共用 `--font-size-section-title` |
+| `home-display` | `clamp(43.2px, calc(35.2px + 2.2vw), 64px)` / 1.06 | 600 | 首页主标题 |
+| `home-section-title` | `clamp(21.6px, 2.4vw, 29.6px)` / 1.25 | 600 | 首页“在线服务”“最近更新”标题 |
 | `article-title` | `var(--font-size-section-title)` / 1.25 | 600 | 随笔、项目和食谱详情标题，不得在单篇内容中覆盖 |
 | `heading-2` | 32px / 40px | 600 | 页面主要章节 |
 | `heading-3` | 24px / 32px | 600 | 长文三级标题 |
 | `heading-4` | 18px / 28px | 600 | 长文四级标题 |
-| `body-large` | 18px / 30px | 400 | 首页介绍、页面导语 |
+| `body-large` | 18px / 30px | 400 | 需要额外强调的页面导语 |
 | `body` | 16px / 28px | 400 | 普通正文 |
 | `body-zh` | 16px / 29px | 400 | 中文长文正文 |
 | `label` | 14px / 20px | 500 | 导航、按钮、标签 |
@@ -244,10 +249,9 @@ HEX: #63065F
 大标题字距允许收紧，正文不使用负字距：
 
 ```text
-display（英文）：-0.04em
-display（中文混排）：-0.025em
-page-title：-0.04em
-section-title / article-title：-0.035em
+home-display（英文）：-0.04em
+home-display（中文混排）：-0.025em
+home-section-title / article-title：-0.035em
 heading-2：-0.025em
 正文与元信息：normal
 ```
@@ -310,22 +314,43 @@ space-24 96px
 
 间距优先用于表达关系：越相关越接近，越独立越分开。
 
+首页采用明确的纵向关系，不再把两个相邻区块各自的 padding 作为独立数值叠加后凭观感调整：
+
+```text
+页面顶部 → Hero 内容：32px
+Hero 标题 → 介绍文字：32px
+Hero 内容 → 在线服务标题：64px（40px + 24px）
+在线服务标题 → 图标内容：32px
+在线服务内容 → 最近更新标题：80px（40px + 40px，首页最大的相邻模块间距）
+最近更新标题 → 本区块内容：24px
+“最近更新”上一条说明文字 → 下一条栏目标签：桌面端28px（12px + 4px + 12px），800px及以下32px（14px + 4px + 14px）
+“最近更新”上一条说明文字 → 下一条标题：桌面端约50px，800px及以下约54px（另含栏目标签约16px行盒及6px下间距）
+“最近更新”内容 → 页脚文字：56px（32px + 24px）
+```
+
+首页以及随笔、项目、食谱列表项采用同一套反向密度补偿：宽屏下说明文字通常不换行，使用12px上下内边距；800px及以下内容更容易换行，使用14px上下内边距。该同步只涉及纵向间距，不改变各页面原有列宽。计算首页“最近更新”的视觉间距时必须计入栏目标签的行盒和下间距，不得只相加列表项内边距与列表间隙。
+
+首页以及随笔、项目、食谱列表保留原有流动双列结构：正文列吸收剩余空间，元信息列占容器约三成且不小于190px，两列间距为38px。800px及以下四处统一切换为单列。
+
 ## 6. 布局与响应式
 
 ### 6.1 容器
 
 ```css
---layout-wide: 1120px;
---layout-reading: 740px;
+--content-wide: 1120px;
+--content-reading: 740px;
+--page-gutter: 30px;
 ```
 
 建议页面内边距：
 
 ```text
-桌面：20px 以上
-平板：20px
-手机：14–16px
+桌面：左右各30px
+平板：左右各30px
+手机：左右各30px
 ```
+
+宽容器和阅读容器统一使用30px视口边距；组件内部不得再次添加同等水平内边距，避免留白叠加。
 
 ### 6.2 项目断点
 
@@ -365,6 +390,7 @@ Wide：> 800px
 
 ```text
 欢迎语与个人简介
+在线服务
 最近更新（随笔、项目、食谱各取最新1条，共3条，按发布日期重新排序）
 页脚
 ```
@@ -373,9 +399,12 @@ Wide：> 800px
 - 首页说明分别自然引导至随笔、项目和食谱，中文使用“技术笔记、踩坑经历、碎碎念”“做过的菜、揉过的面、调过的酒”等生活化表达；英文采用自然意译，并使用 `dough I’ve kneaded` 表达发面、馒头和发糕一类面食语境，不写作 `noodles`；
 - “关于我”正文不使用首行缩进；
 - “关于我”使用独立的中性抬升表面，其下方设置联系方式行：左侧显示纯文本 `Contact: taichieh3@gmail.com`，其左边线距卡片左边12px，与12px圆角曲线和底边直线的交界点对齐；右侧GitHub图标保留外部链接和明确的无障碍名称；
-- “最近更新”标题下不再附加“各取最新一条”等机制说明，具体选择逻辑只在数据层和维护文档中保留。
-- “最近更新”桌面列表中的日期顶端与条目标题顶端对齐，不与栏目标签顶端对齐；移动端日期随元信息自然排在正文下方。
-- 页脚只保留动态年份版权标识 `© 年份 Steeefanie`，不附加框架宣传或泛化口号。
+- “在线服务”优先于内容更新列表，展示可直接使用的轻量工具入口；当前单个服务使用低密度图标入口，不扩展为营销卡片；
+- “在线服务”和“最近更新”的标题使用普通主文字色，左侧设置3px宽、0.72em高的品牌色细竖条。标题行高固定为1.25，竖条按行盒居中并向下进行1px光学校正；不使用黄金分割矩形，也不依赖字体默认行高决定位置；
+- “最近更新”标题下不附加“各取最新一条”等机制说明，具体选择逻辑只在数据层和维护文档中保留；
+- “最近更新”桌面列表中的日期顶端与条目标题顶端对齐，不与栏目标签顶端对齐；移动端日期随元信息自然排在正文下方；
+- 首页介绍使用16px正文级字号，与内容列表摘要保持一致；首页主标题、区块标题和列表标题使用各自的响应式字号令牌，随视口宽度缩放，不使用单独的横竖屏媒体查询；
+- 页脚只保留动态年份版权标识 `© 年份 Steeefanie`，不附加框架宣传或泛化口号；页脚顶部与底部分别使用24px、32px内边距，首页内容至页脚文字的总间距不得超过“在线服务”与“最近更新”的80px模块间距。
 
 不增加：
 
@@ -428,6 +457,14 @@ Wide：> 800px
 - 鸡尾酒内容应包含适度饮酒和法定饮酒年龄提示；
 - 示例食谱必须明确可替换，不虚构为个人原创或经过长期测试的食谱；
 - 食谱仍以文字排版为核心，不制作图片主导的卡片墙。
+
+### 6.8 轻量工具页面
+
+- “返回主页”保留为标题上方的独立一行，不与工具标题并排；
+- 工具页不在全站主内容顶部间距之外追加页面级上内边距；
+- 返回入口与标题之间固定为12px，标题不得再设置额外上边距；
+- 标题与主要工具区域之间保持24px，在维持清晰层级的同时减少首屏无效留白；
+- 返回入口和工具标题沿用既有字号，不通过缩小文字换取空间。
 
 ## 7. 形状、边框与层次
 
@@ -594,8 +631,8 @@ current / selected（如适用）
 :focus-visible {
   outline: none;
   box-shadow:
-    0 0 0 2px var(--color-page),
-    0 0 0 4px var(--color-focus);
+    0 0 0 2px var(--page),
+    0 0 0 4px var(--focus);
 }
 ```
 
@@ -680,7 +717,6 @@ English
 ### 12.1 时间令牌
 
 ```css
---motion-instant: 100ms;
 --motion-fast: 150ms;
 --motion-standard: 200ms;
 --motion-overlay: 300ms;
@@ -781,7 +817,7 @@ Blog 详情页顺序：
 上一篇 / 下一篇
 ```
 
-详情标题必须读取内容 frontmatter 的 `title` 并由统一模板输出；Markdown / MDX 正文不得重复书写一级标题，也不得在单篇内容中覆盖标题字号。标题字号与首页“最近更新”共用 `--font-size-section-title`，因此替换示例文档或新增内容时无需重复配置。
+详情标题必须读取内容 frontmatter 的 `title` 并由统一模板输出；Markdown / MDX 正文不得重复书写一级标题，也不得在单篇内容中覆盖标题字号。详情标题统一使用 `--font-size-section-title`；首页区块标题使用独立的 `--font-size-home-section-title`，两者不得混用。
 
 详情元信息统一字号与行高，并在同一行盒中垂直居中。日期、阅读时间、类别和标签不得各自使用不同字号或嵌套基线规则；类别圆点随文字行盒居中。上一篇/下一篇使用显式左右插槽：上一篇固定左列，下一篇固定右列；缺少任一方向时不渲染空占位，720px及以下统一为单列左对齐。
 
@@ -993,7 +1029,7 @@ Recipe 详情页顺序：
 
 本文件是目标设计基线。当前代码总体方向一致，但后续实施时应优先处理以下差异：
 
-1. 当前部分间距仍存在 17px、27px、42px、54px 等值，应逐步映射到 4px 间距体系；
+1. 首页主要纵向间距已映射到4px间距体系；其他页面仍存在少量历史数值，应在相关组件实际调整时逐步归并，不进行无目的的全站机械替换；
 2. 当前焦点主要使用单层 outline，可根据背景情况升级为两层焦点环；
 3. 应补充 200% 缩放和大字体情况下的专项验收；
 4. View Transitions API 不可用时只能降级为淡出淡入，应持续关注浏览器支持范围；
@@ -1021,3 +1057,6 @@ Recipe 详情页顺序：
 - [Apple Buttons](https://developer.apple.com/design/human-interface-guidelines/buttons)：参考触控区域和按下反馈；
 - [Apple Accessibility](https://developer.apple.com/design/human-interface-guidelines/accessibility)：参考键盘、视觉和字体可访问性；
 - [Apple Reduced Motion Evaluation Criteria](https://developer.apple.com/help/app-store-connect/manage-app-accessibility/reduced-motion-evaluation-criteria)：参考减少动态效果的判断标准。
+- [Material Design 3 Typography](https://m3.material.io/styles/typography/applying-type)：参考文字行盒、中心对齐、行高与内外间距的计算方式；
+- [Carbon Design System Spacing](https://www.carbondesignsystem.com/building-blocks/foundations/spacing/overview)：参考离散间距尺度及组件内部与组件之间的间距分工；
+- [Carbon Design System Tabs Specifications](https://www.carbondesignsystem.com/building-blocks/core/components/tabs/specifications)：参考3px垂直强调标记的视觉重量。

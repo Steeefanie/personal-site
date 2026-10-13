@@ -59,11 +59,11 @@ export const ui = {
     ),
     aboutTitle: text('关于我', '關於我', 'About me'),
     aboutText: text(
-      '工科背景，文职牛马，关注人工智能、计算机网络、图像处理……闲暇时什么都做，搞吃搞喝，偶尔捣鼓一些小东西。',
-      '理工背景，文職社畜，關注人工智慧、電腦網路、影像處理……閒暇時什麼都做，弄吃弄喝，偶爾動手做些小東西。',
-      'Engineering background, office-job desk jockey. I’m interested in artificial intelligence, computer networks, and image processing. In my spare time I do a bit of everything—cook, mix drinks, and occasionally tinker with small things.',
+      '工科背景，文职牛马，关注人工智能、计算机网络、图像处理……',
+      '理工背景，文職社畜，關注人工智慧、電腦網路、影像處理……',
+      'Engineering background, office-job desk jockey. I’m interested in artificial intelligence, computer networks, and image processing.',
     ),
-    latest: text('最近更新', '最新動態', 'Latest'),
+    latest: text('最近更新', '最近更新', 'Latest updates'),
     services: text('在线服务', '線上服務', 'Online services'),
   },
   guestbook: {
