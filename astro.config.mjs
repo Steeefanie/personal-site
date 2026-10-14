@@ -3,6 +3,7 @@ import mdx from '@astrojs/mdx';
 import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
+  site: 'https://steeefanie.top',
   output: 'static',
   devToolbar: { enabled: false },
   integrations: [mdx()],

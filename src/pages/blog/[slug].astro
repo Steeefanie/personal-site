@@ -45,7 +45,7 @@ const titles = Object.fromEntries(locales.map((locale) => [locale, `${entries[lo
 const descriptions = Object.fromEntries(locales.map((locale) => [locale, entries[locale].data.description])) as Localized<string>;
 ---
 
-<BaseLayout activeNav="blog" titles={titles} descriptions={descriptions}>
+<BaseLayout activeNav="blog" titles={titles} descriptions={descriptions} pageType="article">
   <ArticleToc headings={tocHeadings} />
   <article class="article-with-comments article-toc-page" data-article-toc-page>
     <header class="article-header">

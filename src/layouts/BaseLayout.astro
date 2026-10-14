@@ -9,6 +9,7 @@ interface Props {
   titles?: Localized<string>;
   descriptions?: Localized<string>;
   activeNav?: 'home' | 'blog' | 'projects' | 'recipes';
+  pageType?: 'website' | 'article';
 }
 
 const defaultTitles = text('Steeefanie｜个人网站', 'Steeefanie｜個人網站', 'Steeefanie | Personal Site');
@@ -17,7 +18,9 @@ const {
   titles = defaultTitles,
   descriptions = defaultDescriptions,
   activeNav = 'home',
+  pageType = 'website',
 } = Astro.props;
+const canonicalUrl = new URL(Astro.url.pathname, Astro.site ?? Astro.url.origin).href;
 ---
 
 <!doctype html>
@@ -27,6 +30,18 @@ const {
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={descriptions['zh-CN']} />
     <meta name="theme-color" content="#f5f5f5" />
+    <link rel="canonical" href={canonicalUrl} />
+    <meta property="og:site_name" content="Steeefanie" />
+    <meta property="og:type" content={pageType} />
+    <meta property="og:title" content={titles['zh-CN']} data-page-title-meta />
+    <meta property="og:description" content={descriptions['zh-CN']} data-page-description-meta />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:locale" content="zh_CN" />
+    <meta property="og:locale:alternate" content="zh_TW" data-og-locale-alternate />
+    <meta property="og:locale:alternate" content="en_US" data-og-locale-alternate />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={titles['zh-CN']} data-page-title-meta />
+    <meta name="twitter:description" content={descriptions['zh-CN']} data-page-description-meta />
     <link id="site-favicon" rel="icon" href="/brand/favicon-light-nobg.svg" type="image/svg+xml" />
     <title>{titles['zh-CN']}</title>
     <script is:inline>
@@ -81,6 +96,18 @@ const {
         const description = document.body.dataset[`description${suffix}`];
         if (title) document.title = title;
         if (description) document.querySelector('meta[name="description"]')?.setAttribute('content', description);
+        if (title) document.querySelectorAll('[data-page-title-meta]').forEach((meta) => meta.setAttribute('content', title));
+        if (description) document.querySelectorAll('[data-page-description-meta]').forEach((meta) => meta.setAttribute('content', description));
+
+        const localeMap = { 'zh-CN': 'zh_CN', 'zh-TW': 'zh_TW', en: 'en_US' };
+        document.querySelector('meta[property="og:locale"]')?.setAttribute('content', localeMap[language]);
+        const alternateLocales = Object.entries(localeMap)
+          .filter(([locale]) => locale !== language)
+          .map(([, locale]) => locale);
+        document.querySelectorAll('[data-og-locale-alternate]').forEach((meta, index) => {
+          const locale = alternateLocales[index];
+          if (locale) meta.setAttribute('content', locale);
+        });
       };
       syncDocumentLanguage();
       window.addEventListener('site:language-change', syncDocumentLanguage);
