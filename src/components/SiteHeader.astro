@@ -250,6 +250,8 @@ const navItems = [
     if (event.key === 'Escape' && openPanelName) { event.preventDefault(); closePanel(true); }
   });
   window.addEventListener('site:close-panels', () => closePanel());
+  window.addEventListener('site:guestbook-open', () => header?.classList.add('is-hidden'));
+  window.addEventListener('site:guestbook-closing', () => header?.classList.remove('is-hidden'));
   window.addEventListener('site:scroll-unlocked', (event) => {
     const scrollY = (event as CustomEvent<{ scrollY?: number }>).detail?.scrollY;
     previousY = typeof scrollY === 'number' ? scrollY : window.scrollY;

@@ -1,11 +1,9 @@
 html.guestbook-open .top-chrome {
-  opacity: 0;
-  visibility: hidden;
   pointer-events: none;
 }
 
-.top-chrome {
-  transition: opacity 160ms ease, visibility 160ms ease;
+html.guestbook-open .top-chrome-surface {
+  transition-duration: 220ms, 180ms;
 }
 
 .guestbook-dialog {

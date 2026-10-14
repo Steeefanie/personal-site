@@ -690,7 +690,7 @@ html[lang='zh-TW'] .hero h1 {
 .hero-note {
   padding: 20px 22px;
   border-radius: var(--radius-lg);
-  background: color-mix(in srgb, var(--surface-raised) 62%, transparent);
+  background: var(--surface-soft);
   color: var(--muted);
   font-size: 0.92rem;
 }

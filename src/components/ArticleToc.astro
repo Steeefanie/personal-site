@@ -1,0 +1,110 @@
+---
+import LocalizedText from './LocalizedText.astro';
+import { locales, text, type Localized } from '../lib/i18n';
+import '../styles/article-toc.css';
+
+interface TocHeading {
+  depth: number;
+  slug: string;
+  text: string;
+}
+
+interface Props {
+  headings: Localized<TocHeading[]>;
+}
+
+const { headings } = Astro.props;
+const visibleHeadings = Object.fromEntries(locales.map((locale) => [
+  locale,
+  headings[locale].filter(({ depth }) => depth === 2 || depth === 3),
+])) as Localized<TocHeading[]>;
+const shouldRender = locales.some((locale) => visibleHeadings[locale].length >= 3);
+const labels = {
+  title: text('目录', '目錄', 'Contents'),
+  open: text('打开目录', '開啟目錄', 'Open contents'),
+  close: text('关闭目录', '關閉目錄', 'Close contents'),
+  reset: text('恢复自动宽度', '恢復自動寬度', 'Restore automatic width'),
+  resize: text('调整目录宽度', '調整目錄寬度', 'Resize contents'),
+};
+---
+
+{shouldRender && (
+  <div class="article-toc" data-article-toc data-open="false" data-mode="overlay">
+    <button
+      class="article-toc-toggle"
+      type="button"
+      aria-controls="article-toc-panel"
+      aria-expanded="false"
+      aria-label={labels.open['zh-CN']}
+      data-article-toc-toggle
+      data-open-zh-cn={labels.open['zh-CN']}
+      data-open-zh-tw={labels.open['zh-TW']}
+      data-open-en={labels.open.en}
+      data-close-zh-cn={labels.close['zh-CN']}
+      data-close-zh-tw={labels.close['zh-TW']}
+      data-close-en={labels.close.en}
+    >
+      <svg class="article-toc-list-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="5" cy="6" r="1.25"></circle>
+        <circle cx="5" cy="12" r="1.25"></circle>
+        <circle cx="5" cy="18" r="1.25"></circle>
+        <path d="M9 6h10M9 12h10M9 18h10"></path>
+      </svg>
+      <svg class="article-toc-close-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="m7 7 10 10M17 7 7 17"></path>
+      </svg>
+    </button>
+
+    <button class="article-toc-backdrop" type="button" tabindex="-1" aria-label={labels.close['zh-CN']} data-article-toc-backdrop></button>
+
+    <aside
+      class="article-toc-panel"
+      id="article-toc-panel"
+      aria-labelledby="article-toc-title"
+      aria-hidden="true"
+      inert
+      data-article-toc-panel
+    >
+      <header class="article-toc-header">
+        <strong id="article-toc-title"><LocalizedText value={labels.title} /></strong>
+        <button class="article-toc-reset" type="button" hidden data-article-toc-reset>
+          <LocalizedText value={labels.reset} />
+        </button>
+      </header>
+
+      <nav class="article-toc-nav" aria-labelledby="article-toc-title">
+        {locales.map((locale) => (
+          <ol data-lang={locale}>
+            {visibleHeadings[locale].map((heading) => (
+              <li data-depth={heading.depth}>
+                <a href={`#${heading.slug}`} data-article-toc-link data-slug={heading.slug} data-depth={heading.depth}>
+                  <span data-article-toc-title>{heading.text}</span>
+                </a>
+              </li>
+            ))}
+          </ol>
+        ))}
+      </nav>
+
+      <div
+        class="article-toc-resizer"
+        role="separator"
+        aria-orientation="vertical"
+        aria-label={labels.resize['zh-CN']}
+        aria-valuemin="240"
+        aria-valuemax="440"
+        tabindex="0"
+        data-article-toc-resizer
+        data-label-zh-cn={labels.resize['zh-CN']}
+        data-label-zh-tw={labels.resize['zh-TW']}
+        data-label-en={labels.resize.en}
+      ></div>
+    </aside>
+  </div>
+)}
+
+{shouldRender && (
+  <script>
+    import '../scripts/article-toc';
+  </script>
+)}
