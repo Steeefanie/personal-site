@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 import { getCollection } from 'astro:content';
 import { pairEntries } from '../lib/content';
 import { locales, ui } from '../lib/i18n';
+import { localizedPath } from '../lib/routes';
 
 export const prerender = true;
 
@@ -16,7 +17,7 @@ export const GET: APIRoute = async () => {
     ...pairEntries(blogs).map((group) => ({
       id: `blog:${group.slug}`,
       section: 'blog' as const,
-      url: `/blog/${group.slug}/`,
+      urls: Object.fromEntries(locales.map((locale) => [locale, localizedPath(locale, `/blog/${group.slug}/`)])),
       publishDate: group.locales['zh-CN'].data.publishDate.toISOString(),
       locales: Object.fromEntries(locales.map((locale) => [locale, {
         title: group.locales[locale].data.title,
@@ -27,7 +28,7 @@ export const GET: APIRoute = async () => {
     ...pairEntries(projects).map((group) => ({
       id: `projects:${group.slug}`,
       section: 'projects' as const,
-      url: `/projects/${group.slug}/`,
+      urls: Object.fromEntries(locales.map((locale) => [locale, localizedPath(locale, `/projects/${group.slug}/`)])),
       publishDate: group.locales['zh-CN'].data.publishDate.toISOString(),
       locales: Object.fromEntries(locales.map((locale) => [locale, {
         title: group.locales[locale].data.title,
@@ -38,7 +39,7 @@ export const GET: APIRoute = async () => {
     ...pairEntries(recipes).map((group) => ({
       id: `recipes:${group.slug}`,
       section: 'recipes' as const,
-      url: `/recipes/${group.slug}/`,
+      urls: Object.fromEntries(locales.map((locale) => [locale, localizedPath(locale, `/recipes/${group.slug}/`)])),
       publishDate: group.locales['zh-CN'].data.publishDate.toISOString(),
       locales: Object.fromEntries(locales.map((locale) => [locale, {
         title: group.locales[locale].data.title,

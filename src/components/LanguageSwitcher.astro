@@ -1,13 +1,17 @@
+---
+import { ui } from '../lib/i18n';
+import { localeFromPathname } from '../lib/routes';
+
+const locale = localeFromPathname(Astro.url.pathname);
+---
+
 <button
   class="utility-button language-switcher"
   type="button"
   data-panel-trigger="language"
   aria-controls="language-panel"
   aria-expanded="false"
-  aria-label="选择语言"
-  data-label-zh-cn="选择语言"
-  data-label-zh-tw="選擇語言"
-  data-label-en="Choose language"
+  aria-label={ui.common.chooseLanguage[locale]}
 >
   <svg viewBox="0 0 24 24" aria-hidden="true">
     <circle cx="12" cy="12" r="8.25" fill="none" stroke="currentColor" stroke-width="1.7" />

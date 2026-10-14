@@ -3,13 +3,16 @@ import LanguageSwitcher from './LanguageSwitcher.astro';
 import ThemeSwitcher from './ThemeSwitcher.astro';
 import SearchPanel from './SearchPanel.astro';
 import LocalizedText from './LocalizedText.astro';
-import { localeNames, locales, ui } from '../lib/i18n';
+import { localeNames, locales, ui, type Locale } from '../lib/i18n';
+import { localeRoutePrefixes, localizedPath, logicalPathname } from '../lib/routes';
 
 interface Props {
   activeNav: 'home' | 'blog' | 'projects' | 'recipes';
+  locale: Locale;
 }
 
-const { activeNav } = Astro.props;
+const { activeNav, locale } = Astro.props;
+const currentLogicalPath = logicalPathname(Astro.url.pathname);
 const navItems = [
   { key: 'home', href: '/', label: ui.nav.home },
   { key: 'blog', href: '/blog/', label: ui.nav.blog },
@@ -22,7 +25,7 @@ const navItems = [
   <div class="top-chrome-surface" aria-hidden="true"></div>
   <header class="site-header">
     <div class="site-shell header-inner">
-      <a class="site-name" href="/" aria-label="Steeefanie">
+      <a class="site-name" href={localizedPath(locale, '/')} aria-label="Steeefanie">
         <span class="site-name-mark" aria-hidden="true">
           <img class="site-name-mark-image site-name-mark-image--light" src="/brand/favicon-light-nobg.svg" alt="" width="27" height="27" decoding="sync" draggable="false" />
           <img class="site-name-mark-image site-name-mark-image--dark" src="/brand/favicon-dark-nobg.svg" alt="" width="27" height="27" decoding="sync" draggable="false" />
@@ -30,9 +33,9 @@ const navItems = [
         <span class="site-name-text">teeefanie</span>
       </a>
       <div class="header-actions">
-        <nav class="primary-nav" aria-label="主要导航 / Primary navigation">
+        <nav class="primary-nav" aria-label={ui.common.primaryNavigation[locale]}>
           {navItems.map((item) => (
-            <a class="nav-link" href={item.href} aria-current={activeNav === item.key ? 'page' : undefined}>
+            <a class="nav-link" href={localizedPath(locale, item.href)} aria-current={activeNav === item.key ? 'page' : undefined}>
               <LocalizedText value={item.label} />
             </a>
           ))}
@@ -43,10 +46,7 @@ const navItems = [
           data-panel-trigger="search"
           aria-controls="search-panel"
           aria-expanded="false"
-          aria-label="搜索"
-          data-label-zh-cn="搜索"
-          data-label-zh-tw="搜尋"
-          data-label-en="Search"
+          aria-label={ui.common.search[locale]}
         >
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.75" cy="10.75" r="6.75" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="m15.7 15.7 4.05 4.05" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
         </button>
@@ -58,10 +58,7 @@ const navItems = [
           data-panel-trigger="navigation"
           aria-controls="navigation-panel"
           aria-expanded="false"
-          aria-label="打开导航菜单"
-          data-label-zh-cn="打开导航菜单"
-          data-label-zh-tw="開啟導覽選單"
-          data-label-en="Open navigation menu"
+          aria-label={ui.common.openMenu[locale]}
         >
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8.5h14M5 15.5h14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
         </button>
@@ -71,20 +68,27 @@ const navItems = [
 
   <SearchPanel defaultScope={activeNav === 'home' ? 'all' : activeNav} />
 
-  <section id="language-panel" class="header-panel language-panel" data-panel="language" aria-label="Language" hidden>
+  <section id="language-panel" class="header-panel language-panel" data-panel="language" aria-label={ui.common.languageMenu[locale]} hidden>
     <div class="site-shell panel-inner language-panel-inner">
-      {locales.map((locale) => (
-        <button class="language-option" type="button" data-language-option={locale} aria-pressed="false">
-          <span>{localeNames[locale]}</span>
-        </button>
+      {locales.map((candidate) => (
+        <a
+          class="language-option"
+          href={localizedPath(candidate, currentLogicalPath)}
+          data-language-option={localeRoutePrefixes[candidate].slice(1)}
+          aria-current={locale === candidate ? 'page' : undefined}
+          lang={candidate}
+          hreflang={candidate}
+        >
+          <span>{localeNames[candidate]}</span>
+        </a>
       ))}
     </div>
   </section>
 
-  <nav id="navigation-panel" class="header-panel navigation-panel" data-panel="navigation" aria-label="Mobile navigation" hidden>
+  <nav id="navigation-panel" class="header-panel navigation-panel" data-panel="navigation" aria-label={ui.common.mobileNavigation[locale]} hidden>
     <div class="site-shell panel-inner mobile-nav-list">
       {navItems.map((item) => (
-        <a class="mobile-nav-link" href={item.href} aria-current={activeNav === item.key ? 'page' : undefined}>
+        <a class="mobile-nav-link" href={localizedPath(locale, item.href)} aria-current={activeNav === item.key ? 'page' : undefined}>
           <LocalizedText value={item.label} />
         </a>
       ))}
@@ -96,7 +100,6 @@ const navItems = [
   import { lockPageScroll, unlockPageScroll } from '../lib/scroll-lock';
 
   type PanelName = 'search' | 'language' | 'navigation';
-  type Locale = 'zh-CN' | 'zh-TW' | 'en';
   const topChrome = document.querySelector<HTMLElement>('[data-top-chrome]');
   const header = topChrome?.querySelector<HTMLElement>('.site-header');
   const triggers = [...(topChrome?.querySelectorAll<HTMLButtonElement>('[data-panel-trigger]') ?? [])];
@@ -107,23 +110,7 @@ const navItems = [
   let surfaceCloseTimer = 0;
   let previousY = window.scrollY;
   let headerFrame = 0;
-
-  const currentLocale = (): Locale => {
-    const value = document.documentElement.dataset.language;
-    return value === 'zh-TW' || value === 'en' ? value : 'zh-CN';
-  };
-
-  const updateButtonLabels = () => {
-    const locale = currentLocale();
-    const suffix = locale === 'zh-CN' ? 'ZhCn' : locale === 'zh-TW' ? 'ZhTw' : 'En';
-    triggers.forEach((button) => {
-      const label = button.dataset[`label${suffix}`];
-      if (label) button.setAttribute('aria-label', label);
-    });
-    topChrome?.querySelectorAll<HTMLButtonElement>('[data-language-option]').forEach((button) => {
-      button.setAttribute('aria-pressed', String(button.dataset.languageOption === locale));
-    });
-  };
+  let ignoreNextScrollUpdate = false;
 
   const updateSurfaceHeight = () => {
     if (!topChrome) return;
@@ -228,15 +215,38 @@ const navItems = [
     panel.addEventListener('pointerleave', scheduleClose);
   });
 
-  topChrome?.querySelectorAll<HTMLButtonElement>('[data-language-option]').forEach((button) => {
-    button.addEventListener('click', () => {
-      const locale = button.dataset.languageOption as Locale;
-      document.documentElement.dataset.language = locale;
-      document.documentElement.lang = locale;
-      try { localStorage.setItem('language', locale); } catch (_) { /* Storage may be unavailable. */ }
-      updateButtonLabels();
-      window.dispatchEvent(new CustomEvent('site:language-change', { detail: { language: locale } }));
-      closePanel();
+  topChrome?.querySelectorAll<HTMLAnchorElement>('[data-language-option]').forEach((link) => {
+    link.addEventListener('click', (event) => {
+      const preference = link.dataset.languageOption;
+      if (preference) {
+        const secure = location.protocol === 'https:' ? '; Secure' : '';
+        document.cookie = `steeefanie_locale=${encodeURIComponent(preference)}; Max-Age=31536000; Path=/; SameSite=Lax${secure}`;
+      }
+      if (link.getAttribute('aria-current') === 'page') {
+        event.preventDefault();
+        closePanel();
+        return;
+      }
+      const target = new URL(link.href);
+      target.search = location.search;
+      link.href = target.href;
+      try {
+        const headings = [...document.querySelectorAll<HTMLElement>('.prose :is(h2, h3)')];
+        const readingAnchor = Math.min(180, innerHeight * 0.3);
+        let headingIndex = -1;
+        headings.forEach((heading, index) => {
+          if (heading.getBoundingClientRect().top <= readingAnchor) headingIndex = index;
+        });
+        const maximumScroll = Math.max(0, document.documentElement.scrollHeight - innerHeight);
+        const scrollState = {
+          target: `${target.pathname}${target.search}`,
+          scrollY,
+          progress: maximumScroll > 0 ? scrollY / maximumScroll : 0,
+          headingIndex,
+          headingOffset: headingIndex >= 0 ? headings[headingIndex].getBoundingClientRect().top : 0,
+        };
+        sessionStorage.setItem('language-route-scroll', JSON.stringify(scrollState));
+      } catch (_) { /* Storage may be unavailable. */ }
     });
   });
 
@@ -256,11 +266,21 @@ const navItems = [
     const scrollY = (event as CustomEvent<{ scrollY?: number }>).detail?.scrollY;
     previousY = typeof scrollY === 'number' ? scrollY : window.scrollY;
   });
+  window.addEventListener('site:toc-jump', (event) => {
+    const scrollY = (event as CustomEvent<{ scrollY?: number }>).detail?.scrollY;
+    ignoreNextScrollUpdate = true;
+    previousY = typeof scrollY === 'number' ? scrollY : window.scrollY;
+  });
 
   const updateHeader = () => {
     headerFrame = 0;
     if (!header || openPanelName) return;
     const currentY = Math.max(0, window.scrollY);
+    if (ignoreNextScrollUpdate) {
+      ignoreNextScrollUpdate = false;
+      previousY = currentY;
+      return;
+    }
     const delta = currentY - previousY;
     if (currentY < 72 || delta < -10) header.classList.remove('is-hidden');
     else if (delta > 10) header.classList.add('is-hidden');
@@ -274,5 +294,4 @@ const navItems = [
     else updateSurfaceHeight();
   }, { passive: true });
 
-  updateButtonLabels();
 </script>

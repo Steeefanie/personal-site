@@ -1,5 +1,6 @@
 ---
-import { localeDateFormats, locales, type Localized } from '../lib/i18n';
+import { localeDateFormats, type Locale, type Localized } from '../lib/i18n';
+import { localizedPath } from '../lib/routes';
 
 interface Tag { id: string; label: string }
 interface LocalizedPost {
@@ -14,9 +15,11 @@ interface LocalizedPost {
 interface Props {
   slug: string;
   locales: Localized<LocalizedPost>;
+  locale: Locale;
 }
 
-const { slug, locales: entries } = Astro.props;
+const { slug, locales: entries, locale } = Astro.props;
+const entry = entries[locale];
 const formatDate = (locale: keyof typeof entries, date: Date) => new Intl.DateTimeFormat(
   localeDateFormats[locale],
   { year: 'numeric', month: locale === 'en' ? 'short' : 'long', day: 'numeric' },
@@ -24,15 +27,15 @@ const formatDate = (locale: keyof typeof entries, date: Date) => new Intl.DateTi
 ---
 
 <li class="content-list-item">
-  <a href={`/blog/${slug}/`}>
+  <a href={localizedPath(locale, `/blog/${slug}/`)}>
     <div>
-      <h2 class="item-title">{locales.map((locale) => <span data-lang={locale}>{entries[locale].title}</span>)}</h2>
-      <p class="item-description">{locales.map((locale) => <span data-lang={locale}>{entries[locale].attribution && <span class="content-attribution">{entries[locale].attribution}</span>}{entries[locale].description}</span>)}</p>
+      <h2 class="item-title">{entry.title}</h2>
+      <p class="item-description">{entry.attribution && <span class="content-attribution">{entry.attribution}</span>}{entry.description}</p>
     </div>
     <div class="item-meta">
-      <time datetime={entries['zh-CN'].publishDate.toISOString()}>{locales.map((locale) => <span data-lang={locale}>{formatDate(locale, entries[locale].publishDate)}</span>)}</time>
-      {locales.map((locale) => <span data-lang={locale}>{entries[locale].readingTime}</span>)}
-      <span class="tag-list">{locales.map((locale) => <span data-lang={locale}>{entries[locale].tags.map((tag) => <span class="tag">#{tag.label}</span>)}</span>)}</span>
+      <time datetime={entry.publishDate.toISOString()}>{formatDate(locale, entry.publishDate)}</time>
+      <span>{entry.readingTime}</span>
+      <span class="tag-list">{entry.tags.map((tag) => <span class="tag">#{tag.label}</span>)}</span>
     </div>
   </a>
 </li>

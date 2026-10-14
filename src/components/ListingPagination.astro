@@ -1,22 +1,21 @@
 ---
 import LocalizedText from './LocalizedText.astro';
 import { ui } from '../lib/i18n';
+import { localeFromPathname } from '../lib/routes';
 
 interface Props {
   pageSize?: number;
 }
 
 const { pageSize = 20 } = Astro.props;
+const locale = localeFromPathname(Astro.url.pathname);
 ---
 
 <nav
   class="listing-pagination"
   data-listing-pagination
   data-page-size={pageSize}
-  data-label-zh-cn={ui.common.pagination['zh-CN']}
-  data-label-zh-tw={ui.common.pagination['zh-TW']}
-  data-label-en={ui.common.pagination.en}
-  aria-label={ui.common.pagination['zh-CN']}
+  aria-label={ui.common.pagination[locale]}
   hidden
 >
   <button type="button" class="pagination-button pagination-direction" data-page-previous>
@@ -96,12 +95,6 @@ const { pageSize = 20 } = Astro.props;
       });
     };
 
-    const updatePaginationLabel = () => {
-      const locale = getLocale();
-      const suffix = locale === 'zh-CN' ? 'labelZhCn' : locale === 'zh-TW' ? 'labelZhTw' : 'labelEn';
-      pagination.setAttribute('aria-label', pagination.dataset[suffix] ?? '');
-    };
-
     const render = () => {
       const values = selectedFilters();
       const matching = items.filter((item) => matchesFilters(item, values));
@@ -115,7 +108,6 @@ const { pageSize = 20 } = Astro.props;
       pagination.hidden = matching.length === 0 || totalPages <= 1;
       if (previous) previous.disabled = currentPage <= 1;
       if (next) next.disabled = currentPage >= totalPages;
-      updatePaginationLabel();
       renderNumbers(totalPages);
       return totalPages;
     };
@@ -199,7 +191,6 @@ const { pageSize = 20 } = Astro.props;
     });
 
     addEventListener('popstate', syncFromUrl);
-    addEventListener('site:language-change', () => { render(); });
     syncFromUrl();
   });
 </script>

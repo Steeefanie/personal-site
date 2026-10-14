@@ -24,7 +24,7 @@ https://steeefanie.top
 
 ## 2. 浏览器访问网站时发生了什么
 
-访问者在浏览器输入 `https://steeefanie.top/projects/` 后，大致经过以下过程：
+访问者在浏览器输入 `https://steeefanie.top/zh-cn/projects/` 后，大致经过以下过程：
 
 ```text
 浏览器

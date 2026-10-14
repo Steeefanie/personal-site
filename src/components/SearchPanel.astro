@@ -1,11 +1,13 @@
 ---
 import LocalizedText from './LocalizedText.astro';
 import { ui } from '../lib/i18n';
+import { localeFromPathname } from '../lib/routes';
 
 type SearchScope = 'all' | 'blog' | 'projects' | 'recipes';
 interface Props { defaultScope?: SearchScope }
 
 const { defaultScope = 'all' } = Astro.props;
+const locale = localeFromPathname(Astro.url.pathname);
 
 const scopes = [
   { id: 'all', label: ui.common.all },
@@ -26,13 +28,10 @@ const scopes = [
         autocomplete="off"
         aria-autocomplete="list"
         aria-controls="search-results"
-        data-placeholder-zh-cn={ui.search.placeholder['zh-CN']}
-        data-placeholder-zh-tw={ui.search.placeholder['zh-TW']}
-        data-placeholder-en={ui.search.placeholder.en}
-        placeholder={ui.search.placeholder['zh-CN']}
+        placeholder={ui.search.placeholder[locale]}
       />
     </div>
-    <div class="filter-options search-scopes" role="group" aria-label="Search section">
+    <div class="filter-options search-scopes" role="group" aria-label={ui.common.searchSection[locale]}>
       {scopes.map((scope) => (
         <button type="button" class="filter-chip" data-search-scope={scope.id} aria-pressed={scope.id === defaultScope ? 'true' : 'false'}>
           <LocalizedText value={scope.label} />
@@ -40,7 +39,7 @@ const scopes = [
       ))}
     </div>
     <p id="search-status" class="search-status" aria-live="polite"></p>
-    <ol id="search-results" class="search-results" role="listbox" aria-label="Search results"></ol>
+    <ol id="search-results" class="search-results" role="listbox" aria-label={ui.common.searchResults[locale]}></ol>
   </div>
 </section>
 
@@ -51,7 +50,7 @@ const scopes = [
   interface SearchRecord {
     id: string;
     section: Section;
-    url: string;
+    urls: Record<Locale, string>;
     publishDate: string;
     locales: Record<Locale, { title: string; description: string; keywords: string[] }>;
   }
@@ -149,7 +148,7 @@ const scopes = [
       const item = document.createElement('li');
       const link = document.createElement('a');
       link.id = `search-result-${index}`;
-      link.href = record.url;
+      link.href = record.urls[locale];
       link.role = 'option';
       link.className = 'search-result-link';
       const sectionLabel = document.createElement('span');
@@ -189,13 +188,9 @@ const scopes = [
 
   window.addEventListener('site:panel-opened', (event) => {
     if ((event as CustomEvent).detail?.panel !== 'search') return;
-    const locale = getLocale();
-    const suffix = locale === 'zh-CN' ? 'ZhCn' : locale === 'zh-TW' ? 'ZhTw' : 'En';
     selectScope(defaultScope);
-    if (input) input.placeholder = input.dataset[`placeholder${suffix}`] ?? '';
     requestAnimationFrame(() => input?.focus());
     void renderResults();
     void loadIndex();
   });
-  window.addEventListener('site:language-change', () => { void renderResults(); });
 </script>

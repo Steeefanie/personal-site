@@ -1,0 +1,52 @@
+---
+import { render, type CollectionEntry } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ArticleComments from '../components/ArticleComments.astro';
+import ProseLayout from '../components/ProseLayout.astro';
+import LocalizedText from '../components/LocalizedText.astro';
+import { locales, text, ui, type Locale, type Localized } from '../lib/i18n';
+import { localizedPath } from '../lib/routes';
+
+interface Adjacent { slug: string; titles: Localized<string> }
+interface Props {
+  locale: Locale;
+  entries: Localized<CollectionEntry<'recipes'>>;
+  previous?: Adjacent;
+  next?: Adjacent;
+}
+
+const { locale, entries, previous, next } = Astro.props;
+const entry = entries[locale];
+const { Content } = await render(entry);
+const base = entry.data;
+const titles = Object.fromEntries(locales.map((locale) => [locale, `${entries[locale].data.title}${locale === 'en' ? ' | ' : '｜'}Steeefanie`])) as Localized<string>;
+const descriptions = Object.fromEntries(locales.map((locale) => [locale, entries[locale].data.description])) as Localized<string>;
+---
+
+<BaseLayout activeNav="recipes" titles={titles} descriptions={descriptions} pageType="article" locale={locale}>
+  <article class="article-with-comments">
+    <header class="article-header">
+      <div class="reading-shell">
+        <a class="text-link" href={localizedPath(locale, '/recipes/')}><span aria-hidden="true">←</span><LocalizedText value={text('返回食谱', '返回食譜', 'Back to Recipes')} /></a>
+        <h1>{entry.data.title}</h1>
+        <p class="article-deck">{entry.data.description}</p>
+        <div class="article-meta">
+          <span class="status">{ui.category[base.category][locale]}</span>
+          <span>{entry.data.prepTime}</span>
+          <span>{entry.data.servings}</span>
+          <span class="tag-list">{entry.data.tags.map((tag) => <span class="tag">#{tag.label}</span>)}</span>
+        </div>
+      </div>
+    </header>
+    <ProseLayout>
+      <Content />
+    </ProseLayout>
+    {(previous || next) && (
+      <nav class="reading-shell article-pager" aria-label={ui.common.adjacentRecipes[locale]}>
+        {previous && <div class="pager-slot pager-slot--previous"><a class="pager-link" href={localizedPath(locale, `/recipes/${previous.slug}/`)}><span class="pager-label"><LocalizedText value={text('上一篇', '上一篇', 'Previous')} /></span><span class="pager-title">{previous.titles[locale]}</span></a></div>}
+        {next && <div class="pager-slot pager-slot--next"><a class="pager-link" href={localizedPath(locale, `/recipes/${next.slug}/`)}><span class="pager-label"><LocalizedText value={text('下一篇', '下一篇', 'Next')} /></span><span class="pager-title">{next.titles[locale]}</span></a></div>}
+      </nav>
+    )}
+    <ArticleComments />
+  </article>
+</BaseLayout>

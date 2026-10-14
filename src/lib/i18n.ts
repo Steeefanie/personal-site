@@ -3,8 +3,7 @@ export const locales = ['zh-CN', 'zh-TW', 'en'] as const;
 export type Locale = (typeof locales)[number];
 export type Localized<T> = Record<Locale, T>;
 
-export const defaultLocale: Locale = 'zh-CN';
-export const languageStorageKey = 'language';
+export const defaultLocale = 'zh-CN' satisfies Locale;
 
 export const localeNames: Localized<string> = {
   'zh-CN': '简体中文',
@@ -44,6 +43,14 @@ export const ui = {
     previousPage: text('上一页', '上一頁', 'Previous'),
     nextPage: text('下一页', '下一頁', 'Next'),
     pagination: text('内容分页', '內容分頁', 'Content pagination'),
+    primaryNavigation: text('主要导航', '主要導覽', 'Primary navigation'),
+    mobileNavigation: text('移动端导航', '行動版導覽', 'Mobile navigation'),
+    languageMenu: text('语言', '語言', 'Language'),
+    searchSection: text('搜索范围', '搜尋範圍', 'Search section'),
+    searchResults: text('搜索结果', '搜尋結果', 'Search results'),
+    adjacentPosts: text('相邻随笔', '相鄰隨筆', 'Adjacent posts'),
+    adjacentProjects: text('相邻项目', '相鄰專案', 'Adjacent projects'),
+    adjacentRecipes: text('相邻食谱', '相鄰食譜', 'Adjacent recipes'),
   },
   home: {
     title: text('Steeefanie 的个人网站', 'Steeefanie 的個人網站', "Steeefanie's Personal Site"),
@@ -103,8 +110,3 @@ export const ui = {
     cocktail: text('鸡尾酒', '調酒', 'Cocktail'),
   },
 } as const;
-
-export const getInitialLocale = (value: string | null | undefined): Locale => {
-  if (value === 'zh') return 'zh-CN';
-  return locales.includes(value as Locale) ? (value as Locale) : defaultLocale;
-};

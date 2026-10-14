@@ -2,6 +2,9 @@
 import GiscusComments from './GiscusComments.astro';
 import LocalizedText from './LocalizedText.astro';
 import { ui } from '../lib/i18n';
+import { localeFromPathname } from '../lib/routes';
+
+const locale = localeFromPathname(Astro.url.pathname);
 ---
 
 <dialog
@@ -18,10 +21,7 @@ import { ui } from '../lib/i18n';
         type="button"
         class="guestbook-close"
         data-guestbook-close
-        aria-label={ui.guestbook.close['zh-CN']}
-        data-label-zh-cn={ui.guestbook.close['zh-CN']}
-        data-label-zh-tw={ui.guestbook.close['zh-TW']}
-        data-label-en={ui.guestbook.close.en}
+        aria-label={ui.guestbook.close[locale]}
       >
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M6 6L18 18M18 6L6 18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
@@ -49,25 +49,10 @@ import { ui } from '../lib/i18n';
 <script>
   import { lockPageScroll, unlockPageScroll } from '../lib/scroll-lock';
 
-  type Locale = 'zh-CN' | 'zh-TW' | 'en';
   const dialog = document.querySelector<HTMLDialogElement>('[data-guestbook-dialog]');
   const openButton = document.querySelector<HTMLButtonElement>('[data-guestbook-open]');
   const closeButton = dialog?.querySelector<HTMLButtonElement>('[data-guestbook-close]');
   let closeTimer = 0;
-
-  const locale = (): Locale => {
-    const value = document.documentElement.dataset.language;
-    return value === 'zh-TW' || value === 'en' ? value : 'zh-CN';
-  };
-
-  const updateLabels = () => {
-    const current = locale();
-    const suffix = current === 'zh-CN' ? 'ZhCn' : current === 'zh-TW' ? 'ZhTw' : 'En';
-    const openLabel = openButton?.dataset[`label${suffix}`];
-    const closeLabel = closeButton?.dataset[`label${suffix}`];
-    if (openLabel) openButton?.setAttribute('aria-label', openLabel);
-    if (closeLabel) closeButton?.setAttribute('aria-label', closeLabel);
-  };
 
   const finishClose = () => {
     if (!dialog?.open) return;
@@ -117,6 +102,4 @@ import { ui } from '../lib/i18n';
     event.preventDefault();
     requestClose();
   });
-  window.addEventListener('site:language-change', updateLabels);
-  updateLabels();
 </script>

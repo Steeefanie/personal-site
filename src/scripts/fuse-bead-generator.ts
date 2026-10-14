@@ -429,17 +429,11 @@ form?.addEventListener('submit', async (event) => {
   }
 });
 
-window.addEventListener('site:language-change', () => {
-  if (selectedFile && previewTitle) previewTitle.textContent = resultUrl ? t('resultPreview') : t('sourcePreview');
-  if (buttonLabel && !generateButton?.dataset.loading) buttonLabel.textContent = t('generate');
-  updateEstimate();
-});
-
-document.querySelector<HTMLAnchorElement>('[data-service-back]')?.addEventListener('click', (event) => {
+document.querySelector<HTMLAnchorElement>('[data-service-back]')?.addEventListener('click', function (event) {
   try { sessionStorage.setItem('restore-home-service-scroll', 'true'); } catch { /* Storage may be unavailable. */ }
   if (document.referrer) {
     const referrer = new URL(document.referrer);
-    if (referrer.origin === location.origin && referrer.pathname === '/') {
+    if (referrer.origin === location.origin && referrer.pathname === this.dataset.serviceHomePath) {
       event.preventDefault();
       history.back();
     }

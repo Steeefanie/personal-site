@@ -1,13 +1,18 @@
+---
+import { text } from '../lib/i18n';
+import { localeFromPathname } from '../lib/routes';
+
+const locale = localeFromPathname(Astro.url.pathname);
+const lightLabels = text('切换到浅色模式', '切換至淺色模式', 'Switch to light mode');
+const darkLabels = text('切换到深色模式', '切換至深色模式', 'Switch to dark mode');
+---
+
 <button
   class="utility-button theme-switcher"
   type="button"
-  aria-label="切换到深色模式"
-  data-label-light-zh-cn="切换到浅色模式"
-  data-label-dark-zh-cn="切换到深色模式"
-  data-label-light-zh-tw="切換至淺色模式"
-  data-label-dark-zh-tw="切換至深色模式"
-  data-label-light-en="Switch to light mode"
-  data-label-dark-en="Switch to dark mode"
+  aria-label={darkLabels[locale]}
+  data-label-light={lightLabels[locale]}
+  data-label-dark={darkLabels[locale]}
 >
   <svg viewBox="0 0 24 24" aria-hidden="true">
     <defs>
@@ -27,21 +32,13 @@
 
 <script>
   type Theme = 'light' | 'dark';
-  type Locale = 'zh-CN' | 'zh-TW' | 'en';
   const themeButton = document.querySelector<HTMLButtonElement>('.theme-switcher');
   let themeLocked = false;
-
-  const getLocale = (): Locale => {
-    const value = document.documentElement.dataset.language;
-    return value === 'zh-TW' || value === 'en' ? value : 'zh-CN';
-  };
 
   const updateThemeLabel = () => {
     if (!themeButton) return;
     const targetTheme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
-    const locale = getLocale();
-    const suffix = locale === 'zh-CN' ? 'ZhCn' : locale === 'zh-TW' ? 'ZhTw' : 'En';
-    const label = themeButton.dataset[`label${targetTheme === 'light' ? 'Light' : 'Dark'}${suffix}`];
+    const label = themeButton.dataset[targetTheme === 'light' ? 'labelLight' : 'labelDark'];
     if (label) themeButton.setAttribute('aria-label', label);
   };
 
@@ -128,6 +125,5 @@
     }
   });
 
-  window.addEventListener('site:language-change', updateThemeLabel);
   updateThemeLabel();
 </script>

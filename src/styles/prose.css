@@ -10,7 +10,6 @@ html[lang='en'] .prose {
 
 .prose > *:first-child { margin-top: 0; }
 .prose > *:last-child { margin-bottom: 0; }
-.prose > [data-lang] > :first-child { margin-top: 0; }
 
 .prose h2,
 .prose h3,
@@ -32,7 +31,7 @@ html[lang='en'] .prose {
   text-align-last: left;
 }
 
-.prose > [data-lang] > p {
+.prose > p {
   text-indent: 2rem;
 }
 

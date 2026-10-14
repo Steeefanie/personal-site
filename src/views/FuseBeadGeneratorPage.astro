@@ -1,8 +1,14 @@
 ---
-import BaseLayout from '../../layouts/BaseLayout.astro';
-import LocalizedText from '../../components/LocalizedText.astro';
-import { text } from '../../lib/i18n';
-import '../../styles/fuse-bead-generator.css';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import LocalizedText from '../components/LocalizedText.astro';
+import { text, type Locale } from '../lib/i18n';
+import { localizedPath } from '../lib/routes';
+import '../styles/fuse-bead-generator.css';
+
+interface Props { locale: Locale }
+
+const { locale } = Astro.props;
+const homePath = localizedPath(locale, '/');
 
 const pageTitle = text('拼豆图纸生成器', '拼豆圖紙生成器', 'Fuse-bead pattern generator');
 const pageDescription = text(
@@ -12,15 +18,15 @@ const pageDescription = text(
 );
 ---
 
-<BaseLayout activeNav="home" titles={pageTitle} descriptions={pageDescription}>
+<BaseLayout activeNav="home" titles={pageTitle} descriptions={pageDescription} locale={locale}>
   <div class="site-shell service-page">
-    <a class="service-back" href="/#services-heading" data-service-back><span aria-hidden="true">←</span><LocalizedText value={text('返回主页', '返回首頁', 'Back to home')} /></a>
+    <a class="service-back" href={`${homePath}#services-heading`} data-service-back data-service-home-path={homePath}><span aria-hidden="true">←</span><LocalizedText value={text('返回主页', '返回首頁', 'Back to home')} /></a>
 
     <header class="service-header">
       <h1><LocalizedText value={pageTitle} /></h1>
     </header>
 
-    <section class="generator-shell" aria-label="拼豆图纸生成工具">
+    <section class="generator-shell" aria-label={text('拼豆图纸生成工具', '拼豆圖紙產生工具', 'Fuse-bead pattern generator')[locale]}>
       <form class="generator-form" data-generator-form>
         <fieldset class="form-group upload-group">
           <legend><span>1</span><LocalizedText value={text('上传图片', '上傳圖片', 'Upload image')} /></legend>
@@ -44,7 +50,7 @@ const pageDescription = text(
         <fieldset class="form-group">
           <legend><span>2</span><LocalizedText value={text('设置图纸尺寸', '設定圖紙尺寸', 'Set pattern size')} /></legend>
           <div class="size-row">
-            <div class="side-switch" role="radiogroup" aria-label="固定宽度或高度">
+            <div class="side-switch" role="radiogroup" aria-label={text('固定宽度或高度', '固定寬度或高度', 'Choose a fixed width or height')[locale]}>
               <label><input type="radio" name="fixed_side" value="width" /><span><LocalizedText value={text('按宽度', '依寬度', 'By width')} /></span></label>
               <label><input type="radio" name="fixed_side" value="height" checked /><span><LocalizedText value={text('按高度', '依高度', 'By height')} /></span></label>
             </div>
@@ -92,11 +98,11 @@ const pageDescription = text(
     <aside class="service-note">
       <strong><LocalizedText value={text('生成说明', '產生說明', 'About the generator')} /></strong>
       <p><LocalizedText value={text('色卡与实际拼豆品牌、批次可能存在色差。', '色卡與實際拼豆品牌、批次可能存在色差。', 'Palette colours may differ slightly from physical beads across brands and production batches.')} /></p>
-      <a href="/projects/fuse-bead-pattern-generator/"><LocalizedText value={text('查看算法与测试结果', '查看演算法與測試結果', 'View algorithm and test results')} /> ↗</a>
+      <a href={localizedPath(locale, '/projects/fuse-bead-pattern-generator/')}><LocalizedText value={text('查看算法与测试结果', '查看演算法與測試結果', 'View algorithm and test results')} /> ↗</a>
     </aside>
   </div>
 </BaseLayout>
 
 <script>
-  import '../../scripts/fuse-bead-generator';
+  import '../scripts/fuse-bead-generator';
 </script>

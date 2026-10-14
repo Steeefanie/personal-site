@@ -1,11 +1,13 @@
 ---
-import { locales, type Localized } from '../lib/i18n';
+import { type Locale, type Localized } from '../lib/i18n';
+import { localeFromPathname } from '../lib/routes';
 
 interface Props {
   value: Localized<string>;
+  locale?: Locale;
 }
 
-const { value } = Astro.props;
+const { value, locale = localeFromPathname(Astro.url.pathname) } = Astro.props;
 ---
 
-{locales.map((locale) => <span data-lang={locale}>{value[locale]}</span>)}
+{value[locale]}

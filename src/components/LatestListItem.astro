@@ -1,5 +1,5 @@
 ---
-import { localeDateFormats, locales, ui, type Locale, type Localized } from '../lib/i18n';
+import { localeDateFormats, ui, type Locale, type Localized } from '../lib/i18n';
 
 interface LatestContent { title: string; description: string; attribution?: string }
 interface Props {
@@ -7,9 +7,10 @@ interface Props {
   href: string;
   date: Date;
   content: Localized<LatestContent>;
+  locale: Locale;
 }
 
-const { section, href, date, content } = Astro.props;
+const { section, href, date, content, locale } = Astro.props;
 const labels = section === 'blog' ? ui.nav.blog : section === 'projects' ? ui.nav.projects : ui.nav.recipes;
 const formatDate = (locale: Locale) => new Intl.DateTimeFormat(localeDateFormats[locale], {
   year: 'numeric', month: locale === 'en' ? 'short' : 'long', day: 'numeric',
@@ -19,10 +20,10 @@ const formatDate = (locale: Locale) => new Intl.DateTimeFormat(localeDateFormats
 <li class="content-list-item latest-list-item">
   <a href={href}>
     <div>
-      <p class="latest-section">{locales.map((locale) => <span data-lang={locale}>{labels[locale]}</span>)}</p>
-      <h3 class="item-title">{locales.map((locale) => <span data-lang={locale}>{content[locale].title}</span>)}</h3>
-      <p class="item-description">{locales.map((locale) => <span data-lang={locale}>{content[locale].attribution && <span class="content-attribution">{content[locale].attribution}</span>}{content[locale].description}</span>)}</p>
+      <p class="latest-section">{labels[locale]}</p>
+      <h3 class="item-title">{content[locale].title}</h3>
+      <p class="item-description">{content[locale].attribution && <span class="content-attribution">{content[locale].attribution}</span>}{content[locale].description}</p>
     </div>
-    <div class="item-meta"><time datetime={date.toISOString()}>{locales.map((locale) => <span data-lang={locale}>{formatDate(locale)}</span>)}</time></div>
+    <div class="item-meta"><time datetime={date.toISOString()}>{formatDate(locale)}</time></div>
   </a>
 </li>

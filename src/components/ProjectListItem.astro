@@ -1,5 +1,6 @@
 ---
-import { localeDateFormats, locales, type Localized } from '../lib/i18n';
+import { localeDateFormats, type Locale, type Localized } from '../lib/i18n';
+import { localizedPath } from '../lib/routes';
 
 interface LocalizedProject {
   title: string;
@@ -13,10 +14,11 @@ interface LocalizedProject {
 interface Props {
   slug: string;
   locales: Localized<LocalizedProject>;
+  locale: Locale;
 }
 
-const { slug, locales: entries } = Astro.props;
-const base = entries['zh-CN'];
+const { slug, locales: entries, locale } = Astro.props;
+const entry = entries[locale];
 const formatDate = (locale: keyof typeof entries) => new Intl.DateTimeFormat(
   localeDateFormats[locale],
   { dateStyle: 'long' },
@@ -24,14 +26,14 @@ const formatDate = (locale: keyof typeof entries) => new Intl.DateTimeFormat(
 ---
 
 <li class="content-list-item">
-  <a href={`/projects/${slug}/`}>
+  <a href={localizedPath(locale, `/projects/${slug}/`)}>
     <div>
-      <h2 class="item-title">{locales.map((locale) => <span data-lang={locale}>{entries[locale].title}</span>)}</h2>
-      <p class="item-description">{locales.map((locale) => <span data-lang={locale}>{entries[locale].attribution && <span class="content-attribution">{entries[locale].attribution}</span>}{entries[locale].description}</span>)}</p>
+      <h2 class="item-title">{entry.title}</h2>
+      <p class="item-description">{entry.attribution && <span class="content-attribution">{entry.attribution}</span>}{entry.description}</p>
     </div>
     <div class="item-meta">
-      <time datetime={(base.updatedDate ?? base.publishDate).toISOString()}>{locales.map((locale) => <span data-lang={locale}>{formatDate(locale)}</span>)}</time>
-      <span class="tag-list">{base.stack.map((item) => <span class="tag">#{item}</span>)}</span>
+      <time datetime={(entry.updatedDate ?? entry.publishDate).toISOString()}>{formatDate(locale)}</time>
+      <span class="tag-list">{entry.stack.map((item) => <span class="tag">#{item}</span>)}</span>
     </div>
   </a>
 </li>

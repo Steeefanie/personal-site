@@ -1,6 +1,8 @@
 import type { CollectionEntry } from 'astro:content';
 import { defaultLocale, locales, type Locale, type Localized } from './i18n';
 
+export type SiteEntry = CollectionEntry<'blog'> | CollectionEntry<'projects'> | CollectionEntry<'recipes'>;
+
 export const slugFromId = (id: string) => id
   .replace(/\\/g, '/')
   .replace(/\.(md|mdx)$/i, '')
@@ -13,7 +15,10 @@ export interface LocalizedGroup<T> {
   locales: Localized<T>;
 }
 
-export function pairEntries<T extends CollectionEntry<'blog'> | CollectionEntry<'projects'> | CollectionEntry<'recipes'>>(entries: T[]) {
+export const localizedData = <T extends SiteEntry>(group: LocalizedGroup<T>): Localized<T['data']> =>
+  Object.fromEntries(locales.map((locale) => [locale, group.locales[locale].data])) as Localized<T['data']>;
+
+export function pairEntries<T extends SiteEntry>(entries: T[]) {
   const grouped = new Map<string, Partial<Record<Locale, T>>>();
   for (const entry of entries) {
     const slug = slugFromId(entry.id);

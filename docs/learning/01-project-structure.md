@@ -24,6 +24,7 @@ personal-site/
 ├─ pnpm-workspace.yaml
 ├─ tsconfig.json
 ├─ README.md
+├─ README-CN.md
 ├─ CHANGELOG.md
 ├─ TODO.md
 ├─ docs/
@@ -42,7 +43,9 @@ personal-site/
 │  ├─ layouts/
 │  ├─ lib/
 │  ├─ pages/
+│  ├─ scripts/
 │  ├─ styles/
+│  ├─ views/
 │  ├─ content.config.ts
 │  └─ env.d.ts
 ├─ node_modules/       依赖安装后生成
@@ -114,9 +117,10 @@ personal-site/
 
 它不是删除规则；文件仍在本地，只是 Git 默认不跟踪它们。
 
-### `README.md`、`CHANGELOG.md`、`TODO.md`
+### `README.md`、`README-CN.md`、`CHANGELOG.md`、`TODO.md`
 
-- `README.md`：项目入口说明，告诉读者项目是什么、如何运行。
+- `README.md`：英文项目入口说明，告诉读者项目是什么、如何运行。
+- `README-CN.md`：与默认 README 对应的简体中文说明。
 - `CHANGELOG.md`：按版本记录已经完成的变化。
 - `TODO.md`：记录尚未完成或以后考虑的事项。
 
@@ -130,16 +134,11 @@ Astro 使用“基于文件的路由”：文件路径通常直接决定网址�
 
 | 页面文件 | 生成的网址 | 用途 |
 | --- | --- | --- |
-| `src/pages/index.astro` | `/` | 主页 |
-| `src/pages/blog/index.astro` | `/blog/` | 随笔列表 |
-| `src/pages/blog/[slug].astro` | `/blog/文章名/` | 随笔详情 |
-| `src/pages/projects/index.astro` | `/projects/` | 项目列表 |
-| `src/pages/projects/[slug].astro` | `/projects/项目名/` | 项目详情 |
-| `src/pages/recipes/index.astro` | `/recipes/` | 食谱列表 |
-| `src/pages/recipes/[slug].astro` | `/recipes/食谱名/` | 食谱详情 |
+| `src/pages/index.astro` | `/` | 按用户选择和浏览器语言分流 |
+| `src/pages/[locale]/[...path].astro` | `/zh-cn/...`、`/zh-tw/...`、`/en/...` | 生成三种语言的全部公开页面 |
 | `src/pages/search-index.json.ts` | `/search-index.json` | 构建搜索数据 |
 
-`[slug].astro` 是动态路由模板。它不是只对应一篇文章，而是在构建时为同一栏目中的每个 slug 生成详情页。例如 `palworld-dedicated-server.md` 会生成 `/blog/palworld-dedicated-server/`。
+`[locale]/[...path].astro` 是统一的动态路由生成器。它读取内容集合并复用 `src/views/` 中的页面实现，为每个 slug 生成 `/zh-cn/`、`/zh-tw/`、`/en/` 三套静态页面；每个最终 HTML 只包含一种语言正文。旧的 `/blog/...`、`/projects/...`、`/recipes/...` 和 `/services/...` 无前缀地址不再生成。
 
 页面文件通常负责：
 
@@ -150,6 +149,10 @@ Astro 使用“基于文件的路由”：文件路径通常直接决定网址�
 - 组合成最终页面。
 
 它不适合存放长篇文章正文，正文应放在 `src/content/`。
+
+### 4.1.1 `src/views/`：可复用页面实现
+
+`src/views/` 保存主页、栏目列表、详情页和在线工具的完整页面实现，但自身不生成网址。统一路由生成器根据当前语言和内容数据调用这些视图。把页面实现放在 `pages` 之外，可以避免 Astro 同时生成旧的无前缀路由。
 
 ### 4.2 `src/content/`：三种语言的文章
 
@@ -255,7 +258,8 @@ src/assets/projects/fuse-bead-pattern-generator/
 
 - `<html>`、`<head>` 和 `<body>`；
 - 页面标题、摘要和 favicon；
-- 在页面显示前读取主题和语言，减少闪烁；
+- 在页面显示前读取主题，减少闪烁，并根据当前静态路由输出确定的页面语言；
+- 输出当前语言的 canonical、`hreflang`、Open Graph 和 Twitter/X Card 元数据；
 - 引入全局样式；
 - 放置顶部导航和页脚；
 - 用 `<slot />` 接收各页面自己的主体内容。
@@ -281,8 +285,11 @@ src/assets/projects/fuse-bead-pattern-generator/
 
 - 三种语言代码和类型；
 - 语言名称和日期格式；
-- 导航、搜索、筛选、空状态等通用界面文案；
-- 旧语言值 `zh` 到 `zh-CN` 的迁移。
+- 导航、搜索、筛选、空状态等通用界面文案。
+
+#### `src/lib/routes.ts`
+
+它集中管理 `/zh-cn/` 简体中文、`/zh-tw/` 台湾繁体和 `/en/` 英文之间的路径转换，并用于导航、搜索结果、canonical 与 `hreflang`。新增站内链接时应通过这里生成当前语言地址，不要在组件中手工拼接语言前缀。
 
 修改导航等公共文案时，应先在这里找，不要把三套文字散落到不同组件中。
 
@@ -343,7 +350,8 @@ src/content/recipes/三语言 Markdown
                  ↓ 由 content.config.ts 校验
 src/lib/content.ts 配对语言并整理 slug
                  ↓
-src/pages/recipes/[slug].astro 生成每个详情网址
+src/pages/[locale]/[...path].astro 调用 src/views/RecipeDetailPage.astro
+并生成 /zh-cn/、/zh-tw/ 与 /en/ 对应网址
                  ↓
 ProseLayout.astro 组合标题、信息、正文和上一篇/下一篇
                  ↓
@@ -351,7 +359,9 @@ BaseLayout.astro 加上导航、页脚、主题和页面元数据
                  ↓
 global.css + prose.css + tokens.css 决定视觉表现
                  ↓ pnpm build
-dist/recipes/<slug>/index.html
+dist/zh-cn/recipes/<slug>/index.html
+dist/zh-tw/recipes/<slug>/index.html
+dist/en/recipes/<slug>/index.html
 ```
 
 理解这条链路后，排查问题会容易很多：

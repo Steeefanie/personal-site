@@ -1,5 +1,3 @@
-type Locale = 'zh-CN' | 'zh-TW' | 'en';
-
 const root = document.querySelector<HTMLElement>('[data-article-toc]');
 
 if (root && root.dataset.initialized !== 'true') {
@@ -27,12 +25,6 @@ if (root && root.dataset.initialized !== 'true') {
   let pendingDragWidth = 0;
   let scrollFrame = 0;
 
-  const locale = (): Locale => {
-    const value = document.documentElement.dataset.language;
-    return value === 'zh-TW' || value === 'en' ? value : 'zh-CN';
-  };
-
-  const suffix = (value: Locale) => value === 'zh-CN' ? 'ZhCn' : value === 'zh-TW' ? 'ZhTw' : 'En';
   const numberToken = (name: string, fallback: number) => {
     const value = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name));
     return Number.isFinite(value) ? value : fallback;
@@ -72,7 +64,7 @@ if (root && root.dataset.initialized !== 'true') {
   };
 
   const syncPanelHeight = () => {
-    const activeList = root.querySelector<HTMLOListElement>(`.article-toc-nav > [data-lang="${locale()}"]`);
+    const activeList = root.querySelector<HTMLOListElement>('.article-toc-nav > ol');
     if (!activeList || !panelNav) return;
 
     root.dataset.measuring = 'true';
@@ -83,15 +75,13 @@ if (root && root.dataset.initialized !== 'true') {
     delete root.dataset.measuring;
   };
 
-  const syncLocalizedLabels = () => {
-    const key = suffix(locale());
+  const syncLabels = () => {
     if (toggle) {
       toggle.setAttribute('aria-label', open
-        ? toggle.dataset[`close${key}`] ?? 'Close contents'
-        : toggle.dataset[`open${key}`] ?? 'Open contents');
+        ? toggle.dataset.closeLabel ?? 'Close contents'
+        : toggle.dataset.openLabel ?? 'Open contents');
     }
-    if (backdrop) backdrop.setAttribute('aria-label', toggle?.dataset[`close${key}`] ?? 'Close contents');
-    if (resizer) resizer.setAttribute('aria-label', resizer.dataset[`label${key}`] ?? 'Resize contents');
+    if (backdrop) backdrop.setAttribute('aria-label', toggle?.dataset.closeLabel ?? 'Close contents');
   };
 
   const updateLayoutMode = () => {
@@ -121,8 +111,7 @@ if (root && root.dataset.initialized !== 'true') {
   };
 
   const measureAutomaticWidth = () => {
-    const language = locale();
-    const titles = [...root.querySelectorAll<HTMLElement>(`[data-lang="${language}"] [data-article-toc-title]`)];
+    const titles = [...root.querySelectorAll<HTMLElement>('[data-article-toc-title]')];
     if (titles.length === 0) return 300;
 
     const canvas = document.createElement('canvas');
@@ -149,17 +138,17 @@ if (root && root.dataset.initialized !== 'true') {
     if (manualWidth === null) applyWidth(automaticWidth);
   };
 
-  const activeLanguageLinks = () => [
-    ...root.querySelectorAll<HTMLAnchorElement>(`[data-lang="${locale()}"] [data-article-toc-link]`),
+  const activeLinks = () => [
+    ...root.querySelectorAll<HTMLAnchorElement>('[data-article-toc-link]'),
   ];
 
-  const activeContentHeadings = () => [
-    ...document.querySelectorAll<HTMLElement>(`.prose > [data-lang="${locale()}"] :is(h2, h3)`),
+  const contentHeadings = () => [
+    ...document.querySelectorAll<HTMLElement>('.prose :is(h2, h3)'),
   ];
 
   const updateActiveHeading = () => {
     scrollFrame = 0;
-    const headings = activeContentHeadings();
+    const headings = contentHeadings();
     if (headings.length === 0) return;
     const headerHidden = document.querySelector('.site-header')?.classList.contains('is-hidden') ?? false;
     const threshold = headingTopOffset(!headerHidden);
@@ -167,11 +156,11 @@ if (root && root.dataset.initialized !== 'true') {
     let active = atPageEnd ? headings[headings.length - 1] : headings[0];
     if (!atPageEnd) {
       for (const heading of headings) {
-        if (heading.getBoundingClientRect().top > threshold) break;
+        if (heading.getBoundingClientRect().top > threshold + 1) break;
         active = heading;
       }
     }
-    activeLanguageLinks().forEach((link) => {
+    activeLinks().forEach((link) => {
       if (link.dataset.slug === active.id) link.setAttribute('aria-current', 'location');
       else link.removeAttribute('aria-current');
     });
@@ -189,13 +178,13 @@ if (root && root.dataset.initialized !== 'true') {
     toggle.setAttribute('aria-expanded', String(open));
     panel.setAttribute('aria-hidden', String(!open));
     panel.inert = !open;
-    syncLocalizedLabels();
+    syncLabels();
 
     if (open) {
       applyWidth(preferredWidth());
       document.documentElement.dataset.articleTocOpen = 'true';
       document.documentElement.dataset.articleTocMode = root.dataset.mode ?? 'overlay';
-      requestAnimationFrame(() => activeLanguageLinks()[0]?.focus());
+      requestAnimationFrame(() => activeLinks()[0]?.focus());
     } else {
       document.documentElement.removeAttribute('data-article-toc-open');
       document.documentElement.removeAttribute('data-article-toc-mode');
@@ -230,9 +219,8 @@ if (root && root.dataset.initialized !== 'true') {
 
   root.querySelectorAll<HTMLAnchorElement>('[data-article-toc-link]').forEach((link) => {
     link.addEventListener('click', (event) => {
-      const language = locale();
       const slug = link.dataset.slug;
-      const content = document.querySelector<HTMLElement>(`.prose > [data-lang="${language}"]`);
+      const content = document.querySelector<HTMLElement>('.prose');
       const target = slug ? content?.querySelector<HTMLElement>(`#${CSS.escape(slug)}`) : null;
       if (!target || !slug) return;
       event.preventDefault();
@@ -243,10 +231,15 @@ if (root && root.dataset.initialized !== 'true') {
       history.pushState(null, '', url);
 
       const targetTop = window.scrollY + target.getBoundingClientRect().top;
-      const headerWillShow = window.scrollY < 72 || targetTop < window.scrollY;
-      const topOffset = headingTopOffset(headerWillShow);
-      window.scrollTo({ top: Math.max(0, targetTop - topOffset), behavior: 'instant' });
-      activeLanguageLinks().forEach((item) => {
+      const headerHidden = document.querySelector('.site-header')?.classList.contains('is-hidden') ?? false;
+      const topOffset = headingTopOffset(!headerHidden);
+      const maximumScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+      const nextScrollY = clamp(targetTop - topOffset, 0, maximumScroll);
+      if (Math.abs(nextScrollY - window.scrollY) > 1) {
+        window.dispatchEvent(new CustomEvent('site:toc-jump', { detail: { scrollY: nextScrollY } }));
+      }
+      window.scrollTo({ top: nextScrollY, behavior: 'instant' });
+      activeLinks().forEach((item) => {
         if (item === link) item.setAttribute('aria-current', 'location');
         else item.removeAttribute('aria-current');
       });
@@ -308,21 +301,12 @@ if (root && root.dataset.initialized !== 'true') {
   addEventListener('keydown', (event) => {
     if (event.key === 'Escape' && open) setOpen(false, true);
   });
-  window.addEventListener('site:language-change', () => {
-    syncLocalizedLabels();
-    requestAnimationFrame(() => {
-      if (manualWidth === null) refreshAutomaticWidth();
-      else syncPanelHeight();
-      updateActiveHeading();
-    });
-  });
-
   if ('ResizeObserver' in window) {
     new ResizeObserver(() => updateLayoutMode()).observe(panel ?? root);
   }
   manualWidth = readStoredWidth();
   syncResetControl();
-  syncLocalizedLabels();
+  syncLabels();
   refreshAutomaticWidth();
   if (manualWidth !== null) applyWidth(manualWidth);
   updateActiveHeading();

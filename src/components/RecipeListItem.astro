@@ -1,5 +1,6 @@
 ---
-import { locales, ui, type Localized } from '../lib/i18n';
+import { ui, type Locale, type Localized } from '../lib/i18n';
+import { localizedPath } from '../lib/routes';
 
 interface Tag { id: string; label: string }
 interface LocalizedRecipe {
@@ -15,22 +16,23 @@ interface LocalizedRecipe {
 interface Props {
   slug: string;
   locales: Localized<LocalizedRecipe>;
+  locale: Locale;
 }
 
-const { slug, locales: entries } = Astro.props;
-const base = entries['zh-CN'];
+const { slug, locales: entries, locale } = Astro.props;
+const entry = entries[locale];
 ---
 
-<li class="content-list-item" data-filter-item data-category={base.category}>
-  <a href={`/recipes/${slug}/`}>
+<li class="content-list-item" data-filter-item data-category={entry.category}>
+  <a href={localizedPath(locale, `/recipes/${slug}/`)}>
     <div>
-      <h2 class="item-title">{locales.map((locale) => <span data-lang={locale}>{entries[locale].title}</span>)}</h2>
-      <p class="item-description">{locales.map((locale) => <span data-lang={locale}>{entries[locale].description}</span>)}</p>
+      <h2 class="item-title">{entry.title}</h2>
+      <p class="item-description">{entry.description}</p>
     </div>
     <div class="item-meta">
-      <span class="status">{locales.map((locale) => <span data-lang={locale}>{ui.category[base.category][locale]}</span>)}</span>
-      {locales.map((locale) => <span data-lang={locale}>{entries[locale].prepTime} · {entries[locale].servings}</span>)}
-      <span class="tag-list">{locales.map((locale) => <span data-lang={locale}>{entries[locale].tags.map((tag) => <span class="tag">#{tag.label}</span>)}</span>)}</span>
+      <span class="status">{ui.category[entry.category][locale]}</span>
+      <span>{entry.prepTime} · {entry.servings}</span>
+      <span class="tag-list">{entry.tags.map((tag) => <span class="tag">#{tag.label}</span>)}</span>
     </div>
   </a>
 </li>

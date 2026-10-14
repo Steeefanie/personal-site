@@ -2,7 +2,8 @@
 import SiteHeader from '../components/SiteHeader.astro';
 import SiteFooter from '../components/SiteFooter.astro';
 import LocalizedText from '../components/LocalizedText.astro';
-import { text, ui, type Localized } from '../lib/i18n';
+import { locales, text, ui, type Locale, type Localized } from '../lib/i18n';
+import { localizedAbsoluteUrls, logicalPathname, openGraphLocales } from '../lib/routes';
 import '../styles/global.css';
 
 interface Props {
@@ -10,6 +11,7 @@ interface Props {
   descriptions?: Localized<string>;
   activeNav?: 'home' | 'blog' | 'projects' | 'recipes';
   pageType?: 'website' | 'article';
+  locale?: Locale;
 }
 
 const defaultTitles = text('Steeefanie｜个人网站', 'Steeefanie｜個人網站', 'Steeefanie | Personal Site');
@@ -19,31 +21,41 @@ const {
   descriptions = defaultDescriptions,
   activeNav = 'home',
   pageType = 'website',
+  locale = 'zh-CN',
 } = Astro.props;
-const canonicalUrl = new URL(Astro.url.pathname, Astro.site ?? Astro.url.origin).href;
+const site = Astro.site ?? new URL(Astro.url.origin);
+const alternateUrls = localizedAbsoluteUrls(Astro.url.pathname, site);
+const canonicalUrl = alternateUrls[locale];
+const xDefaultUrl = logicalPathname(Astro.url.pathname) === '/'
+  ? new URL('/', site).href
+  : alternateUrls['zh-CN'];
+const title = titles[locale];
+const description = descriptions[locale];
+const alternateLocales = locales.filter((candidate) => candidate !== locale);
 ---
 
 <!doctype html>
-<html lang="zh-CN" data-language="zh-CN">
+<html lang={locale} data-language={locale}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content={descriptions['zh-CN']} />
+    <meta name="description" content={description} />
     <meta name="theme-color" content="#f5f5f5" />
     <link rel="canonical" href={canonicalUrl} />
     <meta property="og:site_name" content="Steeefanie" />
     <meta property="og:type" content={pageType} />
-    <meta property="og:title" content={titles['zh-CN']} data-page-title-meta />
-    <meta property="og:description" content={descriptions['zh-CN']} data-page-description-meta />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
     <meta property="og:url" content={canonicalUrl} />
-    <meta property="og:locale" content="zh_CN" />
-    <meta property="og:locale:alternate" content="zh_TW" data-og-locale-alternate />
-    <meta property="og:locale:alternate" content="en_US" data-og-locale-alternate />
+    <meta property="og:locale" content={openGraphLocales[locale]} />
+    {alternateLocales.map((candidate) => <meta property="og:locale:alternate" content={openGraphLocales[candidate]} />)}
     <meta name="twitter:card" content="summary" />
-    <meta name="twitter:title" content={titles['zh-CN']} data-page-title-meta />
-    <meta name="twitter:description" content={descriptions['zh-CN']} data-page-description-meta />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    {locales.map((candidate) => <link rel="alternate" hreflang={candidate} href={alternateUrls[candidate]} />)}
+    <link rel="alternate" hreflang="x-default" href={xDefaultUrl} />
     <link id="site-favicon" rel="icon" href="/brand/favicon-light-nobg.svg" type="image/svg+xml" />
-    <title>{titles['zh-CN']}</title>
+    <title>{title}</title>
     <script is:inline>
       (() => {
         try {
@@ -57,60 +69,67 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site ?? Astro.url.origin)
             ? '/brand/favicon-dark-nobg.svg'
             : '/brand/favicon-light-nobg.svg');
 
-          const savedLanguage = localStorage.getItem('language');
-          const language = savedLanguage === 'zh-TW' || savedLanguage === 'en' ? savedLanguage : 'zh-CN';
-          if (savedLanguage === 'zh') localStorage.setItem('language', 'zh-CN');
-          document.documentElement.dataset.language = language;
-          document.documentElement.lang = language;
         } catch (_) {
           document.documentElement.dataset.theme = 'light';
-          document.documentElement.dataset.language = 'zh-CN';
           document.querySelector('#site-favicon')?.setAttribute('href', '/brand/favicon-light-nobg.svg');
         }
       })();
     </script>
+    <script is:inline>
+      (() => {
+        try {
+          const raw = sessionStorage.getItem('language-route-scroll');
+          const state = raw ? JSON.parse(raw) : null;
+          history.scrollRestoration = state?.target === `${location.pathname}${location.search}`
+            ? 'manual'
+            : 'auto';
+        } catch (_) { history.scrollRestoration = 'auto'; }
+      })();
+    </script>
   </head>
-  <body
-    data-title-zh-cn={titles['zh-CN']}
-    data-title-zh-tw={titles['zh-TW']}
-    data-title-en={titles.en}
-    data-description-zh-cn={descriptions['zh-CN']}
-    data-description-zh-tw={descriptions['zh-TW']}
-    data-description-en={descriptions.en}
-  >
+  <body>
     <a class="skip-link" href="#main-content">
       <LocalizedText value={text('跳到主要内容', '跳至主要內容', 'Skip to content')} />
     </a>
-    <SiteHeader activeNav={activeNav} />
+    <SiteHeader activeNav={activeNav} locale={locale} />
     <main id="main-content" class="main-content">
       <slot />
     </main>
     <SiteFooter />
     <script>
-      const syncDocumentLanguage = () => {
-        const candidate = document.documentElement.dataset.language;
-        const language = candidate === 'zh-TW' || candidate === 'en' ? candidate : 'zh-CN';
-        document.documentElement.lang = language;
-        const suffix = language === 'zh-CN' ? 'ZhCn' : language === 'zh-TW' ? 'ZhTw' : 'En';
-        const title = document.body.dataset[`title${suffix}`];
-        const description = document.body.dataset[`description${suffix}`];
-        if (title) document.title = title;
-        if (description) document.querySelector('meta[name="description"]')?.setAttribute('content', description);
-        if (title) document.querySelectorAll('[data-page-title-meta]').forEach((meta) => meta.setAttribute('content', title));
-        if (description) document.querySelectorAll('[data-page-description-meta]').forEach((meta) => meta.setAttribute('content', description));
-
-        const localeMap = { 'zh-CN': 'zh_CN', 'zh-TW': 'zh_TW', en: 'en_US' };
-        document.querySelector('meta[property="og:locale"]')?.setAttribute('content', localeMap[language]);
-        const alternateLocales = Object.entries(localeMap)
-          .filter(([locale]) => locale !== language)
-          .map(([, locale]) => locale);
-        document.querySelectorAll('[data-og-locale-alternate]').forEach((meta, index) => {
-          const locale = alternateLocales[index];
-          if (locale) meta.setAttribute('content', locale);
-        });
-      };
-      syncDocumentLanguage();
-      window.addEventListener('site:language-change', syncDocumentLanguage);
+      try {
+        const key = 'language-route-scroll';
+        const raw = sessionStorage.getItem(key);
+        if (raw) {
+          const state = JSON.parse(raw) as {
+            target?: string;
+            scrollY?: number;
+            progress?: number;
+            headingIndex?: number;
+            headingOffset?: number;
+          };
+          if (state.target === `${location.pathname}${location.search}`) {
+            sessionStorage.removeItem(key);
+            const restorePosition = () => requestAnimationFrame(() => {
+              const headings = [...document.querySelectorAll<HTMLElement>('.prose :is(h2, h3)')];
+              const heading = Number.isInteger(state.headingIndex) && (state.headingIndex ?? -1) >= 0
+                ? headings[state.headingIndex ?? -1]
+                : undefined;
+              if (heading) {
+                const offset = Number.isFinite(state.headingOffset) ? state.headingOffset ?? 0 : 0;
+                scrollTo({ top: Math.max(0, scrollY + heading.getBoundingClientRect().top - offset), behavior: 'instant' });
+              } else {
+                const maximumScroll = Math.max(0, document.documentElement.scrollHeight - innerHeight);
+                const progress = Number.isFinite(state.progress) ? Math.min(Math.max(state.progress ?? 0, 0), 1) : 0;
+                const rawY = Number.isFinite(state.scrollY) ? state.scrollY ?? 0 : 0;
+                scrollTo({ top: maximumScroll > 0 ? maximumScroll * progress : rawY, behavior: 'instant' });
+              }
+            });
+            if (document.readyState === 'complete') restorePosition();
+            else addEventListener('load', restorePosition, { once: true });
+          } else sessionStorage.removeItem(key);
+        }
+      } catch (_) { /* Storage or stored data may be unavailable. */ }
     </script>
   </body>
 </html>

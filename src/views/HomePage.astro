@@ -1,0 +1,238 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import GuestbookDialog from '../components/GuestbookDialog.astro';
+import LatestListItem from '../components/LatestListItem.astro';
+import LocalizedText from '../components/LocalizedText.astro';
+import { pairEntries } from '../lib/content';
+import { locales, text, ui, type Locale, type Localized } from '../lib/i18n';
+import { localizedPath } from '../lib/routes';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+
+const [blogEntries, projectEntries, recipeEntries] = await Promise.all([
+  getCollection('blog', ({ data }) => !data.draft),
+  getCollection('projects', ({ data }) => !data.draft),
+  getCollection('recipes', ({ data }) => !data.draft),
+]);
+const latest = [
+  { section: 'blog' as const, group: pairEntries(blogEntries)[0], base: '/blog/' },
+  { section: 'projects' as const, group: pairEntries(projectEntries)[0], base: '/projects/' },
+  { section: 'recipes' as const, group: pairEntries(recipeEntries)[0], base: '/recipes/' },
+].filter((item) => item.group).sort((a, b) => (
+  b.group.locales['zh-CN'].data.publishDate.getTime() - a.group.locales['zh-CN'].data.publishDate.getTime()
+));
+
+interface LatestContent { title: string; description: string; attribution?: string }
+type LatestGroup = (typeof latest)[number]['group'];
+const latestContent = (group: LatestGroup): Localized<LatestContent> => Object.fromEntries(
+  locales.map((candidate) => {
+    const data = group.locales[candidate].data;
+    return [candidate, {
+      title: data.title,
+      description: data.description,
+      attribution: 'attribution' in data ? data.attribution : undefined,
+    }];
+  }),
+) as Localized<LatestContent>;
+---
+
+<BaseLayout activeNav="home" titles={ui.home.title} descriptions={ui.home.description} locale={locale}>
+  <div class="site-shell">
+    <section class="hero" aria-labelledby="hero-title">
+      <div>
+        <h1 id="hero-title">
+          {locale === 'en' ? <>Hello, I’m<br />Steeefanie.</> : <>你好，我是<br />Steeefanie。</>}
+        </h1>
+        <p class="hero-intro"><LocalizedText value={ui.home.intro} /></p>
+      </div>
+      <div class="hero-aside">
+        <div class="hero-note">
+          <strong><LocalizedText value={ui.home.aboutTitle} /></strong>
+          <p class="hero-about-text"><LocalizedText value={ui.home.aboutText} /></p>
+        </div>
+        <div class="hero-contact">
+          <span class="hero-email">Contact: taichieh3@gmail.com</span>
+          <div class="hero-contact-actions">
+            <button
+              class="hero-contact-button"
+              type="button"
+              data-guestbook-open
+              aria-label={ui.guestbook.open[locale]}
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M5.5 5.5h13a2 2 0 0 1 2 2v7.5a2 2 0 0 1-2 2H11l-4.7 3.2.85-3.2H5.5a2 2 0 0 1-2-2V7.5a2 2 0 0 1 2-2Z" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </button>
+            <a class="hero-contact-button" href="https://github.com/Steeefanie" target="_blank" rel="noreferrer" aria-label="GitHub">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3.28-.36 6.72-1.61 6.72-7a5.4 5.4 0 0 0-1.42-3.73 5 5 0 0 0-.08-3S17.06.4 14 2.25a13.38 13.38 0 0 0-7 0C3.94.4 2.78.77 2.78.77a5 5 0 0 0-.08 3A5.4 5.4 0 0 0 1.28 7.5c0 5.42 3.44 6.67 6.72 7C7.31 15.1 6.69 16.25 7 17.5V22" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M7 18c-4.51 2-5-2-7-2" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="services-section" aria-labelledby="services-heading">
+      <div class="section-heading">
+        <h2 id="services-heading"><LocalizedText value={ui.home.services} /></h2>
+      </div>
+      <div class="service-grid">
+        <a class="service-app" href={localizedPath(locale, '/services/fuse-bead-generator/')} data-service-link aria-labelledby="fuse-bead-service-label">
+          <span class="service-card-icon service-card-icon--bead" aria-hidden="true">
+            <span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span>
+          </span>
+          <span class="service-app-label" id="fuse-bead-service-label"><LocalizedText value={text('拼豆图纸生成器', '拼豆圖紙生成器', 'Fuse-bead pattern generator')} /></span>
+        </a>
+      </div>
+    </section>
+
+    <section class="latest-section-block" aria-labelledby="latest-heading">
+      <div class="section-heading">
+        <h2 id="latest-heading"><LocalizedText value={ui.home.latest} /></h2>
+      </div>
+      <ul class="content-list">
+        {latest.map(({ section, group, base }) => (
+          <LatestListItem
+            section={section}
+            href={localizedPath(locale, `${base}${group.slug}/`)}
+            date={group.locales[locale].data.publishDate}
+            locale={locale}
+            content={latestContent(group)}
+          />
+        ))}
+      </ul>
+    </section>
+  </div>
+  <GuestbookDialog />
+</BaseLayout>
+
+<style>
+  .services-section {
+    padding-top: var(--space-6);
+    padding-bottom: var(--space-10);
+  }
+
+  .latest-section-block {
+    padding-top: var(--space-10);
+    padding-bottom: var(--space-8);
+  }
+
+  .services-section .section-heading {
+    margin-bottom: var(--space-8);
+  }
+
+  .service-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 104px);
+    gap: 23px 20px;
+    align-items: start;
+  }
+
+  .service-app {
+    display: grid;
+    width: 104px;
+    justify-items: center;
+    gap: 9px;
+    color: var(--text);
+    text-decoration: none;
+  }
+
+  .service-app:focus-visible {
+    outline: none;
+  }
+
+  .service-app-label {
+    display: block;
+    width: 100%;
+    color: var(--text);
+    font-size: .78rem;
+    font-weight: 500;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+    text-align: center;
+    text-wrap: balance;
+    white-space: normal;
+  }
+
+  .service-card-icon {
+    position: relative;
+    display: grid;
+    width: 72px;
+    aspect-ratio: 1;
+    overflow: hidden;
+    border-radius: 16px;
+    transition: transform var(--motion-fast) ease;
+  }
+
+  .service-app:hover .service-card-icon {
+    transform: translateY(-2px) scale(1.015);
+  }
+
+  .service-app:focus-visible .service-card-icon {
+    outline: 2px solid var(--brand-interactive);
+    outline-offset: 3px;
+  }
+
+  .service-card-icon--bead {
+    grid-template-columns: repeat(4, 9px);
+    grid-auto-rows: 9px;
+    place-content: center;
+    gap: 3px;
+    background: var(--surface-raised);
+  }
+
+  .service-card-icon--bead span {
+    border-radius: 2px;
+    background: var(--brand-interactive);
+    opacity: .24;
+  }
+
+  .service-card-icon--bead span:nth-child(3n + 1),
+  .service-card-icon--bead span:nth-child(7) {
+    opacity: .8;
+  }
+
+  @media (max-width: 520px) {
+    .service-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 20px 9px;
+    }
+
+    .service-app { width: 100%; }
+
+    .service-card-icon {
+      width: clamp(56px, 18vw, 68px);
+      border-radius: clamp(13px, 4.2vw, 15px);
+    }
+
+    .service-app-label { max-width: 84px; font-size: .72rem; }
+  }
+</style>
+
+<script>
+  const serviceLink = document.querySelector<HTMLAnchorElement>('[data-service-link]');
+  serviceLink?.addEventListener('click', () => {
+    try { sessionStorage.setItem('home-service-scroll-y', String(window.scrollY)); } catch (_) { /* Storage may be unavailable. */ }
+  });
+
+  const restoreHomeScroll = () => {
+    try {
+      if (sessionStorage.getItem('restore-home-service-scroll') !== 'true') return;
+      sessionStorage.removeItem('restore-home-service-scroll');
+      const savedY = Number(sessionStorage.getItem('home-service-scroll-y'));
+      if (Number.isFinite(savedY)) requestAnimationFrame(() => window.scrollTo({ top: savedY, behavior: 'auto' }));
+    } catch (_) { /* Storage may be unavailable. */ }
+  };
+  restoreHomeScroll();
+  window.addEventListener('pageshow', restoreHomeScroll);
+</script>

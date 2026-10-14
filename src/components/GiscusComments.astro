@@ -2,12 +2,15 @@
 import LocalizedText from './LocalizedText.astro';
 import { giscusConfig, isGiscusConfigured } from '../lib/giscus';
 import { text } from '../lib/i18n';
+import { localeFromPathname, logicalPathname } from '../lib/routes';
 
 interface Props {
   mode: 'guestbook' | 'article';
 }
 
 const { mode } = Astro.props;
+const locale = localeFromPathname(Astro.url.pathname);
+const discussionTerm = logicalPathname(Astro.url.pathname);
 const loadingText = text('正在加载评论…', '正在載入評論…', 'Loading comments…');
 const errorText = text(
   '留言暂时无法加载，可前往 GitHub Discussions 查看。',
@@ -26,6 +29,7 @@ const errorText = text(
   data-category={giscusConfig.category}
   data-category-id={giscusConfig.categoryId}
   data-discussion-number={String(giscusConfig.guestbookDiscussionNumber)}
+  data-discussion-term={discussionTerm}
   data-theme-light={giscusConfig.themes.light}
   data-theme-dark={giscusConfig.themes.dark}
   data-theme-local-light={giscusConfig.themes.localLight}
@@ -36,13 +40,9 @@ const errorText = text(
   </p>
   <div class="giscus" data-giscus-mount></div>
   <p class="giscus-error" data-giscus-error hidden>
-    {(['zh-CN', 'zh-TW', 'en'] as const).map((locale) => (
-      <span data-lang={locale}>
-        {errorText[locale]}
-        {' '}
-        <a href={giscusConfig.discussionsUrl} target="_blank" rel="noreferrer">GitHub Discussions</a>
-      </span>
-    ))}
+    {errorText[locale]}
+    {' '}
+    <a href={giscusConfig.discussionsUrl} target="_blank" rel="noreferrer">GitHub Discussions</a>
   </p>
 </div>
 
@@ -153,7 +153,8 @@ const errorText = text(
       script.dataset.term = root.dataset.discussionNumber ?? '';
       script.dataset.strict = '0';
     } else {
-      script.dataset.mapping = 'pathname';
+      script.dataset.mapping = 'specific';
+      script.dataset.term = root.dataset.discussionTerm ?? location.pathname;
       script.dataset.strict = '1';
       script.dataset.loading = 'lazy';
     }
@@ -183,10 +184,6 @@ const errorText = text(
     roots.forEach((root) => {
       void themeFor(root, theme).then((value) => sendConfig(root, { theme: value }));
     });
-  });
-  window.addEventListener('site:language-change', () => {
-    const lang = currentLocale();
-    roots.forEach((root) => sendConfig(root, { lang }));
   });
   window.addEventListener('message', (event) => {
     if (event.origin !== 'https://giscus.app' || !event.data?.giscus?.error) return;

@@ -1,74 +1,91 @@
 # Steeefanie Personal Site
 
-一个基于 Astro 构建的多语言个人内容网站，用于发布随笔、项目与食谱。网站采用静态生成架构，支持简体中文、繁体中文（台湾）和英文，并提供响应式布局、深浅主题、本地搜索、内容筛选及键盘操作支持。
+[简体中文](README-CN.md)
 
-## 功能
+A statically generated, multilingual personal website for essays, projects, recipes, and small online tools. It is built with Astro and publishes separate Simplified Chinese, Traditional Chinese (Taiwan), and English pages.
 
-- 随笔、项目和食谱的分类展示与详情阅读；
-- 简体中文、繁体中文（台湾）和英文内容切换；
-- 基于标题、摘要、标签和技术栈的站内搜索；
-- 食谱分类筛选及列表分页；
-- 基于 GitHub Discussions 的主页留言与详情页评论；
-- 深色与浅色主题切换；
-- 响应式导航和无障碍交互；
-- 站点本体采用静态构建，无自建数据库及服务端运行依赖。
+## Features
 
-## 技术栈
+- Essays, project notes, and recipes backed by Astro Content Collections.
+- Independent `/zh-cn/`, `/zh-tw/`, and `/en/` routes with localized content and interface copy.
+- A language gateway at `/` that respects an explicit user preference first, then the browser language, and finally falls back to Simplified Chinese.
+- Local search across titles, summaries, tags, and project technology stacks.
+- Recipe category filters and client-side list pagination.
+- Responsive navigation, light and dark themes, visible keyboard focus, and reduced-motion support.
+- A floating, resizable table of contents for long essays and project pages. It shifts the reading column only when sufficient space remains, and behaves as an overlay otherwise.
+- GitHub Discussions-powered guestbook and article comments, shared by all language versions of the same content.
+- An in-browser fuse-bead pattern generator with guarded asynchronous image processing and request cancellation.
+- Static site output with no application database or server runtime requirement. The fuse-bead generation API is deployed separately.
+
+## Technology
 
 - [Astro](https://astro.build/) 7
 - TypeScript 6
 - Tailwind CSS 4
 - Astro Content Collections
-- Markdown / MDX
+- Markdown and MDX
 
-## 路由
+## Routes and language preference
 
 ```text
-/                    主页
-/blog/               随笔列表
-/blog/[slug]/        随笔详情
-/projects/           项目列表
-/projects/[slug]/    项目详情
-/recipes/            食谱列表
-/recipes/[slug]/     食谱详情
-/search-index.json   本地搜索索引
+/                                 Language gateway
+/zh-cn/                           Simplified Chinese home
+/zh-cn/blog/                      Simplified Chinese essays
+/zh-cn/projects/                  Simplified Chinese projects
+/zh-cn/recipes/                   Simplified Chinese recipes
+/zh-cn/services/fuse-bead-generator/
+/zh-tw/...                        Traditional Chinese (Taiwan)
+/en/...                           English
+/search-index.json                Shared local-search index
 ```
 
-网站不设置语言路径前缀，同一路由根据当前语言展示对应内容。
+All public content pages require a language prefix. Legacy unprefixed content routes are intentionally not generated or redirected.
 
-## 项目结构
+The root gateway selects a destination in this order:
+
+1. The `steeefanie_locale` first-party cookie set by an explicit language-menu choice.
+2. `navigator.languages` / the browser language preference.
+3. `/zh-cn/` as the fallback.
+
+Automatic browser detection is not written to the cookie. Explicit locale URLs always take precedence, so opening an `/en/...` URL remains English regardless of the stored preference. The cookie stores only `zh-cn`, `zh-tw`, or `en`, uses `SameSite=Lax`, applies to the whole site, and expires after one year.
+
+Each localized page emits its own canonical URL, reciprocal `hreflang` links, localized Open Graph metadata, and the corresponding HTML `lang`. The root gateway is the `x-default` target for home pages; other content uses the Simplified Chinese version as its fallback.
+
+## Repository structure
 
 ```text
-public/                         静态资源
+public/                         Static files copied as-is
 src/
-├─ assets/                      内容引用资源
-├─ components/                  页面与交互组件
+├─ assets/                      Build-managed article assets
+├─ components/                  Reusable UI and interaction components
 ├─ content/
-│  ├─ blog/                     随笔内容
-│  ├─ projects/                 项目内容
-│  └─ recipes/                  食谱内容
-├─ layouts/                     页面布局
-├─ lib/                         内容与国际化工具
-├─ pages/                       页面及路由
-└─ styles/                      全局样式与设计令牌
-docs/
-└─ design-system.md             设计与交互规范
+│  ├─ blog/{zh-CN,zh-TW,en}/
+│  ├─ projects/{zh-CN,zh-TW,en}/
+│  └─ recipes/{zh-CN,zh-TW,en}/
+├─ layouts/                     Shared HTML document layout
+├─ lib/                         Content pairing, routing, and utilities
+├─ pages/                       Root gateway, localized route generator, and JSON endpoints
+├─ scripts/                     Client-side interaction and tool logic
+├─ styles/                      Design tokens and shared styles
+└─ views/                       Reusable page implementations rendered by locale routes
+services/                       Separately deployed service code
+docs/                           Design specification and maintenance guides
 ```
 
-各内容栏目按 `zh-CN`、`zh-TW` 和 `en` 分设目录。同一内容的三种语言版本使用相同文件名，以建立稳定的内容对应关系。
+The three language files for one content item must use the same filename. That filename is the stable slug used to pair translations and generate equivalent URLs.
 
-## 本地运行
+## Local development
 
-环境要求：Node.js 22 或更高版本、pnpm 11。
+Requirements: Node.js 22 or later and pnpm 11.
 
 ```bash
 pnpm install
 pnpm dev
 ```
 
-默认开发地址为 `http://localhost:4321`。
+The default development URL is `http://localhost:4321`. Opening `/` performs the same language selection used in production; use `/zh-cn/`, `/zh-tw/`, or `/en/` to inspect a language directly.
 
-## 构建与检查
+## Validation and build
 
 ```bash
 pnpm check
@@ -76,16 +93,17 @@ pnpm build
 pnpm preview
 ```
 
-构建结果输出至 `dist/`，可部署到支持静态文件托管的 Web 服务。
+The static output is written to `dist/`. A successful build should contain all three locale directories and should not contain unprefixed `blog`, `projects`, `recipes`, or `services` pages.
 
-## 内容规范
+## Content rules
 
-- 内容通过 Astro Content Collections 统一管理，并由 Schema 校验元数据；
-- 同一内容应同时提供三种语言版本，且文件名保持一致；
-- 正文使用 Markdown 或 MDX 编写，页面标题及公共排版由统一布局生成；
-- 项目图片存放于 `src/assets/projects/`，公共静态资源存放于 `public/`；
-- 密钥、密码、Token 及其他敏感配置不得写入仓库或前端代码。
+- Content metadata is validated by Astro Content Collections.
+- Every published item must provide matching `zh-CN`, `zh-TW`, and `en` files.
+- Traditional Chinese content is localized for Taiwan rather than generated by mechanical character conversion.
+- Page titles are generated by the view templates; article Markdown/MDX should normally begin with level-two headings.
+- Shared project images belong in `src/assets/projects/`; fixed public assets belong in `public/`.
+- Never commit passwords, access tokens, private data, or production secrets.
 
-留言与评论由独立的公开 GitHub Discussions 仓库承载，访客需要登录 GitHub 后发表公开内容。
+Comments and guestbook entries are public GitHub Discussions. Language prefixes are removed from the stable discussion identifier so that the three localized URLs share one discussion.
 
-完整的视觉与交互规范见 [设计系统](docs/design-system.md)。
+See [the design specification](docs/design-system.md) and [the maintenance guides](docs/learning/README.md) for the full project conventions.
