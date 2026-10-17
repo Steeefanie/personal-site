@@ -80,7 +80,10 @@ const alternateLocales = locales.filter((candidate) => candidate !== locale);
         try {
           const raw = sessionStorage.getItem('language-route-scroll');
           const state = raw ? JSON.parse(raw) : null;
+          const listingReturn = JSON.parse(sessionStorage.getItem('listing-return-position') ?? 'null');
           history.scrollRestoration = state?.target === `${location.pathname}${location.search}`
+            || (listingReturn?.url === `${location.pathname}${location.search}${location.hash}`
+              && Number.isFinite(listingReturn.scrollY) && listingReturn.scrollY >= 0)
             ? 'manual'
             : 'auto';
         } catch (_) { history.scrollRestoration = 'auto'; }

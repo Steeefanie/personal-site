@@ -5,6 +5,7 @@ import ArticleComments from '../components/ArticleComments.astro';
 import ArticleToc from '../components/ArticleToc.astro';
 import ProseLayout from '../components/ProseLayout.astro';
 import LocalizedText from '../components/LocalizedText.astro';
+import ListingBackLink from '../components/ListingBackLink.astro';
 import { localeDateFormats, locales, text, ui, type Locale, type Localized } from '../lib/i18n';
 import { localizedPath } from '../lib/routes';
 
@@ -29,7 +30,7 @@ const descriptions = Object.fromEntries(locales.map((locale) => [locale, entries
   <article class="article-with-comments article-toc-page" data-article-toc-page>
     <header class="article-header">
       <div class="reading-shell">
-        <a class="text-link" href={localizedPath(locale, '/blog/')}><span aria-hidden="true">←</span><LocalizedText value={text('返回随笔', '返回隨筆', 'Back to Blog')} /></a>
+        <ListingBackLink href={localizedPath(locale, '/blog/')} label={text('返回随笔', '返回隨筆', 'Back to Blog')} />
         <h1>{entry.data.title}</h1>
         <p class="article-deck">{entry.data.attribution && <span class="content-attribution">{entry.data.attribution}</span>}{entry.data.description}</p>
         <div class="article-meta">

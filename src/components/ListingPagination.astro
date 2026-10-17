@@ -28,6 +28,8 @@ const locale = localeFromPathname(Astro.url.pathname);
 </nav>
 
 <script>
+  import { rememberListingPosition } from '../scripts/listing-navigation';
+
   type Locale = 'zh-CN' | 'zh-TW' | 'en';
 
   const paginationRoots = document.querySelectorAll<HTMLElement>('[data-listing-pagination]');
@@ -192,5 +194,6 @@ const locale = localeFromPathname(Astro.url.pathname);
 
     addEventListener('popstate', syncFromUrl);
     syncFromUrl();
+    if (section) rememberListingPosition(section);
   });
 </script>

@@ -67,10 +67,13 @@ if (root && root.dataset.initialized !== 'true') {
     const activeList = root.querySelector<HTMLOListElement>('.article-toc-nav > ol');
     if (!activeList || !panelNav) return;
 
+    // Measure the list at its expanded width without resizing the visible shell.
     root.dataset.measuring = 'true';
     const navStyle = getComputedStyle(panelNav);
     const navPadding = Number.parseFloat(navStyle.paddingTop) + Number.parseFloat(navStyle.paddingBottom);
-    const contentHeight = Math.ceil((panelHeader?.offsetHeight ?? 58) + activeList.scrollHeight + navPadding);
+    const headerHeight = panelHeader?.getBoundingClientRect().height ?? 58;
+    const contentHeight = Math.ceil(headerHeight + activeList.getBoundingClientRect().height + navPadding);
+    root.style.setProperty('--article-toc-header-height', `${headerHeight}px`);
     root.style.setProperty('--article-toc-content-height', `${contentHeight}px`);
     delete root.dataset.measuring;
   };
@@ -184,7 +187,7 @@ if (root && root.dataset.initialized !== 'true') {
       applyWidth(preferredWidth());
       document.documentElement.dataset.articleTocOpen = 'true';
       document.documentElement.dataset.articleTocMode = root.dataset.mode ?? 'overlay';
-      requestAnimationFrame(() => activeLinks()[0]?.focus());
+      requestAnimationFrame(() => activeLinks()[0]?.focus({ preventScroll: true }));
     } else {
       document.documentElement.removeAttribute('data-article-toc-open');
       document.documentElement.removeAttribute('data-article-toc-mode');
