@@ -3,6 +3,7 @@ title: Lemon Chicken with Onion and Sweetcorn
 description: Lemon-marinated chicken breast stir-fried with onion, sweetcorn, and ham sausage for a bright, savoury dish.
 publishDate: 2026-02-23
 lang: en
+cover: /images/recipes/lemon-onion-corn-chicken.webp
 category: home-cooking
 prepTime: 20 minutes
 servings: 1–2 servings

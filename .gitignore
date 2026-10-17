@@ -18,8 +18,10 @@ pnpm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Local project notes
+# Local project notes and agent metadata
 CHANGELOG.md
+.agents/
+.git-restore/
 
 # Editors and operating systems
 .DS_Store

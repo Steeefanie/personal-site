@@ -3,6 +3,7 @@ title: 奶香鸡蛋发糕
 description: 同一份鸡蛋发糕基础配方，以 100 g 或 80 g 牛奶分别做出暄软版与更有弹性的 Q 弹版。
 publishDate: 2026-04-06
 lang: zh-CN
+cover: /images/recipes/milk-egg-fa-gao.webp
 category: flour
 prepTime: 约 2 小时
 servings: 1 个（约 6 份）

@@ -1,5 +1,5 @@
 ---
-import { ui, type Locale, type Localized } from '../lib/i18n';
+import type { Locale, Localized } from '../lib/i18n';
 import { localizedPath } from '../lib/routes';
 
 interface Tag { id: string; label: string }
@@ -11,26 +11,31 @@ interface LocalizedRecipe {
   prepTime: string;
   servings: string;
   tags: Tag[];
+  cover?: string;
 }
 
 interface Props {
   slug: string;
   locales: Localized<LocalizedRecipe>;
   locale: Locale;
+  priority?: boolean;
 }
 
-const { slug, locales: entries, locale } = Astro.props;
+const { slug, locales: entries, locale, priority = false } = Astro.props;
 const entry = entries[locale];
+const cover = entry.cover;
 ---
 
 <li class="content-list-item" data-filter-item data-category={entry.category}>
   <a href={localizedPath(locale, `/recipes/${slug}/`)}>
-    <div>
+    <div class="recipe-media" aria-hidden="true">
+      {cover && <img class="recipe-image" src={cover} alt="" width="256" height="256" loading={priority ? 'eager' : 'lazy'} decoding="async" />}
+    </div>
+    <div class="recipe-copy">
       <h2 class="item-title">{entry.title}</h2>
       <p class="item-description">{entry.description}</p>
     </div>
     <div class="item-meta">
-      <span class="status">{ui.category[entry.category][locale]}</span>
       <span>{entry.prepTime} · {entry.servings}</span>
       <span class="tag-list">{entry.tags.map((tag) => <span class="tag">#{tag.label}</span>)}</span>
     </div>

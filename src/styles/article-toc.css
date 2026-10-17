@@ -147,7 +147,7 @@ html:has(.site-header.is-hidden) {
 }
 
 .article-toc-header strong {
-  font-size: .9rem;
+  font-size: calc(var(--font-size-unit) * 0.9);
   font-weight: 600;
 }
 
@@ -156,7 +156,7 @@ html:has(.site-header.is-hidden) {
   border: 0;
   background: transparent;
   color: var(--muted);
-  font-size: .68rem;
+  font-size: calc(var(--font-size-unit) * 0.68);
   cursor: pointer;
 }
 
@@ -194,7 +194,7 @@ html:has(.site-header.is-hidden) {
   padding: 7px 9px 7px 12px;
   border-radius: var(--radius-sm);
   color: var(--muted);
-  font-size: .78rem;
+  font-size: calc(var(--font-size-unit) * 0.78);
   line-height: 1.45;
   overflow-wrap: anywhere;
   text-decoration: none;

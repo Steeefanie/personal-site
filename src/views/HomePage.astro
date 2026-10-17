@@ -155,7 +155,7 @@ const latestContent = (group: LatestGroup): Localized<LatestContent> => Object.f
     display: block;
     width: 100%;
     color: var(--text);
-    font-size: .78rem;
+    font-size: calc(var(--font-size-unit) * 0.78);
     font-weight: 500;
     line-height: 1.25;
     overflow-wrap: anywhere;
@@ -215,7 +215,7 @@ const latestContent = (group: LatestGroup): Localized<LatestContent> => Object.f
       border-radius: clamp(13px, 4.2vw, 15px);
     }
 
-    .service-app-label { max-width: 84px; font-size: .72rem; }
+    .service-app-label { max-width: 84px; font-size: calc(var(--font-size-unit) * 0.72); }
   }
 </style>
 

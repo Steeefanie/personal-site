@@ -3,6 +3,7 @@ title: 奶香雞蛋發糕
 description: 同一份雞蛋發糕基礎配方，以 100 g 或 80 g 牛奶分別做出鬆軟版與更有彈性的 Q 彈版。
 publishDate: 2026-04-06
 lang: zh-TW
+cover: /images/recipes/milk-egg-fa-gao.webp
 category: flour
 prepTime: 約 2 小時
 servings: 1 個（約 6 份）

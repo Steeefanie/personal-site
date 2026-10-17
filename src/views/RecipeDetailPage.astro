@@ -1,5 +1,6 @@
 ---
 import { render, type CollectionEntry } from 'astro:content';
+import '../styles/recipes.css';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ArticleComments from '../components/ArticleComments.astro';
 import ProseLayout from '../components/ProseLayout.astro';
@@ -7,6 +8,7 @@ import LocalizedText from '../components/LocalizedText.astro';
 import ListingBackLink from '../components/ListingBackLink.astro';
 import { locales, text, ui, type Locale, type Localized } from '../lib/i18n';
 import { localizedPath } from '../lib/routes';
+import imageLeftInsets from '../lib/recipe-image-left-insets.json';
 
 interface Adjacent { slug: string; titles: Localized<string> }
 interface Props {
@@ -20,22 +22,30 @@ const { locale, entries, previous, next } = Astro.props;
 const entry = entries[locale];
 const { Content } = await render(entry);
 const base = entry.data;
+const imageBounds = base.cover ? (imageLeftInsets as Record<string, { left: number; right: number }>)[base.cover] : undefined;
+const imageLeftInset = imageBounds?.left ?? 0;
+const imageVisibleWidth = (imageBounds?.right ?? 1) - imageLeftInset;
 const titles = Object.fromEntries(locales.map((locale) => [locale, `${entries[locale].data.title}${locale === 'en' ? ' | ' : '｜'}Steeefanie`])) as Localized<string>;
 const descriptions = Object.fromEntries(locales.map((locale) => [locale, entries[locale].data.description])) as Localized<string>;
 ---
 
 <BaseLayout activeNav="recipes" titles={titles} descriptions={descriptions} pageType="article" locale={locale}>
-  <article class="article-with-comments">
+  <article class:list={['article-with-comments', { 'cocktail-detail': base.category === 'cocktail' }]}>
     <header class="article-header">
       <div class="reading-shell">
         <ListingBackLink href={localizedPath(locale, '/recipes/')} label={text('返回食谱', '返回食譜', 'Back to Recipes')} />
-        <h1>{entry.data.title}</h1>
-        <p class="article-deck">{entry.data.description}</p>
-        <div class="article-meta">
-          <span class="status">{ui.category[base.category][locale]}</span>
-          <span>{entry.data.prepTime}</span>
-          <span>{entry.data.servings}</span>
-          <span class="tag-list">{entry.data.tags.map((tag) => <span class="tag">#{tag.label}</span>)}</span>
+        <div class="recipe-detail-heading" style={`--recipe-icon-left-inset: ${imageLeftInset}; --recipe-icon-visible-width: ${imageVisibleWidth}`}>
+          {base.cover && <div class="recipe-detail-art" aria-hidden="true"><img class="recipe-detail-icon" src={base.cover} alt="" width="256" height="256" decoding="async" /></div>}
+          <div class="recipe-detail-copy">
+            <h1>{entry.data.title}</h1>
+            <p class="article-deck">{entry.data.description}</p>
+            <div class="article-meta">
+              <span class="status">{ui.category[base.category][locale]}</span>
+              <span>{entry.data.prepTime}</span>
+              <span>{entry.data.servings}</span>
+              <span class="tag-list">{entry.data.tags.map((tag) => <span class="tag">#{tag.label}</span>)}</span>
+            </div>
+          </div>
         </div>
       </div>
     </header>
@@ -51,3 +61,24 @@ const descriptions = Object.fromEntries(locales.map((locale) => [locale, entries
     <ArticleComments />
   </article>
 </BaseLayout>
+
+<script>
+  document.querySelectorAll<HTMLElement>('.recipe-detail-heading').forEach((heading) => {
+    const copy = heading.querySelector<HTMLElement>('.recipe-detail-copy');
+    if (!copy || !heading.querySelector('.recipe-detail-art')) return;
+    // Match the text block while retaining room for text on narrow screens.
+    const syncIconSize = () => {
+      const size = Math.min(copy.getBoundingClientRect().height, heading.clientWidth * 0.4);
+      const value = `${size}px`;
+      if (heading.style.getPropertyValue('--recipe-detail-icon-size') !== value) {
+        heading.style.setProperty('--recipe-detail-icon-size', value);
+      }
+    };
+    const observer = new ResizeObserver(() => requestAnimationFrame(syncIconSize));
+    observer.observe(copy);
+    observer.observe(heading);
+    syncIconSize();
+    addEventListener('pagehide', () => observer.disconnect(), { once: true });
+    addEventListener('pageshow', () => { observer.observe(copy); observer.observe(heading); syncIconSize(); });
+  });
+</script>

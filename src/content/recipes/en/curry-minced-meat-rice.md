@@ -3,6 +3,7 @@ title: Curried Minced Meat and Rice
 description: Minced meat, potatoes, and onion simmered with curry and whole milk, then folded through cooked rice.
 publishDate: 2026-02-23
 lang: en
+cover: /images/recipes/curry-minced-meat-rice.webp
 category: home-cooking
 prepTime: 45 minutes
 servings: 2 servings

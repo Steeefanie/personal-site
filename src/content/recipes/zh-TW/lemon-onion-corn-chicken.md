@@ -3,6 +3,7 @@ title: 檸檬版洋蔥玉米炒雞胸
 description: 以檸檬醃過的雞胸搭配洋蔥、甜玉米與火腿腸，酸香清爽的快炒料理。
 publishDate: 2026-02-23
 lang: zh-TW
+cover: /images/recipes/lemon-onion-corn-chicken.webp
 category: home-cooking
 prepTime: 20 分鐘
 servings: 1–2 份

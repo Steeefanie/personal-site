@@ -3,6 +3,7 @@ title: 燕麥雞蛋英式瑪芬
 description: 燕麥先以滾水燙軟，再與雞蛋和高筋麵粉揉成發酵麵糰，以平底鍋小火烙熟。
 publishDate: 2026-06-27
 lang: zh-TW
+cover: /images/recipes/oat-egg-english-muffins.webp
 category: flour
 prepTime: 約 2 小時
 servings: 約 8 個

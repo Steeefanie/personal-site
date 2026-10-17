@@ -26,12 +26,12 @@ personal-site/
 ├─ README.md
 ├─ README-CN.md
 ├─ CHANGELOG.md
-├─ TODO.md
 ├─ docs/
 │  ├─ design-system.md
 │  └─ learning/
 ├─ public/
-│  └─ brand/
+│  ├─ brand/
+│  └─ images/recipes/  共用的压缩食谱图标
 ├─ src/
 │  ├─ assets/
 │  │  └─ projects/
@@ -117,12 +117,11 @@ personal-site/
 
 它不是删除规则；文件仍在本地，只是 Git 默认不跟踪它们。
 
-### `README.md`、`README-CN.md`、`CHANGELOG.md`、`TODO.md`
+### `README.md`、`README-CN.md`、`CHANGELOG.md`
 
 - `README.md`：英文项目入口说明，告诉读者项目是什么、如何运行。
 - `README-CN.md`：与默认 README 对应的简体中文说明。
-- `CHANGELOG.md`：按版本记录已经完成的变化。
-- `TODO.md`：记录尚未完成或以后考虑的事项。
+- `CHANGELOG.md`：按版本记录已经完成的变化，仅本地维护，当前被 `.gitignore` 排除。
 
 修改功能或结构时，通常应同步更新这些文档中的相关信息。
 
@@ -242,7 +241,8 @@ src/assets/projects/fuse-bead-pattern-generator/
 | `SiteFooter.astro` | 页脚 | 全站所有页面 |
 | `PostListItem.astro` | 随笔列表项 | 随笔列表等引用位置 |
 | `ProjectListItem.astro` | 项目列表项 | 项目列表等引用位置 |
-| `RecipeListItem.astro` | 食谱列表项 | 食谱列表等引用位置 |
+| `RecipeListItem.astro` | 共用配图和名称的食谱条目，按视图展示简介及元信息 | 食谱列表 |
+| `RecipeViewSwitcher.astro` | 图标／列表胶囊开关和视图 Cookie | 食谱列表 |
 | `LatestListItem.astro` | 主页“最近更新”列表项 | 主页 |
 | `ListingPagination.astro` | 每页 20 条的翻页功能 | 三个栏目列表 |
 | `ListingFilters.astro` | 食谱类别等列表筛选 | 使用筛选的列表页 |
@@ -293,11 +293,17 @@ src/assets/projects/fuse-bead-pattern-generator/
 
 修改导航等公共文案时，应先在这里找，不要把三套文字散落到不同组件中。
 
+#### `src/lib/recipe-image-left-insets.json`
+
+以图片 URL 为键，记录压缩图片 Alpha 通道不为 0 的左右边界占画布宽度的比例。详情页使用它去除两侧透明留白占位。替换 WebP 后需要重新计算，三语言共用一份数据。
+
 ### 4.8 `src/styles/`：全站视觉规则
 
 - `tokens.css`：颜色、字体、字号、间距等设计变量，是设计系统在代码中的基础。
 - `global.css`：页面、导航、列表、按钮、动画和响应式规则等全局样式。
 - `prose.css`：Markdown/MDX 正文、标题、段落、列表、表格和图片的排版。
+- `recipes.css`：食谱图标与列表视图、视图开关、详情图标的 Alpha 边界对齐。
+- `--font-size-unit`：所有界面文字使用的响应式字号基准，定义在 `tokens.css`；二至四级正文标题使用独立令牌保持层级。
 
 如果只是修改某篇文章内容，不应改这些文件。修改它们往往会影响多个页面或全站。
 
@@ -317,7 +323,8 @@ public/brand/favicon-light-nobg.svg
 
 简单判断：
 
-- favicon、robots.txt 等需要固定网址的公开静态文件放 `public/`；
+- 品牌图标和其他需要固定网址的公开静态文件放 `public/`；
+- 食谱图标放 `public/images/recipes/<slug>.webp`，原始 PNG 保存在项目外；
 - 正文图片、需要构建系统识别和管理的图片放 `src/assets/`。
 
 ## 6. `docs/`：项目文档

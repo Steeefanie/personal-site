@@ -1,21 +1,26 @@
 ---
 title: Long Island Iced Tea
-description: A classic long drink combining five spirits with lemon, simple syrup, and cola.
+description: A classic long drink made with vodka, tequila, gin, rum, Cointreau, lemon, syrup, and cola.
 publishDate: 2024-11-16
 lang: en
+cover: /images/recipes/long-island-iced-tea.webp
 category: cocktail
-prepTime: 3 minutes
+prepTime: 5 minutes
 servings: 1 drink
 tags:
   - { id: vodka, label: Vodka }
-  - { id: tequila, label: Tequila }
+  - { id: tequila, label: Silver tequila }
   - { id: gin, label: Gin }
   - { id: rum, label: Rum }
+  - { id: cointreau, label: Cointreau }
+  - { id: lemon, label: Lemon }
+  - { id: cola, label: Cola }
   - { id: long-drink, label: Long drink }
-  - { id: mixed-spirits, label: Mixed spirits }
 featured: false
 draft: false
 ---
+
+Recommended glass: a Collins glass.
 
 ## Ingredients
 
@@ -27,10 +32,15 @@ draft: false
 - 30 ml fresh lemon juice
 - 20 ml simple syrup
 - 60–90 ml Coca-Cola
-- Ice as needed
+- Ice as needed, for shaking
+- Fresh ice as needed, for serving
 
 ## Method
 
-1. Add every liquid except the cola to a shaker and fill with ice.
-2. Shake for about 10 seconds and strain into a glass over fresh ice.
-3. Top with cola and lift once to combine.
+1. Add the vodka, tequila, gin, white rum, Cointreau, lemon juice, and simple syrup to a shaker.
+2. Add ice and shake for about 10 seconds.
+3. Add fresh ice to a glass and strain the drink into it.
+4. Slowly pour the cola down the side of the glass.
+5. Gently lift the liquid from the bottom of the glass with a bar spoon once or twice to combine.
+
+I sometimes add whiskey and brandy, which may give the drink a fuller flavor.

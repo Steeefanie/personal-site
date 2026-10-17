@@ -3,6 +3,7 @@ title: Hand-kneaded, Twice-proved Mantou
 description: Hand-kneaded steamed buns made with three knead-and-rest cycles, a chilled rest, and two proofs for a fine crumb and smooth surface.
 publishDate: 2026-02-23
 lang: en
+cover: /images/recipes/hand-kneaded-two-rise-mantou.webp
 category: flour
 prepTime: about 5 hours
 servings: 6 buns

@@ -23,9 +23,14 @@
   --content-wide: 1120px;
   --content-reading: 740px;
   --page-gutter: 30px;
-  --font-size-home-display: clamp(2.7rem, calc(2.2rem + 2.2vw), 4rem);
-  --font-size-home-section-title: clamp(1.35rem, 2.4vw, 1.85rem);
-  --font-size-section-title: clamp(1.55rem, 3vw, 2.2rem);
+  /* Responsive type unit: only typography scales; rem-based layout stays stable. */
+  --font-size-unit: clamp(0.94rem, calc(0.92rem + 0.1vw), 1rem);
+  --font-size-home-display: clamp(calc(var(--font-size-unit) * 2.7), calc(calc(var(--font-size-unit) * 2.2) + 2.2vw), calc(var(--font-size-unit) * 4));
+  --font-size-home-section-title: clamp(calc(var(--font-size-unit) * 1.35), 2.4vw, calc(var(--font-size-unit) * 1.85));
+  --font-size-section-title: clamp(calc(var(--font-size-unit) * 1.55), 3vw, calc(var(--font-size-unit) * 2.2));
+  --font-size-prose-h2: clamp(calc(var(--font-size-unit) * 1.3), 2.35vw, calc(var(--font-size-unit) * 1.72));
+  --font-size-prose-h3: clamp(calc(var(--font-size-unit) * 1.15), 1.85vw, calc(var(--font-size-unit) * 1.35));
+  --font-size-prose-h4: clamp(calc(var(--font-size-unit) * 1.05), 1.5vw, calc(var(--font-size-unit) * 1.12));
   --header-height: 72px;
   --space-1: 4px;
   --space-2: 8px;

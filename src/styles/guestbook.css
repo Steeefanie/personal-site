@@ -128,10 +128,12 @@ html.guestbook-open .top-chrome-surface {
 .article-comments-header h2 {
   margin: 0;
   color: var(--text);
-  font-size: var(--font-size-section-title);
+  font-size: var(--font-size-prose-h2);
   font-weight: 600;
   line-height: 1.2;
 }
+
+.guestbook-info h2 { font-size: var(--font-size-home-section-title); }
 
 .guestbook-info > p {
   margin: 20px 0 0;
@@ -141,7 +143,7 @@ html.guestbook-open .top-chrome-surface {
 .guestbook-notes {
   margin-top: 32px;
   color: var(--muted);
-  font-size: 0.84rem;
+  font-size: calc(var(--font-size-unit) * 0.84);
 }
 
 .guestbook-notes p {
@@ -161,7 +163,7 @@ html.guestbook-open .top-chrome-surface {
   margin: 0;
   padding: 20px 0;
   color: var(--muted);
-  font-size: 0.88rem;
+  font-size: calc(var(--font-size-unit) * 0.88);
 }
 
 .giscus-status:not([hidden]) {

@@ -3,6 +3,7 @@ title: Oat and Egg English Muffins
 description: Oats softened with boiling water, mixed into an egg-enriched yeast dough, and slowly cooked in a frying pan.
 publishDate: 2026-06-27
 lang: en
+cover: /images/recipes/oat-egg-english-muffins.webp
 category: flour
 prepTime: about 2 hours
 servings: about 8 muffins

@@ -109,7 +109,7 @@ pnpm exec astro dev stop
 ### 6.1 预演，不写入
 
 ```powershell
-robocopy "C:\Code\Website\personal-site" "C:\Code\Website\personal-site-git" /MIR /L /R:2 /W:1 /XD ".git" "node_modules" ".astro" "dist" ".pnpm-store" /XF ".env" ".env.*" "*.log"
+robocopy "C:\Code\Website\personal-site" "C:\Code\Website\personal-site-git" /MIR /L /R:2 /W:1 /XD ".git" ".git-restore" ".agents" "node_modules" ".astro" "dist" ".pnpm-store" /XF ".env" ".env.*" "*.log" "CHANGELOG.md"
 ```
 
 `/L` 只列出计划复制、更新和删除的内容。必须确认没有误删个人文件或 Git 元数据。
@@ -128,7 +128,7 @@ robocopy "C:\Code\Website\personal-site" "C:\Code\Website\personal-site-git" /MI
 确认预演正确后，只去掉 `/L`：
 
 ```powershell
-robocopy "C:\Code\Website\personal-site" "C:\Code\Website\personal-site-git" /MIR /R:2 /W:1 /XD ".git" "node_modules" ".astro" "dist" ".pnpm-store" /XF ".env" ".env.*" "*.log"
+robocopy "C:\Code\Website\personal-site" "C:\Code\Website\personal-site-git" /MIR /R:2 /W:1 /XD ".git" ".git-restore" ".agents" "node_modules" ".astro" "dist" ".pnpm-store" /XF ".env" ".env.*" "*.log" "CHANGELOG.md"
 ```
 
 不要把源和目标写反：源是 `personal-site`，目标是 `personal-site-git`。

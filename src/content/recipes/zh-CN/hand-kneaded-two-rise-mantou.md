@@ -3,6 +3,7 @@ title: 手揉二发馒头
 description: 通过三揉三醒、冷藏松弛和两次发酵完成的手揉馒头，组织细密且表面光滑。
 publishDate: 2026-02-23
 lang: zh-CN
+cover: /images/recipes/hand-kneaded-two-rise-mantou.webp
 category: flour
 prepTime: 约 5 小时
 servings: 6 个

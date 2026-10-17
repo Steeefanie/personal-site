@@ -1,6 +1,6 @@
 .prose {
   color: var(--text);
-  font-size: 1.02rem;
+  font-size: calc(var(--font-size-unit) * 1.02);
   line-height: 1.72;
 }
 
@@ -22,9 +22,9 @@ html[lang='en'] .prose {
   scroll-margin-top: 90px;
 }
 
-.prose h2 { font-size: 1.72rem; }
-.prose h3 { font-size: 1.35rem; }
-.prose h4 { font-size: 1.12rem; }
+.prose h2 { font-size: var(--font-size-prose-h2); }
+.prose h3 { font-size: var(--font-size-prose-h3); }
+.prose h4 { font-size: var(--font-size-prose-h4); }
 .prose p {
   margin: 1em 0;
   text-align: justify;
@@ -33,6 +33,15 @@ html[lang='en'] .prose {
 
 .prose > p {
   text-indent: 2rem;
+}
+
+.cocktail-detail .prose > p {
+  text-indent: 0;
+}
+
+.cocktail-detail .prose > ul + h2,
+.cocktail-detail .prose > ol + p {
+  margin-top: 3.44rem;
 }
 
 html[lang='zh-CN'] .prose p,
@@ -94,7 +103,7 @@ html[lang='en'] .prose p {
   background: var(--code-bg) !important;
   color: var(--code-text);
   font-family: var(--font-mono);
-  font-size: .86rem;
+  font-size: calc(var(--font-size-unit) * 0.86);
   line-height: 1.55;
   tab-size: 2;
 }
@@ -110,7 +119,7 @@ html[lang='en'] .prose p {
   margin: 1.5em auto;
   overflow-x: auto;
   border-collapse: collapse;
-  font-size: .9rem;
+  font-size: calc(var(--font-size-unit) * 0.9);
   text-indent: 0;
 }
 
@@ -158,7 +167,7 @@ html[lang='en'] .prose p {
 .prose .project-figure figcaption {
   margin-top: .7em;
   color: var(--muted);
-  font-size: .78rem;
+  font-size: calc(var(--font-size-unit) * 0.78);
   line-height: 1.55;
   text-align: center;
   text-indent: 0;

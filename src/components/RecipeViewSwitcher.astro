@@ -1,0 +1,85 @@
+---
+import { text, type Locale } from '../lib/i18n';
+
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+const labels = {
+  group: text('食谱视图', '食譜檢視', 'Recipe view'),
+  grid: text('图标视图', '圖示檢視', 'Icon view'),
+  list: text('列表视图', '列表檢視', 'List view'),
+};
+---
+
+<div class="recipe-view-switch" role="group" aria-label={labels.group[locale]} data-recipe-view-switch>
+  <span class="recipe-view-thumb" aria-hidden="true"></span>
+  <button type="button" data-view-option="grid" aria-pressed="true" aria-label={labels.grid[locale]} title={labels.grid[locale]}>
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1.2"></rect>
+      <rect x="14" y="3.5" width="6.5" height="6.5" rx="1.2"></rect>
+      <rect x="3.5" y="14" width="6.5" height="6.5" rx="1.2"></rect>
+      <rect x="14" y="14" width="6.5" height="6.5" rx="1.2"></rect>
+    </svg>
+  </button>
+  <button type="button" data-view-option="list" aria-pressed="false" aria-label={labels.list[locale]} title={labels.list[locale]}>
+    <svg class="recipe-view-list-icon" viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="5" cy="6" r="1.25"></circle>
+      <circle cx="5" cy="12" r="1.25"></circle>
+      <circle cx="5" cy="18" r="1.25"></circle>
+      <path d="M9 6h10M9 12h10M9 18h10"></path>
+    </svg>
+  </button>
+</div>
+
+<script is:inline>
+  (() => {
+    const section = document.currentScript?.closest('[data-recipe-listing]');
+    if (!section) return;
+    let view = 'grid';
+    try {
+      const saved = document.cookie.split(';').map((part) => part.trim()).find((part) => part.startsWith('steeefanie_recipe_view='))?.split('=')[1];
+      if (saved === 'list') view = 'list';
+    } catch (_) {}
+    section.dataset.view = view;
+    section.querySelectorAll('[data-view-option]').forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.viewOption === view)));
+  })();
+</script>
+
+<script>
+  type RecipeView = 'grid' | 'list';
+  document.querySelectorAll<HTMLElement>('[data-recipe-listing]').forEach((section) => {
+    const controls = section.querySelector<HTMLElement>('[data-recipe-view-switch]');
+    const buttons = [...(controls?.querySelectorAll<HTMLButtonElement>('[data-view-option]') ?? [])];
+
+    const setView = (view: RecipeView, persist = false) => {
+      section.dataset.view = view;
+      buttons.forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.viewOption === view)));
+      if (persist) {
+        try {
+          const secure = location.protocol === 'https:' ? '; Secure' : '';
+          document.cookie = `steeefanie_recipe_view=${view}; Max-Age=31536000; Path=/; SameSite=Lax${secure}`;
+        } catch { /* The selected view remains usable when cookies are blocked. */ }
+      }
+    };
+
+    buttons.forEach((button) => button.addEventListener('click', () => {
+      setView(button.dataset.viewOption === 'list' ? 'list' : 'grid', true);
+    }));
+    controls?.addEventListener('keydown', (event) => {
+      if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+      event.preventDefault();
+      const view: RecipeView = event.key === 'ArrowLeft' || event.key === 'Home' ? 'grid' : 'list';
+      setView(view, true);
+      buttons.find((button) => button.dataset.viewOption === view)?.focus();
+    });
+    const restore = () => {
+      let view: RecipeView = 'grid';
+      try {
+        const saved = document.cookie.split(';').map((part) => part.trim()).find((part) => part.startsWith('steeefanie_recipe_view='))?.split('=')[1];
+        if (saved === 'list') view = 'list';
+      } catch { /* Use the default grid view. */ }
+      setView(view);
+    };
+    restore();
+    addEventListener('pageshow', restore);
+  });
+</script>

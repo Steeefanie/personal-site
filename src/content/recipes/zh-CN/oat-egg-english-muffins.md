@@ -3,6 +3,7 @@ title: 燕麦鸡蛋麦芬
 description: 燕麦先用开水烫软，再与鸡蛋和高筋面粉揉成发酵面团，以平底锅小火烙熟。
 publishDate: 2026-06-27
 lang: zh-CN
+cover: /images/recipes/oat-egg-english-muffins.webp
 category: flour
 prepTime: 约 2 小时
 servings: 约 8 个

@@ -3,6 +3,7 @@ title: 咖喱肉饭
 description: 肉末、土豆和洋葱以咖喱与全脂牛奶收成浓稠酱汁，再与米饭拌匀。
 publishDate: 2026-02-23
 lang: zh-CN
+cover: /images/recipes/curry-minced-meat-rice.webp
 category: home-cooking
 prepTime: 45 分钟
 servings: 2 份

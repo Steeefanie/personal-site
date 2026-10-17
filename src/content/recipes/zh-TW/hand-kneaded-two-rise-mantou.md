@@ -3,6 +3,7 @@ title: 手揉二次發酵饅頭
 description: 透過三揉三醒、冷藏鬆弛與兩次發酵完成的手揉饅頭，組織細密且表面光滑。
 publishDate: 2026-02-23
 lang: zh-TW
+cover: /images/recipes/hand-kneaded-two-rise-mantou.webp
 category: flour
 prepTime: 約 5 小時
 servings: 6 個

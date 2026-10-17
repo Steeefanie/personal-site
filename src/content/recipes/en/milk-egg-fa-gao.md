@@ -3,6 +3,7 @@ title: Milky Egg Fa Gao
 description: One steamed egg-cake base made with either 100 g milk for a softer crumb or 80 g for a springier, chewier result.
 publishDate: 2026-04-06
 lang: en
+cover: /images/recipes/milk-egg-fa-gao.webp
 category: flour
 prepTime: about 2 hours
 servings: 1 cake (about 6 servings)

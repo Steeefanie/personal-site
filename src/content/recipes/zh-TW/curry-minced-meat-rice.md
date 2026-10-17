@@ -3,6 +3,7 @@ title: 咖哩肉飯
 description: 絞肉、馬鈴薯與洋蔥以咖哩和全脂牛奶煮成濃稠醬汁，再與白飯拌勻。
 publishDate: 2026-02-23
 lang: zh-TW
+cover: /images/recipes/curry-minced-meat-rice.webp
 category: home-cooking
 prepTime: 45 分鐘
 servings: 2 份

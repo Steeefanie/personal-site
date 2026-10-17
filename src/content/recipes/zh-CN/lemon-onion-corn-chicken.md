@@ -3,6 +3,7 @@ title: 柠檬版洋葱玉米炒鸡胸
 description: 柠檬腌过的鸡胸搭配洋葱、甜玉米和火腿肠，酸香清爽的快炒菜。
 publishDate: 2026-02-23
 lang: zh-CN
+cover: /images/recipes/lemon-onion-corn-chicken.webp
 category: home-cooking
 prepTime: 20 分钟
 servings: 1–2 份
