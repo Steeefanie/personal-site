@@ -160,7 +160,13 @@ const navItems = [
       surfaceCloseTimer = window.setTimeout(collapseSurface, 48);
       panelAnimationTimer = window.setTimeout(finishClose, 400);
     }
-    if (restoreFocus) trigger?.focus();
+    if (restoreFocus && trigger) {
+      if (previousName === 'search') {
+        trigger.setAttribute('data-escape-focus', '');
+        trigger.addEventListener('blur', () => trigger.removeAttribute('data-escape-focus'), { once: true });
+      }
+      trigger.focus({ preventScroll: true });
+    }
   };
 
   const openPanel = (name: PanelName) => {
@@ -238,12 +244,18 @@ const navItems = [
           if (heading.getBoundingClientRect().top <= readingAnchor) headingIndex = index;
         });
         const maximumScroll = Math.max(0, document.documentElement.scrollHeight - innerHeight);
+        const items = [...document.querySelectorAll<HTMLElement>('.content-list-item')]
+          .filter((item) => !item.hidden && item.getBoundingClientRect().bottom > 0);
+        const readingItem = items.find((item) => item.getBoundingClientRect().bottom > readingAnchor);
+        const itemLink = readingItem?.querySelector<HTMLAnchorElement>('a[href]');
         const scrollState = {
           target: `${target.pathname}${target.search}`,
           scrollY,
           progress: maximumScroll > 0 ? scrollY / maximumScroll : 0,
           headingIndex,
           headingOffset: headingIndex >= 0 ? headings[headingIndex].getBoundingClientRect().top : 0,
+          itemPath: itemLink ? new URL(itemLink.href).pathname.replace(/^\/(?:zh-cn|zh-tw|en)(?=\/)/, '') : undefined,
+          itemOffset: readingItem?.getBoundingClientRect().top,
         };
         sessionStorage.setItem('language-route-scroll', JSON.stringify(scrollState));
       } catch (_) { /* Storage may be unavailable. */ }
@@ -257,6 +269,9 @@ const navItems = [
     if (openPanelName && !topChrome?.contains(event.target as Node)) closePanel();
   });
   document.addEventListener('keydown', (event) => {
+    if (event.key === 'Tab') {
+      triggers.forEach((trigger) => trigger.removeAttribute('data-escape-focus'));
+    }
     if (event.key === 'Escape' && openPanelName) { event.preventDefault(); closePanel(true); }
   });
   window.addEventListener('site:close-panels', () => closePanel());

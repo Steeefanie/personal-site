@@ -110,26 +110,70 @@ const alternateLocales = locales.filter((candidate) => candidate !== locale);
             progress?: number;
             headingIndex?: number;
             headingOffset?: number;
+            itemPath?: string;
+            itemOffset?: number;
           };
           if (state.target === `${location.pathname}${location.search}`) {
             sessionStorage.removeItem(key);
-            const restorePosition = () => requestAnimationFrame(() => {
+            let cancelled = false;
+            let frame = 0;
+            const cancel = () => {
+              cancelled = true;
+              cancelAnimationFrame(frame);
+              inputEvents.forEach((name) => removeEventListener(name, cancel));
+              history.scrollRestoration = 'auto';
+            };
+            const inputEvents = ['wheel', 'touchstart', 'keydown', 'pointerdown'] as const;
+            inputEvents.forEach((name) => addEventListener(name, cancel, { passive: true }));
+            const restorePosition = () => {
+              if (cancelled) return;
               const headings = [...document.querySelectorAll<HTMLElement>('.prose :is(h2, h3)')];
               const heading = Number.isInteger(state.headingIndex) && (state.headingIndex ?? -1) >= 0
                 ? headings[state.headingIndex ?? -1]
                 : undefined;
+              const item = typeof state.itemPath === 'string'
+                ? [...document.querySelectorAll<HTMLElement>('.content-list-item')].find((candidate) => {
+                  const link = candidate.querySelector<HTMLAnchorElement>('a[href]');
+                  return !candidate.hidden && link
+                    && new URL(link.href).pathname.replace(/^\/(?:zh-cn|zh-tw|en)(?=\/)/, '') === state.itemPath;
+                })
+                : undefined;
               if (heading) {
                 const offset = Number.isFinite(state.headingOffset) ? state.headingOffset ?? 0 : 0;
                 scrollTo({ top: Math.max(0, scrollY + heading.getBoundingClientRect().top - offset), behavior: 'instant' });
+              } else if (item && Number.isFinite(state.itemOffset)) {
+                scrollTo({ top: Math.max(0, scrollY + item.getBoundingClientRect().top - (state.itemOffset ?? 0)), behavior: 'instant' });
               } else {
                 const maximumScroll = Math.max(0, document.documentElement.scrollHeight - innerHeight);
                 const progress = Number.isFinite(state.progress) ? Math.min(Math.max(state.progress ?? 0, 0), 1) : 0;
                 const rawY = Number.isFinite(state.scrollY) ? state.scrollY ?? 0 : 0;
                 scrollTo({ top: maximumScroll > 0 ? maximumScroll * progress : rawY, behavior: 'instant' });
               }
-            });
-            if (document.readyState === 'complete') restorePosition();
-            else addEventListener('load', restorePosition, { once: true });
+            };
+            const finish = () => {
+              restorePosition();
+              inputEvents.forEach((name) => removeEventListener(name, cancel));
+              history.scrollRestoration = 'auto';
+            };
+            const afterPageShow = () => {
+              // Filtering, image sizing and native navigation can change the
+              // layout after load. Restore after pageshow and font layout.
+              void document.fonts.ready.then(() => {
+                if (cancelled) { finish(); return; }
+                frame = requestAnimationFrame(() => {
+                  restorePosition();
+                  frame = requestAnimationFrame(finish);
+                });
+              });
+            };
+            restorePosition();
+            if (document.readyState === 'complete') afterPageShow();
+            else addEventListener('pageshow', afterPageShow, { once: true });
+            addEventListener('pagehide', () => {
+              cancel();
+              inputEvents.forEach((name) => removeEventListener(name, cancel));
+              removeEventListener('pageshow', afterPageShow);
+            }, { once: true });
           } else sessionStorage.removeItem(key);
         }
       } catch (_) { /* Storage or stored data may be unavailable. */ }

@@ -27,6 +27,7 @@ type DetailRoute<T extends SupportedEntry, TPage extends string> = {
   entries: Localized<T>;
   previous?: Adjacent;
   next?: Adjacent;
+  categoryAdjacent?: { previous?: Adjacent; next?: Adjacent };
 };
 type RouteProps = IndexRoute
   | DetailRoute<CollectionEntry<'blog'>, 'blog-detail'>
@@ -55,16 +56,29 @@ export async function getStaticPaths() {
     locale: Locale,
     section: 'blog' | 'projects' | 'recipes',
     groups: LocalizedGroup<T>[],
-  ) => groups.map((group, index) => ({
-    params: { locale: localeParam, path: `${section}/${group.slug}` },
-    props: {
-      page: `${section}-detail`,
-      locale,
-      entries: group.locales,
-      previous: adjacentFor(groups[index + 1]),
-      next: adjacentFor(groups[index - 1]),
-    },
-  }));
+  ) => groups.map((group, index) => {
+    const category = section === 'recipes'
+      ? recipes.find((candidate) => candidate.slug === group.slug)?.locales['zh-CN'].data.category
+      : undefined;
+    const categoryGroups = category
+      ? recipes.filter((candidate) => candidate.locales['zh-CN'].data.category === category)
+      : [];
+    const categoryIndex = categoryGroups.findIndex((candidate) => candidate.slug === group.slug);
+    return {
+      params: { locale: localeParam, path: `${section}/${group.slug}` },
+      props: {
+        page: `${section}-detail`,
+        locale,
+        entries: group.locales,
+        previous: adjacentFor(groups[index - 1]),
+        next: adjacentFor(groups[index + 1]),
+        categoryAdjacent: section === 'recipes' ? {
+          previous: adjacentFor(categoryGroups[categoryIndex - 1]),
+          next: adjacentFor(categoryGroups[categoryIndex + 1]),
+        } : undefined,
+      },
+    };
+  });
 
   return Object.entries(routeLocaleParams).flatMap(([localeParam, locale]) => [
     { params: { locale: localeParam, path: undefined }, props: { page: 'home', locale } },
@@ -87,5 +101,5 @@ const pageProps = Astro.props as RouteProps;
 {pageProps.page === 'projects-index' && <ProjectsIndexPage locale={pageProps.locale} />}
 {pageProps.page === 'projects-detail' && <ProjectDetailPage locale={pageProps.locale} entries={pageProps.entries} previous={pageProps.previous} next={pageProps.next} />}
 {pageProps.page === 'recipes-index' && <RecipesIndexPage locale={pageProps.locale} />}
-{pageProps.page === 'recipes-detail' && <RecipeDetailPage locale={pageProps.locale} entries={pageProps.entries} previous={pageProps.previous} next={pageProps.next} />}
+{pageProps.page === 'recipes-detail' && <RecipeDetailPage locale={pageProps.locale} entries={pageProps.entries} previous={pageProps.previous} next={pageProps.next} categoryAdjacent={pageProps.categoryAdjacent} />}
 {pageProps.page === 'service' && <FuseBeadGeneratorPage locale={pageProps.locale} />}

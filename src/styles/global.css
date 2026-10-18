@@ -92,6 +92,10 @@ svg {
   outline-offset: 4px;
 }
 
+.search-switcher[data-escape-focus]:focus-visible {
+  outline: none;
+}
+
 .skip-link {
   position: fixed;
   z-index: 1000;
@@ -1219,7 +1223,7 @@ html[lang='zh-TW'] .tag {
 
 .article-pager {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 20px;
   align-items: start;
   padding: 26px 0 68px;
@@ -1299,9 +1303,6 @@ html[lang='zh-TW'] .tag {
   .content-list-item > a:active .item-title { color: var(--brand-interactive); }
   .article-header { padding-top: 32px; }
   .footer-inner { flex-direction: column; gap: 6px; }
-  .article-pager { grid-template-columns: 1fr; }
-  .pager-slot--previous,
-  .pager-slot--next { grid-column: 1; text-align: left; }
 }
 
 @media (max-width: 420px) {

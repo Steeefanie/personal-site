@@ -16,9 +16,10 @@ interface Props {
   entries: Localized<CollectionEntry<'recipes'>>;
   previous?: Adjacent;
   next?: Adjacent;
+  categoryAdjacent?: { previous?: Adjacent; next?: Adjacent };
 }
 
-const { locale, entries, previous, next } = Astro.props;
+const { locale, entries, previous, next, categoryAdjacent } = Astro.props;
 const entry = entries[locale];
 const { Content } = await render(entry);
 const base = entry.data;
@@ -53,11 +54,27 @@ const descriptions = Object.fromEntries(locales.map((locale) => [locale, entries
       <Content />
     </ProseLayout>
     {(previous || next) && (
-      <nav class="reading-shell article-pager" aria-label={ui.common.adjacentRecipes[locale]}>
+      <nav class="reading-shell article-pager" data-recipe-pager="all" aria-label={ui.common.adjacentRecipes[locale]}>
         {previous && <div class="pager-slot pager-slot--previous"><a class="pager-link" href={localizedPath(locale, `/recipes/${previous.slug}/`)}><span class="pager-label"><LocalizedText value={text('上一篇', '上一篇', 'Previous')} /></span><span class="pager-title">{previous.titles[locale]}</span></a></div>}
         {next && <div class="pager-slot pager-slot--next"><a class="pager-link" href={localizedPath(locale, `/recipes/${next.slug}/`)}><span class="pager-label"><LocalizedText value={text('下一篇', '下一篇', 'Next')} /></span><span class="pager-title">{next.titles[locale]}</span></a></div>}
       </nav>
     )}
+    {(categoryAdjacent?.previous || categoryAdjacent?.next) && (
+      <nav class="reading-shell article-pager" data-recipe-pager={base.category} aria-label={ui.common.adjacentRecipes[locale]} hidden>
+        {categoryAdjacent.previous && <div class="pager-slot pager-slot--previous"><a class="pager-link" href={`${localizedPath(locale, `/recipes/${categoryAdjacent.previous.slug}/`)}?category=${base.category}`}><span class="pager-label"><LocalizedText value={text('上一篇', '上一篇', 'Previous')} /></span><span class="pager-title">{categoryAdjacent.previous.titles[locale]}</span></a></div>}
+        {categoryAdjacent.next && <div class="pager-slot pager-slot--next"><a class="pager-link" href={`${localizedPath(locale, `/recipes/${categoryAdjacent.next.slug}/`)}?category=${base.category}`}><span class="pager-label"><LocalizedText value={text('下一篇', '下一篇', 'Next')} /></span><span class="pager-title">{categoryAdjacent.next.titles[locale]}</span></a></div>}
+      </nav>
+    )}
+    <script is:inline data-category={base.category}>
+      (() => {
+        const script = document.currentScript;
+        const category = new URLSearchParams(location.search).get('category');
+        const scope = category === script?.dataset.category ? category : 'all';
+        script?.closest('article')?.querySelectorAll('[data-recipe-pager]').forEach((pager) => {
+          pager.hidden = pager.dataset.recipePager !== scope;
+        });
+      })();
+    </script>
     <ArticleComments />
   </article>
 </BaseLayout>

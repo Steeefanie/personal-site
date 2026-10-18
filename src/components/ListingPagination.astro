@@ -106,6 +106,16 @@ const locale = localeFromPathname(Astro.url.pathname);
       const pageItems = new Set(matching.slice(start, start + pageSize));
 
       items.forEach((item) => { item.hidden = !pageItems.has(item); });
+      if (section?.hasAttribute('data-recipe-listing')) {
+        items.forEach((item) => {
+          const link = item.querySelector<HTMLAnchorElement>('a[href]');
+          if (!link) return;
+          const url = new URL(link.href);
+          if (values.category) url.searchParams.set('category', values.category);
+          else url.searchParams.delete('category');
+          link.href = `${url.pathname}${url.search}${url.hash}`;
+        });
+      }
       if (empty) empty.hidden = matching.length > 0;
       pagination.hidden = matching.length === 0 || totalPages <= 1;
       if (previous) previous.disabled = currentPage <= 1;

@@ -79,6 +79,14 @@ export const initializeListingBackLinks = () => {
     const pathname = new URL(link.href).pathname;
     const sync = () => {
       const position = readPosition(positionKey(pathname), pathname);
+      const category = new URLSearchParams(location.search).get('category');
+      if (pathname.endsWith('/recipes/') && ['home-cooking', 'flour', 'cocktail'].includes(category ?? '')) {
+        const fallback = `${pathname}?category=${category}`;
+        if (!position || new URL(position.url, location.origin).searchParams.get('category') !== category) {
+          link.href = fallback;
+          return null;
+        }
+      }
       link.href = position?.url ?? pathname;
       return position;
     };
