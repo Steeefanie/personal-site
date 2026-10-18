@@ -109,7 +109,7 @@ pnpm exec astro dev stop
 ### 6.1 预演，不写入
 
 ```powershell
-robocopy "C:\Code\Website\personal-site" "C:\Code\Website\personal-site-git" /MIR /L /R:2 /W:1 /XD ".git" ".git-restore" ".agents" "node_modules" ".astro" "dist" ".pnpm-store" /XF ".env" ".env.*" "*.log" "CHANGELOG.md"
+robocopy "C:\Code\Website\personal-site" "C:\Code\Website\personal-site-git" /MIR /L /R:2 /W:1 /XD ".git" ".git-restore" ".agents" "node_modules" ".astro" "dist" ".pnpm-store" /XF ".env" ".env.*" "*.log" "CHANGELOG.md" "AGENTS.md"
 ```
 
 `/L` 只列出计划复制、更新和删除的内容。必须确认没有误删个人文件或 Git 元数据。
@@ -128,7 +128,7 @@ robocopy "C:\Code\Website\personal-site" "C:\Code\Website\personal-site-git" /MI
 确认预演正确后，只去掉 `/L`：
 
 ```powershell
-robocopy "C:\Code\Website\personal-site" "C:\Code\Website\personal-site-git" /MIR /R:2 /W:1 /XD ".git" ".git-restore" ".agents" "node_modules" ".astro" "dist" ".pnpm-store" /XF ".env" ".env.*" "*.log" "CHANGELOG.md"
+robocopy "C:\Code\Website\personal-site" "C:\Code\Website\personal-site-git" /MIR /R:2 /W:1 /XD ".git" ".git-restore" ".agents" "node_modules" ".astro" "dist" ".pnpm-store" /XF ".env" ".env.*" "*.log" "CHANGELOG.md" "AGENTS.md"
 ```
 
 不要把源和目标写反：源是 `personal-site`，目标是 `personal-site-git`。
@@ -163,13 +163,14 @@ git diff --check
 
 ## 8. 暂存并提交
 
-如果全部变化都属于本次任务：
+按独立目的拆分提交，显式暂存本次提交涉及的路径：
 
 ```powershell
-git add -A
+git add -- <paths>
 git status -sb
 git diff --cached --stat
 git diff --cached
+git diff --cached --check
 ```
 
 `git diff --cached` 是真正将进入提交的内容，应作为提交前最后一次核对。
@@ -177,12 +178,16 @@ git diff --cached
 确认后：
 
 ```powershell
-git commit -m "Add beginner maintenance guides"
+git commit -F <utf8-message-file>
 git status -sb
 git log -1 --oneline
 ```
 
-提交信息应说明完成了什么，不要只写 `update`、`fix` 或日期。
+每次提交使用英文标题和正文。标题格式为 `type(scope): imperative summary`，不超过 72 个字符，摘要以小写动词开头，不加句号。新增功能用 `feat`，行为修正用 `fix`，纯文档用 `docs`；`style` 只表示代码格式整理，不表示 CSS 视觉或交互修改。
+
+正文使用 `Changes:` 和相邻的 `- ` 项目符号，每项以句号结尾。实际验证后才添加 `Validation:`，不得编造结果。提交信息写入项目外的 UTF-8 文件，并使用 `git commit -F`。不同目的的改动拆分为多个提交。
+
+推送前确认 `git check-ignore -v AGENTS.md` 命中本地排除规则，且 `AGENTS.md` 不在已跟踪和暂存文件中；该文件只保留在两个本地目录，不加入仓库。
 
 ## 9. 推送分支
 

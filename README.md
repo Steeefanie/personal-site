@@ -9,11 +9,11 @@ A statically generated, multilingual personal website for essays, projects, reci
 - Essays, project notes, and recipes backed by Astro Content Collections.
 - Independent `/zh-cn/`, `/zh-tw/`, and `/en/` routes with localized content and interface copy.
 - A language gateway at `/` that respects an explicit user preference first, then the browser language, and finally falls back to Simplified Chinese.
-- Local search across titles, summaries, tags, and project technology stacks.
-- Recipe category filters, compact icon/list views with a one-year view-preference cookie, and client-side list pagination.
+- Local search across all three languages’ titles, summaries, tags, and project technology stacks, with bounded English fuzzy matching and results displayed in the current language.
+- Recipe category filters, compact icon/list views with a one-year view-preference cookie, and client-side list pagination. Previous/next links follow the entry category and run from newer to older content.
 - Shared 256×256 transparent WebP recipe icons, including Alpha-aware detail-page alignment.
 - Responsive typography for headings, body text, labels, navigation, and tools.
-- Responsive navigation, light and dark themes, visible keyboard focus, and reduced-motion support.
+- Responsive navigation, light and dark themes, VS Code Light+/Dark+ code highlighting, visible keyboard focus, and reduced-motion support.
 - A floating, resizable table of contents for long essays and project pages. It shifts the reading column only when sufficient space remains, and behaves as an overlay otherwise.
 - GitHub Discussions-powered guestbook and article comments, shared by all language versions of the same content.
 - An in-browser fuse-bead pattern generator with guarded asynchronous image processing and request cancellation.
