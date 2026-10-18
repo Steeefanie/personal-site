@@ -5,8 +5,8 @@ publishDate: 2026-06-27
 lang: en
 cover: /images/recipes/oat-egg-english-muffins.webp
 category: flour
-prepTime: about 2 hours
-servings: about 8 muffins
+prepTime: About 1 hour (excluding cooling and proofing)
+servings: 8 muffins
 tags:
   - { id: oats, label: Oats }
   - { id: pan-cooked-bread, label: Pan-cooked bread }
@@ -31,7 +31,10 @@ draft: false
 2. Let the oat mixture cool until warm but no longer hot to the touch. Add the salt, yeast, and egg and mix until even.
 3. Add the bread flour, mix well, and knead into a dough. It should remain soft and slightly moist; avoid working in a large amount of extra flour.
 4. Cover the bowl and leave it somewhere warm for the first proof, until the dough has roughly doubled.
-5. Lightly flour the worktop, turn out the dough, and divide it into about 8 pieces.
+5. Lightly flour the worktop, turn out the dough, and divide it into 8 pieces.
 6. Round each piece, then press or roll it gently into a disc.
 7. Cover the shaped muffins for the second proof, until slightly puffed and noticeably lighter when lifted.
-8. Preheat a frying pan and add the muffins. Cook slowly over low heat throughout. Turn once the first side is set and colored, then continue until both sides are lightly browned and the centers are visibly puffed.
+8. Preheat a frying pan and add the muffins. Cook slowly over low heat until the underside is set and colored.
+9. Turn and continue cooking until both sides are lightly browned, the muffins are puffed, and the centers are cooked through. Cook in batches if necessary.
+
+Tip: Preparation and cooking time is an estimate and varies with pan size and the number of batches. Allow extra time for cooling and proofing; judge proofing by the condition of the dough.

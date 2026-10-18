@@ -5,7 +5,7 @@ publishDate: 2024-12-21
 lang: zh-CN
 cover: /images/recipes/pu-huo.webp
 category: cocktail
-prepTime: 2 分钟
+prepTime: 约 2 分钟
 servings: 1 杯
 tags:
   - { id: vodka, label: 伏特加 }

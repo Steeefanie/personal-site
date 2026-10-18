@@ -5,7 +5,7 @@ publishDate: 2025-10-14
 lang: en
 cover: /images/recipes/tequila-tabasco-shot.webp
 category: cocktail
-prepTime: 1 minute
+prepTime: About 1 minute
 servings: 1 shot
 tags:
   - { id: tequila, label: Silver tequila }

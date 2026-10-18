@@ -5,7 +5,7 @@ publishDate: 2024-10-17
 lang: en
 cover: /images/recipes/white-peach-lemon-sparkler.webp
 category: cocktail
-prepTime: 2 minutes
+prepTime: About 2 minutes
 servings: 1 drink
 tags:
   - { id: vodka, label: Vodka }

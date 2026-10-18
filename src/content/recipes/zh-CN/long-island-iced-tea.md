@@ -5,7 +5,7 @@ publishDate: 2024-11-16
 lang: zh-CN
 cover: /images/recipes/long-island-iced-tea.webp
 category: cocktail
-prepTime: 5 分钟
+prepTime: 约 5 分钟
 servings: 1 杯
 tags:
   - { id: vodka, label: 伏特加 }

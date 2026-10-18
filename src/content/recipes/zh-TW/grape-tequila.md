@@ -5,7 +5,7 @@ publishDate: 2025-01-06
 lang: zh-TW
 cover: /images/recipes/grape-tequila.webp
 category: cocktail
-prepTime: 2 分鐘
+prepTime: 約 2 分鐘
 servings: 1 杯
 tags:
   - { id: tequila, label: 銀龍舌蘭 }

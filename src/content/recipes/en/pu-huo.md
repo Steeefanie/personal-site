@@ -5,7 +5,7 @@ publishDate: 2024-12-21
 lang: en
 cover: /images/recipes/pu-huo.webp
 category: cocktail
-prepTime: 2 minutes
+prepTime: About 2 minutes
 servings: 1 drink
 tags:
   - { id: vodka, label: Vodka }

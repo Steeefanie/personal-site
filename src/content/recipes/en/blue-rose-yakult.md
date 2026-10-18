@@ -5,7 +5,7 @@ publishDate: 2024-10-02
 lang: en
 cover: /images/recipes/blue-rose-yakult.webp
 category: cocktail
-prepTime: 2 minutes
+prepTime: About 2 minutes
 servings: 1 drink
 tags:
   - { id: vodka, label: Vodka }

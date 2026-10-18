@@ -5,7 +5,7 @@ publishDate: 2025-05-04
 lang: zh-CN
 cover: /images/recipes/pineapple-coconut.webp
 category: cocktail
-prepTime: 2 分钟
+prepTime: 约 2 分钟
 servings: 1 杯
 tags:
   - { id: rum, label: 朗姆酒 }

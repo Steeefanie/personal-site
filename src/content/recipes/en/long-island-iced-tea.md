@@ -5,7 +5,7 @@ publishDate: 2024-11-16
 lang: en
 cover: /images/recipes/long-island-iced-tea.webp
 category: cocktail
-prepTime: 5 minutes
+prepTime: About 5 minutes
 servings: 1 drink
 tags:
   - { id: vodka, label: Vodka }

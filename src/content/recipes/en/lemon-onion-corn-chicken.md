@@ -5,7 +5,7 @@ publishDate: 2026-02-23
 lang: en
 cover: /images/recipes/lemon-onion-corn-chicken.webp
 category: home-cooking
-prepTime: 20 minutes
+prepTime: About 20 minutes, including marinating
 servings: 1–2 servings
 tags:
   - { id: chicken, label: Chicken breast }
@@ -22,16 +22,16 @@ draft: false
 - kernels from 1 ear of sweetcorn;
 - 1 ham sausage;
 - 1 lemon;
-- 3–4 garlic cloves, minced;
+- 3–4 garlic cloves;
 - starch, ground Sichuan pepper, ground black pepper, salt, and sugar, as needed;
-- 1 tbsp light soy sauce.
+- 1 tbsp light soy sauce;
+- A little cooking oil.
 
 ## Method
 
-1. Dice the chicken. Cut 2 slices from the lemon and set them aside; juice the remainder and finely grate a little zest.
-2. Mix the chicken with the lemon juice, sugar, starch, salt, Sichuan pepper, black pepper, and zest. Marinate for 5 minutes.
-3. Dice the onion and ham sausage, cut the corn from the cob, and mince the garlic.
-4. Add oil to a hot wok. Fry the garlic until fragrant, then add the reserved lemon slices for about 10 seconds.
-5. Add the chicken and stir-fry quickly over medium heat until every piece turns opaque. Remove and set aside.
-6. Soften the onion in the same wok. Add the sweetcorn and ham sausage and stir-fry for about 30 seconds.
-7. Return the chicken, add the soy sauce and a small pinch of salt, then toss briefly and serve.
+1. Dice the chicken, onion, and ham sausage. Remove the corn kernels and mince the garlic. Reserve 2 lemon slices, then juice the rest and finely grate a little zest.
+2. Add the lemon juice, sugar, starch, salt, Sichuan pepper, black pepper, and zest to the chicken. Mix well and marinate for 5 minutes.
+3. Heat a wok and add a little oil. Fry the garlic until fragrant, then add the reserved lemon slices and fry for about 10 seconds.
+4. Add the chicken and stir-fry over medium heat until the surfaces turn opaque. Remove and set aside.
+5. Add the onion to the same wok and cook until soft and fragrant. Add the corn and ham sausage and stir-fry for about 30 seconds.
+6. Return the chicken, add the light soy sauce and a little salt, and continue stir-frying until the chicken and corn are cooked through and the seasoning is evenly distributed. Serve.

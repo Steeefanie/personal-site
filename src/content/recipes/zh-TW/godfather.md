@@ -5,7 +5,7 @@ publishDate: 2026-09-06
 lang: zh-TW
 cover: /images/recipes/godfather.webp
 category: cocktail
-prepTime: 3 分鐘
+prepTime: 約 3 分鐘
 servings: 1 杯
 tags:
   - { id: whiskey, label: 蘇格蘭威士忌 }

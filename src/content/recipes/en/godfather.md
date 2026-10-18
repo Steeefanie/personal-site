@@ -5,7 +5,7 @@ publishDate: 2026-09-06
 lang: en
 cover: /images/recipes/godfather.webp
 category: cocktail
-prepTime: 3 minutes
+prepTime: About 3 minutes
 servings: 1 drink
 tags:
   - { id: whiskey, label: Scotch whiskey }

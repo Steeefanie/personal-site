@@ -5,7 +5,7 @@ publishDate: 2025-05-14
 lang: en
 cover: /images/recipes/grape-jasmine-milk-washed-whiskey.webp
 category: cocktail
-prepTime: 20 minutes
+prepTime: Allow time for curdling and filtration
 servings: 1 drink
 tags:
   - { id: whiskey, label: Whiskey }

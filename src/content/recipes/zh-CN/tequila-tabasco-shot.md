@@ -5,7 +5,7 @@ publishDate: 2025-10-14
 lang: zh-CN
 cover: /images/recipes/tequila-tabasco-shot.webp
 category: cocktail
-prepTime: 1 分钟
+prepTime: 约 1 分钟
 servings: 1 杯
 tags:
   - { id: tequila, label: 银龙舌兰 }

@@ -5,7 +5,7 @@ publishDate: 2025-01-06
 lang: en
 cover: /images/recipes/grape-tequila.webp
 category: cocktail
-prepTime: 2 minutes
+prepTime: About 2 minutes
 servings: 1 drink
 tags:
   - { id: tequila, label: Silver tequila }

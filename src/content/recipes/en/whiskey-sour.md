@@ -5,7 +5,7 @@ publishDate: 2024-10-29
 lang: en
 cover: /images/recipes/whiskey-sour.webp
 category: cocktail
-prepTime: 3 minutes
+prepTime: About 3 minutes
 servings: 1 drink
 tags:
   - { id: whiskey, label: Whiskey }

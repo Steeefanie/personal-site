@@ -5,7 +5,7 @@ publishDate: 2025-05-14
 lang: zh-CN
 cover: /images/recipes/grape-jasmine-milk-washed-whiskey.webp
 category: cocktail
-prepTime: 20 分钟
+prepTime: 用时以凝乳、过滤完成为准
 servings: 1 杯
 tags:
   - { id: whiskey, label: 威士忌 }

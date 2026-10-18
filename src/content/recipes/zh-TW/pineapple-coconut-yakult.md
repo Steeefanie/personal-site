@@ -5,7 +5,7 @@ publishDate: 2025-05-04
 lang: zh-TW
 cover: /images/recipes/pineapple-coconut-yakult.webp
 category: cocktail
-prepTime: 2 分鐘
+prepTime: 約 2 分鐘
 servings: 1 杯
 tags:
   - { id: rum, label: 蘭姆酒 }

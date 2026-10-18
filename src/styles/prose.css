@@ -35,13 +35,29 @@ html[lang='en'] .prose {
   text-indent: 2rem;
 }
 
-.cocktail-detail .prose > p {
+.cocktail-detail .prose > p,
+.flour-detail .prose > p {
   text-indent: 0;
 }
 
 .cocktail-detail .prose > ul + h2,
-.cocktail-detail .prose > ol + p {
+.cocktail-detail .prose > ol + p,
+.flour-detail .prose > ul + p,
+.flour-detail .prose > ol + p {
   margin-top: 3.44rem;
+}
+
+.prose .recipe-tips {
+  margin-top: 3.44rem;
+}
+
+.prose .recipe-tips > p {
+  margin: 0;
+  text-indent: 2em;
+}
+
+.prose .recipe-tips > p:first-child {
+  text-indent: 0;
 }
 
 html[lang='zh-CN'] .prose p,

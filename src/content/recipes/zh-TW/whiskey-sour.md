@@ -5,7 +5,7 @@ publishDate: 2024-10-29
 lang: zh-TW
 cover: /images/recipes/whiskey-sour.webp
 category: cocktail
-prepTime: 3 分鐘
+prepTime: 約 3 分鐘
 servings: 1 杯
 tags:
   - { id: whiskey, label: 威士忌 }

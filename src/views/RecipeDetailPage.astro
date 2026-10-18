@@ -30,7 +30,7 @@ const descriptions = Object.fromEntries(locales.map((locale) => [locale, entries
 ---
 
 <BaseLayout activeNav="recipes" titles={titles} descriptions={descriptions} pageType="article" locale={locale}>
-  <article class:list={['article-with-comments', { 'cocktail-detail': base.category === 'cocktail' }]}>
+  <article class:list={['article-with-comments', { 'cocktail-detail': base.category === 'cocktail', 'flour-detail': base.category === 'flour' }]}>
     <header class="article-header">
       <div class="reading-shell">
         <ListingBackLink href={localizedPath(locale, '/recipes/')} label={text('返回食谱', '返回食譜', 'Back to Recipes')} />

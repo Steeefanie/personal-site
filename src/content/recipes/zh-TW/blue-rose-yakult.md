@@ -5,7 +5,7 @@ publishDate: 2024-10-02
 lang: zh-TW
 cover: /images/recipes/blue-rose-yakult.webp
 category: cocktail
-prepTime: 2 分鐘
+prepTime: 約 2 分鐘
 servings: 1 杯
 tags:
   - { id: vodka, label: 伏特加 }

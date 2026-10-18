@@ -5,7 +5,7 @@ publishDate: 2025-05-04
 lang: en
 cover: /images/recipes/pineapple-coconut.webp
 category: cocktail
-prepTime: 2 minutes
+prepTime: About 2 minutes
 servings: 1 drink
 tags:
   - { id: rum, label: Rum }
