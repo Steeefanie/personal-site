@@ -7,6 +7,14 @@ export default defineConfig({
   output: 'static',
   devToolbar: { enabled: false },
   integrations: [mdx()],
+  markdown: {
+    shikiConfig: {
+      themes: {
+        light: 'light-plus',
+        dark: 'dark-plus',
+      },
+    },
+  },
   vite: {
     plugins: [tailwindcss()],
     server: {

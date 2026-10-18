@@ -128,6 +128,14 @@ html[lang='en'] .prose p {
   font-family: inherit;
 }
 
+html[data-theme='dark'] .prose pre.astro-code {
+  color: var(--shiki-dark, var(--code-text)) !important;
+}
+
+html[data-theme='dark'] .prose pre.astro-code span {
+  color: var(--shiki-dark, inherit) !important;
+}
+
 .prose table {
   display: block;
   width: max-content;
