@@ -248,7 +248,6 @@ src/assets/projects/fuse-bead-pattern-generator/
 | `ListingFilters.astro` | 食谱类别等列表筛选 | 使用筛选的列表页 |
 | `ProseLayout.astro` | 详情页正文、元数据和上一篇/下一篇 | 三类详情页 |
 | `LocalizedText.astro` | 根据当前语言显示对应文案 | 使用它的多语言界面 |
-| `CodeBlock.astro` | 项目正文中的代码块表现 | 引用它的 MDX 内容 |
 
 新增文章通常不需要改组件。只有想改变全站界面或交互时才修改这里。
 

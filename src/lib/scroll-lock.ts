@@ -35,5 +35,3 @@ export const unlockPageScroll = (owner: ScrollLockOwner): void => {
     else root.style.removeProperty('scroll-behavior');
   });
 };
-
-export const isPageScrollLocked = (): boolean => owners.size > 0;

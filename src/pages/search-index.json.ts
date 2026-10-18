@@ -49,9 +49,6 @@ export const GET: APIRoute = async () => {
           ui.category[group.locales[locale].data.category][locale],
         ],
       }])),
-      filters: {
-        category: group.locales['zh-CN'].data.category,
-      },
     })),
   ].sort((a, b) => Date.parse(b.publishDate) - Date.parse(a.publishDate));
 
