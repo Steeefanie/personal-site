@@ -193,7 +193,7 @@ html:has(.site-header.is-hidden) {
   display: block;
   padding: 7px 9px 7px 12px;
   border-radius: var(--radius-sm);
-  color: var(--muted);
+  color: var(--text);
   font-size: calc(var(--font-size-unit) * 0.78);
   line-height: 1.45;
   overflow-wrap: anywhere;

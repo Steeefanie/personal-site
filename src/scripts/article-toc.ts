@@ -24,6 +24,7 @@ if (root && root.dataset.initialized !== 'true') {
   let dragFrame = 0;
   let pendingDragWidth = 0;
   let scrollFrame = 0;
+  let measurementFrame = 0;
 
   const numberToken = (name: string, fallback: number) => {
     const value = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name));
@@ -71,8 +72,9 @@ if (root && root.dataset.initialized !== 'true') {
     root.dataset.measuring = 'true';
     const navStyle = getComputedStyle(panelNav);
     const navPadding = Number.parseFloat(navStyle.paddingTop) + Number.parseFloat(navStyle.paddingBottom);
-    const headerHeight = panelHeader?.getBoundingClientRect().height ?? 58;
-    const contentHeight = Math.ceil(headerHeight + activeList.getBoundingClientRect().height + navPadding);
+    const headerHeight = Math.max(58, panelHeader?.getBoundingClientRect().height ?? 0);
+    const listHeight = Math.max(activeList.scrollHeight, activeList.getBoundingClientRect().height);
+    const contentHeight = Math.ceil(headerHeight + listHeight + navPadding);
     root.style.setProperty('--article-toc-header-height', `${headerHeight}px`);
     root.style.setProperty('--article-toc-content-height', `${contentHeight}px`);
     delete root.dataset.measuring;
@@ -155,7 +157,8 @@ if (root && root.dataset.initialized !== 'true') {
     if (headings.length === 0) return;
     const headerHidden = document.querySelector('.site-header')?.classList.contains('is-hidden') ?? false;
     const threshold = headingTopOffset(!headerHidden);
-    const atPageEnd = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 2;
+    const atPageEnd = window.scrollY > 0
+      && window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 2;
     let active = atPageEnd ? headings[headings.length - 1] : headings[0];
     if (!atPageEnd) {
       for (const heading of headings) {
@@ -174,7 +177,7 @@ if (root && root.dataset.initialized !== 'true') {
     scrollFrame = requestAnimationFrame(updateActiveHeading);
   };
 
-  const setOpen = (nextOpen: boolean, restoreFocus = false) => {
+  const setOpen = (nextOpen: boolean, restoreFocus = false, focusCurrentLink = false) => {
     if (!panel || !toggle) return;
     open = nextOpen;
     root.dataset.open = String(open);
@@ -187,7 +190,23 @@ if (root && root.dataset.initialized !== 'true') {
       applyWidth(preferredWidth());
       document.documentElement.dataset.articleTocOpen = 'true';
       document.documentElement.dataset.articleTocMode = root.dataset.mode ?? 'overlay';
-      requestAnimationFrame(() => activeLinks()[0]?.focus({ preventScroll: true }));
+      requestAnimationFrame(() => {
+        if (!open) return;
+        updateActiveHeading();
+        const current = activeLinks().find((link) => link.getAttribute('aria-current') === 'location');
+        if (!current) return;
+        if (panelNav) {
+          const bounds = panelNav.getBoundingClientRect();
+          const target = current.getBoundingClientRect();
+          if (target.top < bounds.top || target.bottom > bounds.bottom) {
+            panelNav.scrollTo({
+              top: Math.max(0, panelNav.scrollTop + target.top - bounds.top - (bounds.height - target.height) / 2),
+              behavior: 'instant',
+            });
+          }
+        }
+        if (focusCurrentLink) current.focus({ preventScroll: true });
+      });
     } else {
       document.documentElement.removeAttribute('data-article-toc-open');
       document.documentElement.removeAttribute('data-article-toc-mode');
@@ -214,7 +233,7 @@ if (root && root.dataset.initialized !== 'true') {
     if (persist) saveManualWidth();
   };
 
-  toggle?.addEventListener('click', () => setOpen(!open, open));
+  toggle?.addEventListener('click', (event) => setOpen(!open, open, event.detail === 0));
   backdrop?.addEventListener('click', () => setOpen(false, true));
   backdrop?.addEventListener('wheel', closeOverlayOnContentScroll, { passive: true });
   backdrop?.addEventListener('touchmove', closeOverlayOnContentScroll, { passive: true });
@@ -305,7 +324,20 @@ if (root && root.dataset.initialized !== 'true') {
     if (event.key === 'Escape' && open) setOpen(false, true);
   });
   if ('ResizeObserver' in window) {
-    new ResizeObserver(() => updateLayoutMode()).observe(panel ?? root);
+    const observer = new ResizeObserver(() => {
+      if (measurementFrame) return;
+      measurementFrame = requestAnimationFrame(() => {
+        measurementFrame = 0;
+        syncPanelHeight();
+        updateLayoutMode();
+      });
+    });
+    // Font and stylesheet loading can resize the contents after initialization.
+    // Watching only the clipped panel leaves an early, undersized measurement stuck.
+    observer.observe(panel ?? root);
+    if (panelHeader) observer.observe(panelHeader);
+    const list = root.querySelector<HTMLOListElement>('.article-toc-nav > ol');
+    if (list) observer.observe(list);
   }
   manualWidth = readStoredWidth();
   syncResetControl();
@@ -316,5 +348,15 @@ if (root && root.dataset.initialized !== 'true') {
   void document.fonts?.ready.then(() => {
     if (manualWidth === null) refreshAutomaticWidth();
     else syncPanelHeight();
+    updateLayoutMode();
+    queueActiveHeadingUpdate();
   });
+  const refreshMeasurements = () => {
+    if (manualWidth === null) refreshAutomaticWidth();
+    else applyWidth(manualWidth);
+    queueActiveHeadingUpdate();
+  };
+  if (document.readyState === 'complete') refreshMeasurements();
+  else addEventListener('load', refreshMeasurements, { once: true });
+  addEventListener('pageshow', refreshMeasurements);
 }
