@@ -34,4 +34,4 @@ draft: false
 5. Lightly flour the worktop, turn out the dough, and divide it into about 8 pieces.
 6. Round each piece, then press or roll it gently into a disc.
 7. Cover the shaped muffins for the second proof, until slightly puffed and noticeably lighter when lifted.
-8. Preheat a frying pan and add the muffins. Cook slowly over low heat throughout. Turn once the first side is set and coloured, then continue until both sides are lightly browned and the centres are visibly puffed.
+8. Preheat a frying pan and add the muffins. Cook slowly over low heat throughout. Turn once the first side is set and colored, then continue until both sides are lightly browned and the centers are visibly puffed.

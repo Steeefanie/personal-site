@@ -42,6 +42,6 @@ Only the milk quantity changes. The 100 g version has a wetter batter and a soft
 ## Results
 
 - **Softer version:** a fine, moist crumb with pronounced milk, egg, and butter aromas; softer and more open overall.
-- **Springier version:** a similar flavour with more bounce and chew rather than an especially fluffy texture.
+- **Springier version:** a similar flavor with more bounce and chew rather than an especially fluffy texture.
 
 The butter makes the base and edges more aromatic. Slight browning or natural cracks in places are normal.
