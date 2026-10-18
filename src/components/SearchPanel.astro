@@ -44,6 +44,8 @@ const scopes = [
 </section>
 
 <script>
+  import { fuzzySearchScore, normalizeSearchText } from '../lib/search-normalization';
+
   type Locale = 'zh-CN' | 'zh-TW' | 'en';
   type Section = 'blog' | 'projects' | 'recipes';
   type SearchScope = 'all' | Section;
@@ -67,6 +69,7 @@ const scopes = [
   let index: SearchRecord[] | null = null;
   let scope: SearchScope = defaultScope;
   let activeIndex = -1;
+  let searchRevision = 0;
 
   const messages = {
     none: { 'zh-CN': '没有找到匹配内容。', 'zh-TW': '找不到符合的內容。', en: 'No matching results.' },
@@ -86,7 +89,7 @@ const scopes = [
     const value = document.documentElement.dataset.language;
     return value === 'zh-TW' || value === 'en' ? value : 'zh-CN';
   };
-  const normalize = (value: string) => value.normalize('NFKC').toLocaleLowerCase(getLocale());
+  const normalize = normalizeSearchText;
 
   const loadIndex = async () => {
     if (index) return index;
@@ -115,6 +118,7 @@ const scopes = [
   };
 
   const renderResults = async () => {
+    const revision = ++searchRevision;
     if (!input || !results || !status) return;
     const query = normalize(input.value.trim());
     results.replaceChildren();
@@ -126,31 +130,39 @@ const scopes = [
     }
 
     const records = await loadIndex();
+    if (revision !== searchRevision) return;
     const locale = getLocale();
     const matches = records
       .filter((record) => scope === 'all' || record.section === scope)
       .map((record) => {
         const value = record.locales[locale];
-        const title = normalize(value.title);
-        const description = normalize(value.description);
-        const keywords = normalize(value.keywords.join(' '));
-        let score = 0;
-        if (title.includes(query)) score += 30 + (title.startsWith(query) ? 8 : 0);
-        if (description.includes(query)) score += 10;
-        if (keywords.includes(query)) score += 3;
-        return { record, value, score };
+        const translations = Object.values(record.locales).map((translation) => [
+          normalize(translation.title), normalize(translation.description), normalize(translation.keywords.join(' ')),
+        ]);
+        const exactScore = Math.max(...translations.map(([title, description, keywords]) => {
+          let score = 0;
+          if (title.includes(query)) score += 30 + (title.startsWith(query) ? 8 : 0);
+          if (description.includes(query)) score += 10;
+          if (keywords.includes(query)) score += 3;
+          return score;
+        }));
+        const fuzzy = exactScore === 0;
+        const score = exactScore || Math.max(...translations.map((fields) => fuzzySearchScore(query, fields)));
+        return { record, value, score, fuzzy };
       })
       .filter((item) => item.score > 0)
-      .sort((a, b) => b.score - a.score || Date.parse(b.record.publishDate) - Date.parse(a.record.publishDate));
+      .sort((a, b) => Number(a.fuzzy) - Number(b.fuzzy) || b.score - a.score
+        || Date.parse(b.record.publishDate) - Date.parse(a.record.publishDate));
 
     status.textContent = matches.length ? messages.count[locale](matches.length) : messages.none[locale];
-    matches.forEach(({ record, value }, index) => {
+    matches.forEach(({ record, value, fuzzy }, index) => {
       const item = document.createElement('li');
       const link = document.createElement('a');
       link.id = `search-result-${index}`;
       link.href = record.urls[locale];
       link.role = 'option';
       link.className = 'search-result-link';
+      link.classList.toggle('is-fuzzy', fuzzy);
       const sectionLabel = document.createElement('span');
       sectionLabel.className = 'search-result-section';
       sectionLabel.textContent = messages.sections[record.section][locale];
