@@ -111,3 +111,5 @@ The static output is written to `dist/`. A successful build should contain all t
 Comments and guestbook entries are public GitHub Discussions. Language prefixes are removed from the stable discussion identifier so that the three localized URLs share one discussion.
 
 See [the design specification](docs/design-system.md) and [the maintenance guides](docs/learning/README.md) for the full project conventions.
+
+See the [AI report service guide](services/four_elements_api/README.md) for the DeepSeek key placeholder, backend setup, and deployment configuration.

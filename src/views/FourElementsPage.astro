@@ -1,0 +1,83 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import LocalizedText from '../components/LocalizedText.astro';
+import ElementIcon from '../components/ElementIcon.astro';
+import ServiceBackLink from '../components/ServiceBackLink.astro';
+import { text, type Locale } from '../lib/i18n';
+import { elementInfo, labels, questions } from '../lib/four-elements';
+import '../styles/four-elements.css';
+import '../styles/questionnaire.css';
+
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+const titles = text('星象测试', '星象測試', 'Star elements test');
+const descriptions = text('通过 48 道题探索认知、感受、建构与行动偏好，在浏览器内生成个人报告。', '透過 48 道題探索認知、感受、建構與行動偏好，在瀏覽器內產生個人報告。', 'Explore your preferences through 48 questions, with a report calculated in your browser. Chinese questionnaire.');
+---
+
+<BaseLayout activeNav="home" titles={titles} descriptions={descriptions} locale={locale}>
+  <div class="site-shell fe-page">
+    <ServiceBackLink locale={locale} />
+    {locale !== 'zh-CN' && <p class="fe-language-note"><LocalizedText value={text('本测评目前使用简体中文题库和报告。', '本測評目前使用簡體中文題庫與報告，以保留原版題意。', 'This first version uses the original Simplified Chinese questionnaire and report.')} /></p>}
+    <div class="fe-app" data-fe-app data-stage="intro" lang="zh-CN">
+      <header class="fe-header">
+        <h1><span data-fe-title>星象测试</span><a href="#test-home" data-fe-home hidden>星象测试</a></h1>
+        <p class="fe-subtitle">48 道题，探索你的行为偏好。</p>
+      </header>
+
+      <section id="test-home" data-fe-intro aria-label="测试介绍">
+        <div class="fe-elements" aria-label="水、火、土、风">
+          {(['water', 'fire', 'earth', 'wind'] as const).map((element) => <span class={`fe-element-symbol fe-${element}`} title={elementInfo[element].name}><ElementIcon element={element} size={36} /></span>)}
+        </div>
+        <div class="fe-start-block">
+          <div class="fe-intro-actions"><button type="button" class="fe-secondary" data-fe-clear hidden>清除数据</button><button type="button" class="fe-primary" data-fe-start>开始测试</button></div>
+          <p class="fe-small" data-fe-resume hidden></p>
+        </div>
+        <details class="fe-about" open><summary>测试说明</summary><p>按过去一两年的通常状态作答，没有标准答案，不必选择你认为“应该成为”的样子。<br />进度自动保存在当前浏览器，提交后本次作答将被发送至 DeepSeek，本服务器不保存数据。<br />仅供娱乐与自我探索，非标准化心理测验，不用于诊断。</p></details>
+      </section>
+
+      <section data-fe-quiz hidden aria-label="答题区">
+        <div class="fe-progress-header"><strong data-fe-count></strong><span class="fe-sr-only" data-fe-step></span></div>
+        <progress max="48" value="0" data-fe-progress aria-label="已完成题数"></progress>
+        <form data-fe-form novalidate>
+          {Array.from({ length: 8 }, (_, page) => <section class="fe-question-page" data-fe-question-page={page} hidden>
+            <h2 class="fe-sr-only" tabindex="-1" data-fe-page-title>第 {page + 1} 页 · {page < 6 ? '评分题' : '二选一'}</h2>
+            {page === 6 && <p class="fe-page-help">接下来请选择相对更接近你的一项。</p>}
+            {questions.slice(page * 6, page * 6 + 6).map((question) => <fieldset class="fe-question" data-fe-question={question.id}>
+              <legend><span class="fe-question-number">{question.id}.</span>{question.type === 'likert' ? question.text : question.stem}</legend>
+              <div class:list={['fe-options', question.type === 'likert' ? 'fe-scale' : 'fe-forced']}>
+                {question.type === 'likert' ? [1, 2, 3, 4, 5].map((value) => <label><input type="radio" name={`q${question.id}`} value={value} required /><span><b>{value}</b><small>{labels[String(value) as keyof typeof labels]}</small></span></label>)
+                  : (['A', 'B'] as const).map((value) => <label><input type="radio" name={`q${question.id}`} value={value} required /><span><b>{value}</b><small>{question.options[value].text}</small></span></label>)}
+              </div>
+            </fieldset>)}
+          </section>)}
+          <p class="fe-error" role="alert" data-fe-error hidden></p>
+          <div class="fe-quiz-actions questionnaire-actions"><button type="button" class="fe-secondary" data-fe-previous>上一页</button><button type="button" class="fe-text-button" data-fe-pause>稍后继续</button><button type="submit" class="fe-primary" data-fe-next>下一页 →</button></div>
+        </form>
+      </section>
+
+      <section class="fe-submission" data-fe-submission hidden aria-label="生成报告" aria-busy="false">
+        <div class="fe-spinner questionnaire-spinner" data-fe-spinner aria-hidden="true"></div>
+        <h2 tabindex="-1" data-fe-submission-title>正在生成报告</h2>
+        <p class="fe-small" role="status" data-fe-submission-status>正在逐题分析你的回答，请稍候。</p>
+        <div class="fe-submission-actions"><button type="button" class="fe-secondary" data-fe-submission-home hidden>返回测试主页</button><button type="button" class="fe-primary" data-fe-retry hidden>重试</button></div>
+      </section>
+
+      <section class="fe-report" data-fe-report hidden aria-label="测评报告">
+        <div class="fe-report-toolbar"><span>测试结果</span><div><button type="button" class="fe-primary" data-fe-print>保存报告</button></div></div>
+        <p class="fe-small" role="status" data-fe-export-status hidden></p>
+        <div data-fe-result></div>
+        <div class="fe-answer-section"><details class="fe-answer-details"><summary>查看全部作答</summary><ol data-fe-answer-review></ol></details><button type="button" class="fe-text-button fe-answer-clear" data-fe-clear>清除数据</button></div>
+      </section>
+      <p class="fe-storage-status fe-small" role="status" data-fe-storage hidden></p>
+      <noscript><p class="fe-error">此测评需要启用 JavaScript，才能答题、计算和在本地暂存。</p></noscript>
+      <dialog class="fe-clear-dialog" data-fe-clear-dialog aria-labelledby="fe-clear-title">
+        <h2 id="fe-clear-title">清除数据？</h2><p>将删除当前浏览器中的答案和进度，清除后无法恢复。</p>
+        <div class="fe-actions"><button class="fe-secondary" type="button" data-fe-cancel-clear autofocus>取消</button><button class="fe-primary" type="button" data-fe-confirm-clear>清除数据</button></div>
+      </dialog>
+    </div>
+  </div>
+</BaseLayout>
+
+<script>
+  import '../scripts/four-elements';
+</script>

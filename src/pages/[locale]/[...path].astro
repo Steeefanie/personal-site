@@ -8,6 +8,7 @@ import ProjectDetailPage from '../../views/ProjectDetailPage.astro';
 import RecipesIndexPage from '../../views/RecipesIndexPage.astro';
 import RecipeDetailPage from '../../views/RecipeDetailPage.astro';
 import FuseBeadGeneratorPage from '../../views/FuseBeadGeneratorPage.astro';
+import FourElementsPage from '../../views/FourElementsPage.astro';
 import { pairEntries, type LocalizedGroup } from '../../lib/content';
 import { locales, type Locale, type Localized } from '../../lib/i18n';
 import { routeLocaleParams } from '../../lib/routes';
@@ -18,7 +19,7 @@ interface Adjacent {
   titles: Localized<string>;
 }
 type IndexRoute = {
-  page: 'home' | 'blog-index' | 'projects-index' | 'recipes-index' | 'service';
+  page: 'home' | 'blog-index' | 'projects-index' | 'recipes-index' | 'service' | 'four-elements';
   locale: Locale;
 };
 type DetailRoute<T extends SupportedEntry, TPage extends string> = {
@@ -86,6 +87,7 @@ export async function getStaticPaths() {
     { params: { locale: localeParam, path: 'projects' }, props: { page: 'projects-index', locale } },
     { params: { locale: localeParam, path: 'recipes' }, props: { page: 'recipes-index', locale } },
     { params: { locale: localeParam, path: 'services/fuse-bead-generator' }, props: { page: 'service', locale } },
+    { params: { locale: localeParam, path: 'services/four-elements' }, props: { page: 'four-elements', locale } },
     ...detailRoutes(localeParam, locale, 'blog', blogs),
     ...detailRoutes(localeParam, locale, 'projects', projects),
     ...detailRoutes(localeParam, locale, 'recipes', recipes),
@@ -103,3 +105,4 @@ const pageProps = Astro.props as RouteProps;
 {pageProps.page === 'recipes-index' && <RecipesIndexPage locale={pageProps.locale} />}
 {pageProps.page === 'recipes-detail' && <RecipeDetailPage locale={pageProps.locale} entries={pageProps.entries} previous={pageProps.previous} next={pageProps.next} categoryAdjacent={pageProps.categoryAdjacent} />}
 {pageProps.page === 'service' && <FuseBeadGeneratorPage locale={pageProps.locale} />}
+{pageProps.page === 'four-elements' && <FourElementsPage locale={pageProps.locale} />}

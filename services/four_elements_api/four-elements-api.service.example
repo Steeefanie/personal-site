@@ -1,0 +1,23 @@
+[Unit]
+Description=Four elements AI report API
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/personal-site
+EnvironmentFile=/etc/personal-site/four-elements-api.env
+# Replace with a verified Node.js 24 path accessible to www-data.
+ExecStart=/usr/bin/node services/four_elements_api/server.mjs
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+MemoryMax=256M
+
+[Install]
+WantedBy=multi-user.target

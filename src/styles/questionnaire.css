@@ -1,0 +1,9 @@
+.questionnaire-actions { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: center; padding-top: 8px; }
+.questionnaire-actions > :first-child { justify-self: start; }
+.questionnaire-actions > :last-child { justify-self: end; }
+.questionnaire-spinner { width: 32px; height: 32px; border: 2px solid var(--border); border-top-color: var(--brand-readable); border-radius: 50%; animation: questionnaire-spin .85s linear infinite; margin: 0 auto 22px; }
+@keyframes questionnaire-spin { to { transform: rotate(360deg); } }
+@media (max-width: 560px) {
+  .questionnaire-actions { position: sticky; bottom: 0; z-index: 2; background: var(--page); padding: 14px 0 max(14px, env(safe-area-inset-bottom)); border-top: 1px solid var(--border); }
+}
+@media (prefers-reduced-motion: reduce) { .questionnaire-spinner { animation: none; } }

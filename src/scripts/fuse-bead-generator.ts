@@ -429,17 +429,6 @@ form?.addEventListener('submit', async (event) => {
   }
 });
 
-document.querySelector<HTMLAnchorElement>('[data-service-back]')?.addEventListener('click', function (event) {
-  try { sessionStorage.setItem('restore-home-service-scroll', 'true'); } catch { /* Storage may be unavailable. */ }
-  if (document.referrer) {
-    const referrer = new URL(document.referrer);
-    if (referrer.origin === location.origin && referrer.pathname === this.dataset.serviceHomePath) {
-      event.preventDefault();
-      history.back();
-    }
-  }
-});
-
 addEventListener('beforeunload', () => {
   cancelPreview();
   generationController?.abort();

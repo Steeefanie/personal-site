@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import LocalizedText from '../components/LocalizedText.astro';
+import ServiceBackLink from '../components/ServiceBackLink.astro';
 import { text, type Locale } from '../lib/i18n';
 import { localizedPath } from '../lib/routes';
 import '../styles/fuse-bead-generator.css';
@@ -8,7 +9,6 @@ import '../styles/fuse-bead-generator.css';
 interface Props { locale: Locale }
 
 const { locale } = Astro.props;
-const homePath = localizedPath(locale, '/');
 
 const pageTitle = text('拼豆图纸生成器', '拼豆圖紙生成器', 'Fuse-bead pattern generator');
 const pageDescription = text(
@@ -20,7 +20,7 @@ const pageDescription = text(
 
 <BaseLayout activeNav="home" titles={pageTitle} descriptions={pageDescription} locale={locale}>
   <div class="site-shell service-page">
-    <a class="service-back" href={`${homePath}#services-heading`} data-service-back data-service-home-path={homePath}><span aria-hidden="true">←</span><LocalizedText value={text('返回主页', '返回首頁', 'Back to home')} /></a>
+    <ServiceBackLink locale={locale} />
 
     <header class="service-header">
       <h1><LocalizedText value={pageTitle} /></h1>

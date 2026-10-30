@@ -39,3 +39,6 @@ test-results/
 # Python caches
 __pycache__/
 *.py[cod]
+
+# Local report exports
+/output/pdf/

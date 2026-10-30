@@ -8,12 +8,16 @@
     "start": "astro dev",
     "build": "astro check && astro build",
     "preview": "astro preview",
-    "check": "astro check"
+    "check": "astro check",
+    "ai:dev": "node services/four_elements_api/dev.mjs",
+    "ai:start": "node --env-file-if-exists=services/four_elements_api/.env services/four_elements_api/server.mjs"
   },
   "dependencies": {
     "@astrojs/mdx": "7.0.2",
+    "@pdf-lib/fontkit": "1.1.1",
     "@tailwindcss/vite": "4.3.2",
     "astro": "7.0.7",
+    "pdf-lib": "1.17.1",
     "tailwindcss": "4.3.2"
   },
   "devDependencies": {

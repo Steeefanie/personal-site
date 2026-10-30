@@ -1,6 +1,4 @@
 .service-page { padding-bottom: 88px; }
-.service-back { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: calc(var(--font-size-unit) * 0.84); text-decoration: none; }
-.service-back:hover { color: var(--brand-interactive); }
 .service-header { max-width: 760px; padding: 12px 0 24px; }
 .service-header h1 { margin: 0; font-size: var(--font-size-section-title); font-weight: 600; letter-spacing: -.035em; line-height: 1.2; }
 .generator-shell { display: grid; grid-template-columns: minmax(340px, .82fr) minmax(0, 1.18fr); overflow: hidden; border: 1px solid var(--border); border-radius: 18px; background: var(--surface); }

@@ -1,0 +1,32 @@
+---
+import LocalizedText from './LocalizedText.astro';
+import { text, type Locale } from '../lib/i18n';
+import { localizedPath } from '../lib/routes';
+
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+const homePath = localizedPath(locale, '/');
+---
+
+<a class="service-back" href={`${homePath}#services-heading`} data-service-back data-service-home-path={homePath}><span aria-hidden="true">←</span><LocalizedText value={text('返回主页', '返回首頁', 'Back to home')} /></a>
+
+<style>
+  .service-back { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: calc(var(--font-size-unit) * 0.84); text-decoration: none; }
+  .service-back:hover { color: var(--brand-interactive); }
+  @media print { .service-back { display: none; } }
+</style>
+
+<script>
+  document.querySelectorAll<HTMLAnchorElement>('[data-service-back]').forEach((link) => {
+    link.addEventListener('click', (event) => {
+      try { sessionStorage.setItem('restore-home-service-scroll', 'true'); } catch { /* Storage may be unavailable. */ }
+      if (document.referrer) {
+        const referrer = new URL(document.referrer);
+        if (referrer.origin === location.origin && referrer.pathname === link.dataset.serviceHomePath) {
+          event.preventDefault();
+          history.back();
+        }
+      }
+    });
+  });
+</script>

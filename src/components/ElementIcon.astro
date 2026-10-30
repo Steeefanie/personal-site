@@ -1,0 +1,9 @@
+---
+import type { Element } from '../lib/four-elements';
+import { elementIconPaths } from '../lib/element-icons';
+interface Props { element: Element; size?: number }
+const { element, size = 32 } = Astro.props;
+---
+<svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+  {elementIconPaths[element].map((path) => <path d={path} transform={element === 'water' ? 'translate(12 2.5) scale(1.066667) translate(-12 -2.5)' : undefined} />)}
+</svg>

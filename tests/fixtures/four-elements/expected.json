@@ -1,0 +1,208 @@
+{
+  "version": "1.0",
+  "raw": {
+    "wind": {
+      "sum": 42,
+      "mean": 4.6667,
+      "normalized": 91.6667,
+      "items": {
+        "1": 5,
+        "6": 5,
+        "9": 5,
+        "13": 5,
+        "17": 4,
+        "21": 4,
+        "25": 5,
+        "29": 5,
+        "33": 4
+      },
+      "max_items": [
+        1,
+        6,
+        9,
+        13,
+        25,
+        29
+      ],
+      "min_items": [
+        17,
+        21,
+        33
+      ]
+    },
+    "water": {
+      "sum": 33,
+      "mean": 3.6667,
+      "normalized": 66.6667,
+      "items": {
+        "3": 5,
+        "7": 5,
+        "11": 5,
+        "15": 3,
+        "18": 3,
+        "23": 2,
+        "26": 5,
+        "30": 3,
+        "34": 2
+      },
+      "max_items": [
+        3,
+        7,
+        11,
+        26
+      ],
+      "min_items": [
+        23,
+        34
+      ]
+    },
+    "earth": {
+      "sum": 32,
+      "mean": 3.5556,
+      "normalized": 63.8889,
+      "items": {
+        "4": 1,
+        "8": 3,
+        "12": 3,
+        "14": 5,
+        "19": 3,
+        "22": 5,
+        "27": 5,
+        "31": 2,
+        "35": 5
+      },
+      "max_items": [
+        14,
+        22,
+        27,
+        35
+      ],
+      "min_items": [
+        4
+      ]
+    },
+    "fire": {
+      "sum": 31,
+      "mean": 3.4444,
+      "normalized": 61.1111,
+      "items": {
+        "2": 5,
+        "5": 5,
+        "10": 2,
+        "16": 2,
+        "20": 3,
+        "24": 2,
+        "28": 4,
+        "32": 4,
+        "36": 4
+      },
+      "max_items": [
+        2,
+        5
+      ],
+      "min_items": [
+        10,
+        16,
+        24
+      ]
+    }
+  },
+  "forced": {
+    "wind": {
+      "wins": 4,
+      "normalized": 66.6667
+    },
+    "water": {
+      "wins": 3,
+      "normalized": 50.0
+    },
+    "earth": {
+      "wins": 3,
+      "normalized": 50.0
+    },
+    "fire": {
+      "wins": 2,
+      "normalized": 33.3333
+    }
+  },
+  "forced_detail": {
+    "37": {
+      "answer": "B",
+      "element": "wind"
+    },
+    "38": {
+      "answer": "A",
+      "element": "water"
+    },
+    "39": {
+      "answer": "B",
+      "element": "earth"
+    },
+    "40": {
+      "answer": "A",
+      "element": "wind"
+    },
+    "41": {
+      "answer": "B",
+      "element": "earth"
+    },
+    "42": {
+      "answer": "B",
+      "element": "earth"
+    },
+    "43": {
+      "answer": "A",
+      "element": "fire"
+    },
+    "44": {
+      "answer": "A",
+      "element": "water"
+    },
+    "45": {
+      "answer": "A",
+      "element": "fire"
+    },
+    "46": {
+      "answer": "A",
+      "element": "wind"
+    },
+    "47": {
+      "answer": "A",
+      "element": "wind"
+    },
+    "48": {
+      "answer": "A",
+      "element": "water"
+    }
+  },
+  "composite": {
+    "wind": 86.6667,
+    "water": 63.3334,
+    "earth": 61.1111,
+    "fire": 55.5555
+  },
+  "relative_share": {
+    "wind": 32.5,
+    "water": 23.75,
+    "earth": 22.92,
+    "fire": 20.83
+  },
+  "ranking": [
+    "wind",
+    "water",
+    "earth",
+    "fire"
+  ],
+  "ranking_zh": [
+    "风",
+    "水",
+    "土",
+    "火"
+  ],
+  "dominance": "主元素明显",
+  "gap_first_second": 23.3333,
+  "notes": [
+    "relative_share 仅用于受测者内部四元素相对比较，不是心理学概率或人群百分位。",
+    "本测评为探索性、娱乐性人格映射，不属于临床或标准化人格诊断。"
+  ]
+}

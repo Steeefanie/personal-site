@@ -116,3 +116,5 @@ pnpm preview
 留言和评论存储在公开的 GitHub Discussions 中。讨论标识会移除语言前缀，因此同一内容的三种语言页面共用一个讨论主题。
 
 完整约定见[设计规范](docs/design-system.md)和[维护手册](docs/learning/README.md)。
+
+星象测试的 DeepSeek 密钥占位、后端启动与部署配置见 [AI 解读接口说明](services/four_elements_api/README.md)。

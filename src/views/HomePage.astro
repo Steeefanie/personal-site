@@ -4,6 +4,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import GuestbookDialog from '../components/GuestbookDialog.astro';
 import LatestListItem from '../components/LatestListItem.astro';
 import LocalizedText from '../components/LocalizedText.astro';
+import ElementIcon from '../components/ElementIcon.astro';
 import { pairEntries } from '../lib/content';
 import { locales, text, ui, type Locale, type Localized } from '../lib/i18n';
 import { localizedPath } from '../lib/routes';
@@ -93,6 +94,19 @@ const latestContent = (group: LatestGroup): Localized<LatestContent> => Object.f
           </span>
           <span class="service-app-label" id="fuse-bead-service-label"><LocalizedText value={text('拼豆图纸生成器', '拼豆圖紙生成器', 'Fuse-bead pattern generator')} /></span>
         </a>
+        <a class="service-app" href={localizedPath(locale, '/services/four-elements/')} data-service-link aria-labelledby="four-elements-service-label">
+          <span class="service-card-icon service-card-icon--elements" aria-hidden="true">
+            <svg class="elements-emblem" viewBox="0 0 72 72" fill="none">
+              <circle class="elements-orbit" cx="36" cy="36" r="11" stroke="currentColor" stroke-width="1" stroke-dasharray="7 10.28" transform="rotate(25 36 36)" />
+              <path class="elements-star" d="m36 27 2.5 6.5L45 36l-6.5 2.5L36 45l-2.5-6.5L27 36l6.5-2.5Z" fill="currentColor" />
+              <g class="elements-water" transform="translate(10 9)"><ElementIcon element="water" size={20} /></g>
+              <g class="elements-fire" transform="translate(42 9)"><ElementIcon element="fire" size={20} /></g>
+              <g class="elements-earth" transform="translate(10 42)"><ElementIcon element="earth" size={20} /></g>
+              <g class="elements-wind" transform="translate(42 44)"><ElementIcon element="wind" size={20} /></g>
+            </svg>
+          </span>
+          <span class="service-app-label" id="four-elements-service-label"><LocalizedText value={text('星象测试', '星象測試', 'Star elements test (Chinese)')} /></span>
+        </a>
       </div>
     </section>
 
@@ -165,6 +179,7 @@ const latestContent = (group: LatestGroup): Localized<LatestContent> => Object.f
   }
 
   .service-card-icon {
+    --service-icon-bg: var(--surface-raised);
     position: relative;
     display: grid;
     width: 72px;
@@ -174,9 +189,24 @@ const latestContent = (group: LatestGroup): Localized<LatestContent> => Object.f
     transition: transform var(--motion-fast) ease;
   }
 
+
   .service-app:hover .service-card-icon {
     transform: translateY(-2px) scale(1.015);
   }
+
+
+  .service-card-icon--elements { background: var(--service-icon-bg); }
+  .elements-emblem { width: 100%; height: 100%; }
+  .elements-orbit { color: #a6a0ae; opacity: .55; }
+  .elements-star { color: #a18aa8; opacity: .8; }
+  .elements-water { color: #128eae; }
+  .elements-fire { color: #e56742; }
+  .elements-earth { color: #b98718; }
+  .elements-wind { color: #7c65d9; }
+  :global(:root[data-theme='dark']) .elements-water { color: #53cde5; }
+  :global(:root[data-theme='dark']) .elements-fire { color: #ff9a78; }
+  :global(:root[data-theme='dark']) .elements-earth { color: #efd06a; }
+  :global(:root[data-theme='dark']) .elements-wind { color: #b49aff; }
 
   .service-app:focus-visible .service-card-icon {
     outline: 2px solid var(--brand-interactive);
@@ -188,19 +218,21 @@ const latestContent = (group: LatestGroup): Localized<LatestContent> => Object.f
     grid-auto-rows: 9px;
     place-content: center;
     gap: 3px;
-    background: var(--surface-raised);
+    background: var(--service-icon-bg);
   }
 
   .service-card-icon--bead span {
-    border-radius: 2px;
-    background: var(--brand-interactive);
-    opacity: .24;
+    position: relative;
+    border-radius: 3px;
+    background: #36b5c3;
+    opacity: .9;
   }
 
-  .service-card-icon--bead span:nth-child(3n + 1),
-  .service-card-icon--bead span:nth-child(7) {
-    opacity: .8;
-  }
+  .service-card-icon--bead span::after { position: absolute; inset: 3px; border-radius: 50%; background: rgb(255 255 255 / .65); content: ''; }
+  .service-card-icon--bead span:nth-child(4n + 2) { background: #f18a64; }
+  .service-card-icon--bead span:nth-child(4n + 3) { background: #e3bc4b; }
+  .service-card-icon--bead span:nth-child(4n) { background: #a58ae7; }
+  .service-card-icon--bead span:nth-child(5n) { opacity: .45; }
 
   @media (max-width: 520px) {
     .service-grid {
@@ -220,10 +252,9 @@ const latestContent = (group: LatestGroup): Localized<LatestContent> => Object.f
 </style>
 
 <script>
-  const serviceLink = document.querySelector<HTMLAnchorElement>('[data-service-link]');
-  serviceLink?.addEventListener('click', () => {
+  document.querySelectorAll<HTMLAnchorElement>('[data-service-link]').forEach((serviceLink) => serviceLink.addEventListener('click', () => {
     try { sessionStorage.setItem('home-service-scroll-y', String(window.scrollY)); } catch (_) { /* Storage may be unavailable. */ }
-  });
+  }));
 
   const restoreHomeScroll = () => {
     try {
