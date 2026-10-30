@@ -6,7 +6,7 @@ const envFile = fileURLToPath(new URL('.env', import.meta.url));
 const serverFile = fileURLToPath(new URL('server.mjs', import.meta.url));
 let child, restart = false, stopping = false;
 function start() {
-  child = spawn(process.execPath, [`--env-file-if-exists=${envFile}`, serverFile], { stdio: 'inherit' });
+  child = spawn(process.execPath, ['--use-env-proxy', `--env-file-if-exists=${envFile}`, serverFile], { stdio: 'inherit' });
   child.once('error', () => console.error('Unable to start the local report API.'));
   child.once('exit', () => {
     child = undefined;

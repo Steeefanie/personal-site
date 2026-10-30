@@ -1,0 +1,10 @@
+---
+import type { Element } from '../lib/four-elements';
+import { elementIconLayers, elementIconPalette } from '../lib/element-icons';
+interface Props { element: Element; size?: number; cutout?: string }
+const { element, size = 16, cutout = 'var(--service-icon-bg, #f6f0e5)' } = Astro.props;
+const palette = elementIconPalette[element];
+---
+<svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+  {elementIconLayers[element].map(({ d, fill }) => <path d={d} fill={fill === 'cutout' ? cutout : palette[fill]} />)}
+</svg>

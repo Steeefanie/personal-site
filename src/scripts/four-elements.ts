@@ -1,6 +1,6 @@
 import {
   isValidAnswer,
-  questions, scoreAnswers, type Answers,
+  scoreAnswers, type Answers,
 } from '../lib/four-elements';
 import { createDraftStore } from '../lib/four-elements-draft';
 import { renderNarrativeReport } from './four-elements-report';
@@ -251,40 +251,15 @@ function initialize(app: HTMLElement) {
     form.reset();
     app.querySelectorAll('[data-unanswered]').forEach((node) => node.removeAttribute('data-unanswered'));
     find('[data-fe-result]').replaceChildren();
-    find('[data-fe-answer-review]').replaceChildren();
-    find<HTMLDetailsElement>('.fe-answer-details').open = false;
+    find('[data-fe-source-slot]').replaceChildren();
     find('[data-fe-export-status]').hidden = true;
     dialog.close();
     returnHome();
   });
 
-  function node<K extends keyof HTMLElementTagNameMap>(tag: K, text?: string, className?: string) {
-    const element = document.createElement(tag);
-    if (text !== undefined) element.textContent = text;
-    if (className) element.className = className;
-    return element;
-  }
-
   function showReport() {
     const result = scoreAnswers(answers);
-    const heading = renderNarrativeReport(find('[data-fe-result]'), result, aiControls.getReport());
-
-    const review = find('[data-fe-answer-review]');
-    review.replaceChildren();
-    questions.forEach((question) => {
-      const answer = answers[question.id - 1];
-      const item = node('li');
-      const content = node('div', undefined, 'fe-review-content');
-      content.append(node('span', question.type === 'likert' ? question.text : question.stem));
-      const response = node('span', undefined, 'fe-review-response');
-      const arrow = node('span', '→', 'fe-review-arrow');
-      arrow.setAttribute('aria-hidden', 'true');
-      response.append(arrow, node('span', question.type === 'likert'
-        ? `${answer} 分` : `${answer}：${question.options[answer as 'A' | 'B'].text}`));
-      content.append(response);
-      item.append(node('span', `${question.id}.`, 'fe-review-number'), content);
-      review.append(item);
-    });
+    const heading = renderNarrativeReport(find('[data-fe-result]'), result, aiControls.getReport(), find('[data-fe-source-slot]'));
     show('result');
     heading.focus({ preventScroll: true });
     app.scrollIntoView({ block: 'start', behavior: 'instant' });

@@ -1,6 +1,7 @@
 import { elements, questions, scoreAnswers, type Answers, type Element } from './four-elements.ts';
 
 import { readingGroups, readingPlans, type ReadingLayout } from './four-elements-reading.ts';
+import { literalEmphasis } from './report-emphasis.ts';
 
 export const aiReportVersion = 'deepseek-report-v3';
 export type ReportCard = { title: string; body: string[]; emphasis: string[]; element?: Element };
@@ -39,9 +40,8 @@ export function validateAiReport(value: unknown, answers?: Answers): AiReport {
     if (!Array.isArray(v) || v.length < 1 || v.length > max) return fail('paragraph-count');
     return v.map(p => text(p, 25, 280));
   };
-  const emphasis = (value: unknown, body: string): string[] => {
-    if (!Array.isArray(value)) return [];
-    return [...new Set(value.filter((v): v is string => typeof v === 'string' && v.length >= 2 && v.length <= 24 && body.includes(v)))].slice(0, 3);
+  const emphasis = (value: unknown, body: string | string[]): string[] => {
+    return literalEmphasis(value, body);
   };
   const card = (value: unknown): ReportCard => {
     const p = object(value);
@@ -49,7 +49,7 @@ export function validateAiReport(value: unknown, answers?: Answers): AiReport {
     const body = p.body.map(v => text(v, 12, 95));
     if (body.join('').length > 175) return fail('card-length');
     if (p.element !== undefined && !elements.includes(p.element as Element)) return fail('card-element');
-    return { title: text(p.title, 2, 22), body, emphasis: emphasis(p.emphasis, body.join('')), ...(p.element ? { element: p.element as Element } : {}) };
+    return { title: text(p.title, 2, 22), body, emphasis: emphasis(p.emphasis, body), ...(p.element ? { element: p.element as Element } : {}) };
   };
   const root = object(value);
   if (root.version !== aiReportVersion) return fail();
@@ -96,7 +96,7 @@ export function validateAiReport(value: unknown, answers?: Answers): AiReport {
     if (prose.join('').length + cards.flatMap(c => c.body).join('').length + String(p.keySentence).length > 620) return fail('chapter-length');
     if (prose.join('').length > 720) return fail('chapter-length', { length: prose.join('').length, min: 50, max: 720 });
     return { elements: members, title: text(p.title, 5, 45), paragraphs: prose,
-      keySentence: text(p.keySentence, 15, 100), layout, cards, emphasis: emphasis(p.emphasis, prose.join('')), evidenceIds: evidence(p.evidenceIds, allowed) };
+      keySentence: text(p.keySentence, 15, 100), layout, cards, emphasis: emphasis(p.emphasis, prose), evidenceIds: evidence(p.evidenceIds, allowed) };
   });
   if (covered.size !== 4 || readings.flatMap(r => r.elements).length !== 4) return fail();
   if (answers && JSON.stringify(readings.map(r => r.elements)) !== JSON.stringify(readingGroups(scoreAnswers(answers)))) return fail();
@@ -107,7 +107,8 @@ export function validateAiReport(value: unknown, answers?: Answers): AiReport {
   if (!Array.isArray(integration.roles) || integration.roles.length !== 4 || !Array.isArray(conclusion.highlights) || conclusion.highlights.length !== 3) return fail('closing-cards');
   const roles = integration.roles.map(card);
   if (new Set(roles.map(c => c.element)).size !== 4 || roles.some(c => !c.element)) return fail('role-elements');
-  const integrationResult = { roles, emphasis: emphasis(integration.emphasis, Array.isArray(integration.paragraphs) ? integration.paragraphs.join('') : ''), title: text(integration.title, 5, 45), paragraphs: paragraphs(integration.paragraphs), evidenceIds: evidence(integration.evidenceIds, allIds, 3) };
+  const integrationProse = paragraphs(integration.paragraphs);
+  const integrationResult = { roles, emphasis: emphasis(integration.emphasis, integrationProse), title: text(integration.title, 5, 45), paragraphs: integrationProse, evidenceIds: evidence(integration.evidenceIds, allIds, 3) };
   location = 'conclusion';
   const conclusionResult = { highlights: conclusion.highlights.map(card), emphasis: emphasis(conclusion.emphasis, String(conclusion.summary)), summary: text(conclusion.summary, 25, 180), reflection: text(conclusion.reflection, 15, 150), evidenceIds: evidence(conclusion.evidenceIds, allIds) };
   return { version: aiReportVersion, overview: overviewResult, elements: profiles, conflicts, readings, integration: integrationResult, conclusion: conclusionResult };

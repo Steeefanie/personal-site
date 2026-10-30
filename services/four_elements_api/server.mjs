@@ -11,7 +11,7 @@ const questionnaires = {
 
 export function createReportServer({ env = process.env, fetchImpl = fetch, now = () => Date.now() } = {}) {
   const origins = new Set((env.FOUR_ELEMENTS_ORIGINS || 'http://localhost:4322,http://127.0.0.1:4322,http://localhost:4321,http://127.0.0.1:4321').split(',').map(s => s.trim()));
-  const model = env.DEEPSEEK_MODEL || 'deepseek-v4-pro';
+  const model = env.DEEPSEEK_MODEL || 'deepseek-flash';
   const limit = (name, fallback) => Math.max(1, Math.min(10000, Number(env[name]) || fallback));
   const ipLimit = limit('FOUR_ELEMENTS_HOURLY_LIMIT', 5), dailyLimit = limit('FOUR_ELEMENTS_DAILY_LIMIT', 100);
   const usage = new Map(), pending = new Map();
@@ -57,6 +57,8 @@ export function createReportServer({ env = process.env, fetchImpl = fetch, now =
     if (pending.has(hash)) { try { return reply(res, 200, await pending.get(hash)); } catch { return reply(res, 502, { error: 'AI 解读暂未生成成功，请稍后重试。' }); } }
     if (active >= 2 || dayCount >= dailyLimit) return reply(res, 429, { error: 'AI 服务繁忙或已达到今日额度，请稍后再试。' });
     active++; dayCount++;
+    const upstreamStarted = Date.now();
+    let upstreamStage = 'request';
     const job = (async () => {
       const response = await fetchImpl('https://api.deepseek.com/chat/completions', {
         method: 'POST', signal: AbortSignal.timeout(90000),
@@ -65,10 +67,12 @@ export function createReportServer({ env = process.env, fetchImpl = fetch, now =
           response_format: { type: 'json_object' }, messages: [{ role: 'system', content: questionnaire.prompt }, { role: 'user', content: JSON.stringify(questionnaire.buildAiEvidence(payload.answers)) }] }),
       });
       if (!response.ok) throw Object.assign(new Error('provider'), { providerStatus: response.status });
+      upstreamStage = 'response-body';
       const content = await response.json();
       if (content.choices?.[0]?.finish_reason !== 'stop') throw Object.assign(new Error('incomplete'), { finishReason: content.choices?.[0]?.finish_reason });
       const text = content.choices[0].message?.content;
       if (typeof text !== 'string' || text.length > questionnaire.maxLength) throw new Error('content');
+      upstreamStage = 'report-validation';
       return { report: questionnaire.validateAiReport(JSON.parse(text), payload.answers), model, generatedAt: new Date(now()).toISOString() };
     })();
     pending.set(hash, job);
@@ -78,10 +82,12 @@ export function createReportServer({ env = process.env, fetchImpl = fetch, now =
     } catch (error) {
       // Only structural diagnostics: never log answers, generated prose, keys or upstream bodies.
       console.warn(JSON.stringify({ event: 'report_failed', questionnaire: match[1], code: error.cause?.code || error.name,
-        stage: ['provider', 'incomplete', 'content'].includes(error.message) ? error.message : undefined,
+        stage: ['provider', 'incomplete', 'content'].includes(error.message) ? error.message : upstreamStage,
+        elapsedMs: Date.now() - upstreamStarted,
         providerStatus: error.providerStatus, finishReason: error.finishReason,
         field: error.cause?.field, reason: error.cause?.reason, length: error.cause?.length, min: error.cause?.min, max: error.cause?.max }));
       reply(res, 502, { error: error.name === 'TimeoutError' ? '生成用时较长，请稍后重试。本次作答已保留。'
+        : ['UND_ERR_SOCKET', 'ECONNRESET', 'ECONNREFUSED', 'ETIMEDOUT', 'UND_ERR_CONNECT_TIMEOUT'].includes(error.cause?.code) ? '与 AI 服务的连接中断，请检查网络后重试。本次作答已保留。'
         : error.cause?.code === 'invalid-report' ? '解读内容未完整生成，请重试。本次作答已保留。'
         : 'AI 解读暂未生成成功，请稍后重试。本次作答已保留。' });
     }

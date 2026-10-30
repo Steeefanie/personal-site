@@ -1,5 +1,5 @@
 .fe-page { max-width: 820px; padding-top: 28px; padding-bottom: 64px; }
-.fe-app { --fe-wind: #7c65d9; --fe-water: #128eae; --fe-earth: #b98718; --fe-fire: #e56742; scroll-margin-top: 90px; }
+.fe-app { --fe-wind: #54968b; --fe-water: #128eae; --fe-earth: #b98718; --fe-fire: #e56742; scroll-margin-top: 90px; }
 .fe-header { padding: 32px 0 24px; }
 .fe-eyebrow { font-size: .74rem; font-weight: 600; letter-spacing: .13em; color: var(--muted); }
 .fe-header h1 { margin: 0 0 12px; font-size: 32px; line-height: 1.4; font-weight: 600; letter-spacing: -.02em; }
@@ -109,6 +109,8 @@
 .fe-evidence li, .fe-evidence p { font-size: .82rem; line-height: 1.85; margin-bottom: 6px; }
 .fe-app .fe-boundary { color: var(--muted); font-size: .8rem; margin-top: 20px; margin-bottom: 0; }
 .fe-answer-section { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; margin-bottom: 20px; }
+.fe-source-slot { grid-area: 1 / 1 / 2 / 3; min-width: 0; }
+.fe-source-slot .fe-report-sources > summary { max-width: calc(100% - 90px); padding-block: 0; line-height: 44px; }
 .fe-answer-details { grid-area: 1 / 1 / 2 / 3; padding: 0; margin: 0; font-size: .85rem; }
 .fe-answer-details > summary { width: fit-content; max-width: calc(100% - 90px); }
 .fe-app .fe-answer-clear { grid-area: 1 / 2; position: relative; align-self: start; height: 44px; min-height: 44px; padding: 0; font-size: .85rem; }
@@ -180,7 +182,7 @@ html:has(.fe-clear-dialog[open]) { overflow: hidden; }
 .fe-clear-dialog .fe-actions { justify-content: flex-end; gap: 12px; }
 .fe-clear-dialog .fe-actions button { min-width: 88px; }
 :root[data-theme='dark'] .fe-clear-dialog::backdrop { background: rgb(0 0 0 / .2); }
-:root[data-theme='dark'] .fe-app { --fe-wind: #b49aff; --fe-water: #53cde5; --fe-earth: #efd06a; --fe-fire: #ff9a78; }
+:root[data-theme='dark'] .fe-app { --fe-wind: #87c1b5; --fe-water: #53cde5; --fe-earth: #efd06a; --fe-fire: #ff9a78; }
 @media (max-width: 560px) {
   .fe-header { padding-top: 26px; }
   .fe-header h1 { font-size: 26px; }
@@ -198,7 +200,7 @@ html:has(.fe-clear-dialog[open]) { overflow: hidden; }
   .fe-progress-header { font-size: .78rem; }
   .fe-quiz-actions { gap: 8px; }
   .fe-quiz-actions > button { padding-inline: 12px; }
-  .fe-quiz-actions { position: sticky; bottom: 0; z-index: 2; background: var(--page); border-top: 1px solid var(--border); padding: 12px 0 max(12px, env(safe-area-inset-bottom)); }
+  .fe-app .fe-quiz-actions { position: static; bottom: auto; z-index: auto; background: none; border-top: 0; padding: 8px 0 0; }
 }
 @media (prefers-reduced-motion: reduce) { .fe-options label > span { transition: none; } }
 @media print {
@@ -209,7 +211,7 @@ html:has(.fe-clear-dialog[open]) { overflow: hidden; }
   .fe-report-toolbar, .fe-bottom-actions, .fe-storage-status, .fe-print-help, .fe-answer-section, .fe-clear-dialog { display: none !important; }
   .main-content { padding: 0 !important; }
   .fe-page { width: 100%; max-width: none; margin: 0; padding: 0; }
-  .fe-app { --fe-wind: #7c65d9 !important; --fe-water: #128eae !important; --fe-earth: #b98718 !important; --fe-fire: #e56742 !important; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  .fe-app { --fe-wind: #54968b !important; --fe-water: #128eae !important; --fe-earth: #b98718 !important; --fe-fire: #e56742 !important; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
   .fe-result-hero, .fe-analysis { background: white; border-radius: 0; padding: 16px 0; border-width: 0 0 1px; margin-bottom: 12px; }
   .fe-report-detail { color: #222; }
   .fe-report-detail > summary { display: none; }
@@ -245,7 +247,7 @@ html:has(.fe-clear-dialog[open]) { overflow: hidden; }
 .fe-cards-method { margin-top: 16px; }
 .fe-cards-method .fe-card-label { color: var(--brand-readable); }
 .fe-method-content .fe-card-prose { color: var(--text); }
-.fe-cards-method > :last-child { grid-column: 1 / -1; }
+.fe-cards-method > :last-child:nth-child(odd) { grid-column: 1 / -1; }
 .fe-method-content > .prose { padding-left: 18px; border-left: 2px solid var(--border); }
 .fe-app .fe-method-note > p { text-indent: 0; }
 @media (max-width: 700px) {
@@ -256,3 +258,5 @@ html:has(.fe-clear-dialog[open]) { overflow: hidden; }
   .fe-content-cards:not(.fe-cards-roles) { grid-template-columns: 1fr; gap: 16px; }
   .fe-content-card { padding: 22px; }
 }
+
+.fe-composite-chart, .fe-content-card { --fe-icon-cutout: var(--surface-soft); }

@@ -1,6 +1,7 @@
 import { elementInfo, elements, interpretElement, questions, summarizeResult, type Element, type Score } from './four-elements.ts';
 import { readingGroups, readingPlans } from './four-elements-reading.ts';
 import { validateAiReport, type AiReport } from './four-elements-ai.ts';
+import { resolveEmphasis } from './report-emphasis.ts';
 
 const itemLabels: Record<number, string> = {
   1: '探索陌生领域', 3: '察觉关系变化', 4: '偏爱稳妥方案', 5: '兴趣激发行动', 6: '理解结构原理',
@@ -124,7 +125,8 @@ export function buildNarrativeReport(result: Score, ai?: AiReport) {
     const grouped = members.map(element => profiles.find(p => p.element === element)!);
     const cards = generated?.cards ?? (members.length > 1 ? grouped.map(profile => ({ element: profile.element,
       title: profile.title, body: [profile.narrative], emphasis: [] as string[] })) : Array.from({ length: layout === 'features' ? 3 : 2 }, (_, i) => ({ element: members[0], title: grouped[0].groups[i]?.title || '具体表现', body: [grouped[0].descriptions[i] || grouped[0].narrative], emphasis: [] as string[] })));
-    return { elements: members, layout, cards, emphasis: generated?.emphasis ?? [],
+    return { elements: members, layout, cards: cards.map(c => ({ ...c, emphasis: resolveEmphasis(c.emphasis, c.body, [c.title]) })),
+      emphasis: resolveEmphasis(generated?.emphasis, generated?.paragraphs ?? grouped.flatMap(p => p.paragraphs), [generated?.title ?? '', generated?.keySentence ?? '']),
       label: readingGroups(result).length === 1 ? '相近倾向' : index === 0 ? '相对靠前' : index === readingGroups(result).length - 1 ? '相对靠后' : '共同支撑',
       title: generated?.title ?? (members.length === 1 ? grouped[0].title : `${members.map(e => elementInfo[e].name).join('与')}：两种相近而不同的支撑`),
       paragraphs: generated?.paragraphs ?? grouped.flatMap(p => p.paragraphs),
@@ -132,5 +134,11 @@ export function buildNarrativeReport(result: Score, ai?: AiReport) {
       evidenceIds: generated?.evidenceIds ?? grouped.flatMap(p => p.evidence.map(e => e.id)),
     };
   });
-  return { ...report, readings, overviewEmphasis: generatedContent?.overview.emphasis ?? [], integrationCards: generatedContent?.integration.roles ?? [], integrationEmphasis: generatedContent?.integration.emphasis ?? [], closingCards: generatedContent?.conclusion.highlights ?? [], conclusionEmphasis: generatedContent?.conclusion.emphasis ?? [] };
+  const resolveCards = (cards: NonNullable<AiReport['readings'][number]['cards']>) => cards.map(c => ({ ...c, emphasis: resolveEmphasis(c.emphasis, c.body, [c.title]) }));
+  return { ...report, readings,
+    overviewEmphasis: resolveEmphasis(generatedContent?.overview.emphasis, report.introduction, [report.headline, report.coreSentence]),
+    integrationCards: resolveCards(generatedContent?.integration.roles ?? []),
+    integrationEmphasis: resolveEmphasis(generatedContent?.integration.emphasis, report.integration.map(p => p.text), [generatedContent?.integration.title ?? '']),
+    closingCards: resolveCards(generatedContent?.conclusion.highlights ?? []),
+    conclusionEmphasis: resolveEmphasis(generatedContent?.conclusion.emphasis, report.conclusion, [report.reflection]) };
 }

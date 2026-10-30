@@ -1,9 +1,11 @@
 import { elementInfo, questions, type Element, type Score } from '../lib/four-elements';
 import { buildNarrativeReport } from '../lib/four-elements-report';
 import { reportMethod, readingNote } from '../lib/four-elements-reading';
-import { elementIconPaths } from '../lib/element-icons';
-import { emphasisRuns } from '../lib/report-emphasis';
-import type { AiReport, ReportCard } from '../lib/four-elements-ai';
+import { elementIconLayers, elementIconPalette } from '../lib/element-icons';
+import { reportProse, reportCardGrid } from './report-dom';
+import type { AiReport, ReportCard as AiReportCard } from '../lib/four-elements-ai';
+import type { ReportEmphasis } from '../lib/report-emphasis';
+type ReportCard = Omit<AiReportCard, 'emphasis'> & { emphasis: ReportEmphasis };
 
 function node<K extends keyof HTMLElementTagNameMap>(tag: K, text?: string, className?: string) {
   const element = document.createElement(tag);
@@ -13,41 +15,28 @@ function node<K extends keyof HTMLElementTagNameMap>(tag: K, text?: string, clas
 }
 function glyph(element: Element) {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  Object.entries({ viewBox: '0 0 24 24', width: '28', height: '28', fill: 'none', stroke: 'currentColor', 'stroke-width': '1.6', 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'aria-hidden': 'true', class: `fe-${element}` }).forEach(([k,v]) => svg.setAttribute(k,v));
-  elementIconPaths[element].forEach(d => {
+  Object.entries({ viewBox: '0 0 24 24', width: '28', height: '28', fill: 'none', 'aria-hidden': 'true', class: `fe-${element}` }).forEach(([k,v]) => svg.setAttribute(k,v));
+  elementIconLayers[element].forEach(({ d, fill }) => {
     const path = document.createElementNS('http://www.w3.org/2000/svg', 'path'); path.setAttribute('d', d);
-    if (element === 'water') path.setAttribute('transform', 'translate(12 2.5) scale(1.066667) translate(-12 -2.5)');
+    path.setAttribute('fill', fill === 'cutout' ? 'var(--fe-icon-cutout, var(--page))' : elementIconPalette[element][fill]);
     svg.append(path);
   });
   return svg;
 }
-function rich(text: string, emphasis: string[] = [], className?: string) {
-  const p = node('p', undefined, className);
-  emphasisRuns(text, emphasis).forEach(run => p.append(run.bold ? node('strong', run.text) : document.createTextNode(run.text)));
-  return p;
-}
-function prose(paragraphs: string[], emphasis: string[] = []) {
-  const body = node('div', undefined, 'prose fe-reading-prose');
-  paragraphs.forEach(p => body.append(rich(p, emphasis)));
-  return body;
+function prose(paragraphs: string[], emphasis: ReportEmphasis = []) {
+  return reportProse(paragraphs, emphasis);
 }
 
 function cardGrid(cards: ReportCard[], layout: string) {
-  const grid = node('div', undefined, `fe-content-cards fe-cards-${layout}`);
-  cards.forEach((card, i) => {
-    const item = node('article', undefined, `fe-content-card${card.element ? ` fe-${card.element}` : ''}`);
-    const label = node('div', undefined, 'fe-card-label');
+  return reportCardGrid(cards.map(card => ({ ...card, accent: card.element ? `var(--fe-${card.element})` : undefined })), layout, (card, index) => {
+    const label = document.createDocumentFragment();
     if (card.element) label.append(glyph(card.element), node('span', elementInfo[card.element].name));
-    else label.append(node('span', String(i + 1).padStart(2, '0')));
-    item.append(label, node('h3', card.title));
-    const body = node('div', undefined, 'fe-card-prose');
-    card.body.forEach(text => body.append(rich(text, card.emphasis)));
-    item.append(body); grid.append(item);
+    else label.append(node('span', String(index + 1).padStart(2, '0')));
+    return label;
   });
-  return grid;
 }
 
-export function renderNarrativeReport(container: HTMLElement, result: Score, ai?: AiReport) {
+export function renderNarrativeReport(container: HTMLElement, result: Score, ai?: AiReport, sourcesContainer?: HTMLElement) {
   const model = buildNarrativeReport(result, ai);
   container.replaceChildren();
   const overview = node('section', undefined, 'fe-editorial-overview');
@@ -73,7 +62,7 @@ export function renderNarrativeReport(container: HTMLElement, result: Score, ai?
   const methodNote = prose([readingNote]);
   methodNote.classList.add('fe-method-note');
   methodContent.append(cardGrid(reportMethod.map(part => ({ title: part.title, body: [part.text],
-    emphasis: ['可以同时较高', '不需要彼此抵消', '给定情境', '选择可以不同', '评分题八成', '两两选择两成', '全部题目与回答'],
+    emphasis: part.emphasis,
   })), 'method'), methodNote, node('p', '仅供娱乐与自我探索，非标准化心理测验，不用于诊断。', 'fe-report-disclaimer'));
   method.append(methodContent);
   container.append(method);
@@ -107,6 +96,7 @@ export function renderNarrativeReport(container: HTMLElement, result: Score, ai?
     sources.append(list);
   });
   model.pairs.forEach(pair => { sources.append(node('h3', pair.title), node('p', pair.text), node('p', `对应第 ${pair.ids.join('、')} 题`, 'fe-small')); });
-  container.append(sources);
+  if (sourcesContainer) sourcesContainer.replaceChildren(sources);
+  else container.append(sources);
   return heading;
 }

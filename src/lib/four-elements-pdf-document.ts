@@ -1,19 +1,21 @@
-import { PDFDocument, PDFFont, PDFPage, PDFName, PDFString, rgb, beginText, endText, setCharacterSpacing, setFontAndSize, setFillingColor, setTextMatrix, showText, type RGB } from 'pdf-lib';
+import { PDFDocument, PDFFont, PDFPage, PDFName, PDFString, rgb, type RGB } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
 import { elementInfo, scoreAnswers, type Answers, type Element } from './four-elements.ts';
 import { buildNarrativeReport } from './four-elements-report.ts';
 import { reportMethod, readingNote } from './four-elements-reading.ts';
-import { elementIconPaths } from './element-icons.ts';
+import { elementIconLayers, elementIconPalette } from './element-icons.ts';
 import { wrapPdfText } from './report-pdf-text.ts';
-import { emphasisRuns } from './report-emphasis.ts';
-import type { AiReport, ReportCard } from './four-elements-ai.ts';
+import { layoutPdfRichText, drawPdfTextRows, pdfCardHeight, pdfNeedsPage } from './report-pdf-layout.ts';
+import type { AiReport, ReportCard as AiReportCard } from './four-elements-ai.ts';
+import type { ReportEmphasis } from './report-emphasis.ts';
+type ReportCard = Omit<AiReportCard, 'emphasis'> & { emphasis: ReportEmphasis };
 
 import { loadReportFonts, type ReportFonts } from './report-fonts.ts';
 export type { ReportFonts } from './report-fonts.ts';
 type Options = { fonts?: ReportFonts; date?: Date; ai?: AiReport };
 const hex = (value: string) => rgb(...[1, 3, 5].map(i => parseInt(value.slice(i, i + 2), 16) / 255) as [number, number, number]);
 const ink = hex('#25272d'), muted = hex('#777d86'), rule = hex('#dfe2e8'), pale = hex('#f6f7f9');
-const colors: Record<Element, RGB> = { water: hex('#128eae'), fire: hex('#e56742'), earth: hex('#b98718'), wind: hex('#7c65d9') };
+const colors = Object.fromEntries(Object.entries(elementIconPalette).map(([element, palette]) => [element, hex(palette.main)])) as Record<Element, RGB>;
 const W = 595.28, H = 841.89, M = 50, CW = W - 2 * M, BOTTOM = 775;
 
 /** Actual PDF text with embedded CJK fonts and vector icons; no page screenshots. */
@@ -51,32 +53,15 @@ export async function createReportPdf(answers: Answers, options: Options = {}): 
     at('Steeefanie  /  星象测试', M, 32, 7.5, muted);
     right(label, W - M, 32, 7.5, muted); line(53); y = 82;
   }
-  function ensure(height: number) { if (y + height > BOTTOM) newPage(chapter); }
+  function ensure(height: number) { if (pdfNeedsPage(y, height, BOTTOM)) newPage(chapter); }
   function richHeight(text: string, width: number, size: number, indent = false) {
     return wrap(`${indent ? '　　' : ''}${text}`, width, size).length * size * 1.8;
   }
-  function richText(text: string, x: number, top: number, width: number, size: number, emphasis: string[] = [], indent = false, color = ink) {
-    const source = `${indent ? '　　' : ''}${text}`;
-    const rows = wrap(source, width, size), leading = size * 1.8;
-    let offset = 0;
-    rows.forEach((row, i) => {
-      const start = source.indexOf(row, offset);
-      const runs = emphasisRuns(source, emphasis, { start, end: start + row.length });
-      offset = start + row.length;
-      const rowWidth = runs.reduce((sum, run) => sum + (run.bold ? semibold : regular).widthOfTextAtSize(run.text, size), 0);
-      const spacing = i < rows.length - 1 && row.length > 1 ? Math.max(0, (width - rowWidth) / (row.length - 1)) : 0;
-      let left = x;
-      for (const run of runs) {
-        const font = run.bold ? semibold : regular, key = page.node.newFontDictionary(font.name, font.ref);
-        page.pushOperators(beginText(), setFontAndSize(key, size), setFillingColor(color),
-          setTextMatrix(1, 0, 0, 1, left, H - top - i * leading - size), setCharacterSpacing(spacing),
-          showText(font.encodeText(run.text)), setCharacterSpacing(0), endText());
-        left += font.widthOfTextAtSize(run.text, size) + run.text.length * spacing;
-      }
-    });
-    return rows.length * leading;
+  function richText(text: string, x: number, top: number, width: number, size: number, emphasis: ReportEmphasis = [], indent = false, color = ink) {
+    const layout = layoutPdfRichText(text, width, size, regular, semibold, emphasis, indent);
+    return drawPdfTextRows(page, layout.rows, x, top, size, color, regular, semibold, H);
   }
-  function paragraph(text: string, size = 11.2, color = ink, indent = true, emphasis: string[] = []) {
+  function paragraph(text: string, size = 11.2, color = ink, indent = true, emphasis: ReportEmphasis = []) {
     ensure(richHeight(text, CW, size, indent) + 12);
     y += richText(text, M, y, CW, size, emphasis, indent, color) + 12;
   }
@@ -86,15 +71,12 @@ export async function createReportPdf(answers: Answers, options: Options = {}): 
       x, y: H - top, color: fill, ...(border ? { borderColor: border, borderWidth: .6 } : {}),
     });
   }
-  function cardHeight(card: ReportCard, width: number, size: number) {
-    return 30 + (card.element ? 35 : 22) + wrap(card.title, width - 30, 13, semibold).length * 19 + 12
-      + card.body.reduce((sum, text) => sum + richHeight(text, width - 30, size) + 10, 0);
-  }
+  function cardHeight(card: ReportCard, width: number, size: number) { return pdfCardHeight(card, width, size, regular, semibold, card.element ? 35 : 22); }
   function drawCard(card: ReportCard, x: number, top: number, width: number, height: number, index: number, size: number, accent?: RGB) {
     const color = card.element ? colors[card.element] : accent || muted;
     rounded(x, top, width, height);
     let cy = top + 15;
-    if (card.element) { icon(card.element, x + 15, cy, 22); at(elementInfo[card.element].name, x + 46, cy + 3, 11, color, true); cy += 35; }
+    if (card.element) { icon(card.element, x + 15, cy, 22, pale); at(elementInfo[card.element].name, x + 46, cy + 3, 11, color, true); cy += 35; }
     else { at(String(index + 1).padStart(2, '0'), x + 15, cy, 8, color, true); cy += 22; }
     for (const row of wrap(card.title, width - 30, 13, semibold)) { at(row, x + 15, cy, 13, ink, true); cy += 19; }
     cy += 12;
@@ -115,11 +97,11 @@ export async function createReportPdf(answers: Answers, options: Options = {}): 
     }
   }
   function section(text: string, color = ink) { ensure(140); y += 12; at(text, M, y, 13, color, true); y += 30; }
-  function icon(element: Element, x: number, top: number, size: number) {
-    const ratio = element === 'water' ? 1.066667 : 1;
-    elementIconPaths[element].forEach(path => page.drawSvgPath(path, {
-      x: x + 12 * (1 - ratio) * size / 24, y: H - top - 2.5 * (1 - ratio) * size / 24,
-      scale: size / 24 * ratio, borderColor: colors[element], borderWidth: 1.6, borderLineCap: 1,
+  function icon(element: Element, x: number, top: number, size: number, background = rgb(1, 1, 1)) {
+    const palette = elementIconPalette[element];
+    elementIconLayers[element].forEach(({ d, fill }) => page.drawSvgPath(d, {
+      x, y: H - top, scale: size / 24,
+      color: fill === 'cutout' ? background : hex(palette[fill]),
     }));
   }
   function title(text: string, subtitle = '', members: Element[] = []) {
@@ -155,7 +137,7 @@ export async function createReportPdf(answers: Answers, options: Options = {}): 
   at('四元素倾向', M + 18, panelsTop + 18, 12, ink, true);
   let chartY = panelsTop + 56;
   result.ranking.forEach(element => {
-    icon(element, M + 18, chartY + 3, 22); at(elementInfo[element].name, M + 52, chartY + 2, 12, colors[element], true);
+    icon(element, M + 18, chartY + 3, 22, pale); at(elementInfo[element].name, M + 52, chartY + 2, 12, colors[element], true);
     right(result.composite[element].toFixed(1), M + chartWidth - 18, chartY + 2, 15, colors[element], true);
     at(elementInfo[element].meaning, M + 52, chartY + 25, 8, muted);
     rect(M + 18, chartY + 48, chartWidth - 36, 4, rule);
@@ -173,15 +155,15 @@ export async function createReportPdf(answers: Answers, options: Options = {}): 
   newPage('如何得到这个结果');
   title('如何得到这个结果', '先观察各自倾向，再理解情境中的取舍');
   cards([
-    { title: '评分题 · 观察各自倾向', body: [reportMethod[0].text], emphasis: ['可以同时较高', '不需要彼此抵消'] },
-    { title: '两两选择 · 观察取舍', body: [reportMethod[1].text], emphasis: ['给定情境', '选择可以不同'] },
+    { title: '评分题 · 观察各自倾向', body: [reportMethod[0].text], emphasis: reportMethod[0].emphasis },
+    { title: '两两选择 · 观察取舍', body: [reportMethod[1].text], emphasis: reportMethod[1].emphasis },
   ]);
   section('四个观察角度');
   for (const element of ['wind', 'water', 'earth', 'fire'] as Element[]) {
     icon(element, M, y + 1, 20); at(elementInfo[element].name, M + 32, y, 11, colors[element], true);
     at(elementInfo[element].role, M + 62, y + 1, 10); y += 36;
   }
-  y += 16; paragraph(reportMethod[2].text, 10.2, ink, true, ['完整作答', '不只凭总分']);
+  y += 16; paragraph(reportMethod[2].text, 10.2, ink, true, reportMethod[2].emphasis);
   paragraph(readingNote, 9, muted);
   paragraph('本问卷不是标准化心理测验，不提供人群常模、能力评定或诊断结论。', 9, muted);
 

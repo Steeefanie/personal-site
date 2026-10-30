@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import LocalizedText from '../components/LocalizedText.astro';
-import ElementIcon from '../components/ElementIcon.astro';
+import ServiceElementEmblem from '../components/ServiceElementEmblem.astro';
 import ServiceBackLink from '../components/ServiceBackLink.astro';
 import { text, type Locale } from '../lib/i18n';
 import { elementInfo, labels, questions } from '../lib/four-elements';
@@ -20,13 +20,13 @@ const descriptions = text('通过 48 道题探索认知、感受、建构与行�
     {locale !== 'zh-CN' && <p class="fe-language-note"><LocalizedText value={text('本测评目前使用简体中文题库和报告。', '本測評目前使用簡體中文題庫與報告，以保留原版題意。', 'This first version uses the original Simplified Chinese questionnaire and report.')} /></p>}
     <div class="fe-app" data-fe-app data-stage="intro" lang="zh-CN">
       <header class="fe-header">
-        <h1><span data-fe-title>星象测试</span><a href="#test-home" data-fe-home hidden>星象测试</a></h1>
+        <h1><span data-fe-title>星象</span><a href="#test-home" data-fe-home hidden>星象</a></h1>
         <p class="fe-subtitle">48 道题，探索你的行为偏好。</p>
       </header>
 
       <section id="test-home" data-fe-intro aria-label="测试介绍">
         <div class="fe-elements" aria-label="水、火、土、风">
-          {(['water', 'fire', 'earth', 'wind'] as const).map((element) => <span class={`fe-element-symbol fe-${element}`} title={elementInfo[element].name}><ElementIcon element={element} size={36} /></span>)}
+          {(['water', 'fire', 'earth', 'wind'] as const).map((element) => <span class={`fe-element-symbol fe-${element}`} title={elementInfo[element].name}><ServiceElementEmblem element={element} size={36} cutout="var(--page)" /></span>)}
         </div>
         <div class="fe-start-block">
           <div class="fe-intro-actions"><button type="button" class="fe-secondary" data-fe-clear hidden>清除数据</button><button type="button" class="fe-primary" data-fe-start>开始测试</button></div>
@@ -66,7 +66,7 @@ const descriptions = text('通过 48 道题探索认知、感受、建构与行�
         <div class="fe-report-toolbar"><span>测试结果</span><div><button type="button" class="fe-primary" data-fe-print>保存报告</button></div></div>
         <p class="fe-small" role="status" data-fe-export-status hidden></p>
         <div data-fe-result></div>
-        <div class="fe-answer-section"><details class="fe-answer-details"><summary>查看全部作答</summary><ol data-fe-answer-review></ol></details><button type="button" class="fe-text-button fe-answer-clear" data-fe-clear>清除数据</button></div>
+        <div class="fe-answer-section"><div class="fe-source-slot" data-fe-source-slot></div><button type="button" class="fe-text-button fe-answer-clear" data-fe-clear>清除数据</button></div>
       </section>
       <p class="fe-storage-status fe-small" role="status" data-fe-storage hidden></p>
       <noscript><p class="fe-error">此测评需要启用 JavaScript，才能答题、计算和在本地暂存。</p></noscript>

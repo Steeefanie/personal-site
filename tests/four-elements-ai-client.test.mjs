@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createAiReportClient } from '../src/scripts/four-elements-ai.ts';
 import { mockAiReport } from './fixtures/four-elements/ai-response.mjs';
+import { validateAiReport } from '../src/lib/four-elements-ai.ts';
 const answers = [...Array(36).fill(3), ...Array(12).fill('A')];
 function setup(t, fetchImpl) {
   const storage = new Map();
@@ -22,8 +23,9 @@ test('submit sends complete answers and restores the validated report locally', 
   const client = createAiReportClient(() => answers);
   assert.equal(client.getReport(), undefined);
   await client.generate();
-  assert.deepEqual(client.getReport(), mockAiReport());
-  assert.deepEqual(createAiReportClient(() => answers).getReport(), mockAiReport());
+  assert.deepEqual(client.getReport(), validateAiReport(mockAiReport()));
+  assert.deepEqual(client.getReport().overview.emphasis, []); // Repeated labels remain ordinary text.
+  assert.deepEqual(createAiReportClient(() => answers).getReport(), client.getReport());
 });
 test('failed generation does not create a result and can retry the same submitted answers', async t => {
   let calls = 0;

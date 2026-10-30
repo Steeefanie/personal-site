@@ -10,7 +10,7 @@
     "preview": "astro preview",
     "check": "astro check",
     "ai:dev": "node services/four_elements_api/dev.mjs",
-    "ai:start": "node --env-file-if-exists=services/four_elements_api/.env services/four_elements_api/server.mjs"
+    "ai:start": "node --use-env-proxy --env-file-if-exists=services/four_elements_api/.env services/four_elements_api/server.mjs"
   },
   "dependencies": {
     "@astrojs/mdx": "7.0.2",
