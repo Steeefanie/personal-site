@@ -40,5 +40,6 @@ test-results/
 __pycache__/
 *.py[cod]
 
-# Local report exports
-/output/pdf/
+# Local exports and temporary verification artifacts
+/output/
+/tmp/

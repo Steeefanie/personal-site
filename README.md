@@ -80,6 +80,8 @@ The three language files for one content item must use the same filename. That f
 
 Requirements: Node.js 22.12 or later and pnpm 11.
 
+Use this checkout for development, previews, commits, and pushes; no secondary Git directory or file synchronization is required. Text files use LF through `.gitattributes`, with CRLF reserved for `.bat` and `.cmd` scripts.
+
 ```bash
 pnpm install
 pnpm dev

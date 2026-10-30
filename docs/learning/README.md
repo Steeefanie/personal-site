@@ -21,16 +21,15 @@ Markdown / MDX 内容 + Astro 页面和组件 + CSS
                  Nginx 对外提供文件
 ```
 
-因此，需要把四个位置分清楚：
+因此，需要把三个位置分清楚：
 
 | 位置 | 当前路径或地址 | 主要用途 |
 | --- | --- | --- |
-| 开发目录 | `C:\Code\Website\personal-site` | 平时编辑、预览和构建网站；这是主要工作目录 |
-| Git 工作目录 | `C:\Code\Website\personal-site-git` | 检查改动范围、提交 Git、推送 GitHub |
+| 本地 Git 工作目录 | `C:\Code\Website\personal-site` | 编辑、预览、构建、检查差异、提交和推送均在此完成 |
 | GitHub 远程仓库 | `Steeefanie/personal-site` | 保存公开版本和完整提交历史 |
 | 服务器 | 源码 `/opt/personal-site`；网页 `/var/www/steeefanie/` | 拉取 GitHub 上的代码、构建网站并由 Nginx 对外发布 |
 
-这四处是同一项目在不同阶段的副本，不会自动同步：
+这三处是同一项目在不同阶段的副本，不会自动同步；本地开发文件与 Git 工作区位于同一目录，无须再进行目录间复制：
 
 - 在开发目录修改文件，不等于已经提交到 GitHub。
 - 推送分支到 GitHub，不等于已经合并到 `main`。
@@ -40,14 +39,13 @@ Markdown / MDX 内容 + Astro 页面和组件 + CSS
 ## 最常用的完整流程
 
 ```text
-1. 在 personal-site 编辑
-2. 本地预览并执行检查、构建
-3. 将需要发布的文件同步到 personal-site-git
-4. 在 personal-site-git 检查差异
-5. 创建分支、提交、推送
-6. 在 GitHub 创建并合并 Pull Request
-7. 登录服务器，拉取 main、重新构建并发布
-8. 打开正式域名复查
+1. 在 personal-site 检查 Git 状态并创建本次工作的分支
+2. 编辑、本地预览并执行检查、构建
+3. 在同一目录检查差异、选择提交范围
+4. 提交、推送
+5. 在 GitHub 创建并合并 Pull Request
+6. 登录服务器，拉取 main、重新构建并发布
+7. 打开正式域名复查
 ```
 
 每一步的命令和故障处理都在后续手册中展开。
@@ -57,7 +55,8 @@ Markdown / MDX 内容 + Astro 页面和组件 + CSS
 - 不直接编辑 `node_modules/`、`.astro/` 和 `dist/`，它们都是生成目录。
 - 不把密码、Token、SSH 私钥、真实服务器凭据或 `.env` 文件提交到 GitHub。
 - 同一次提交只处理一个清晰主题，提交前一定看 `git status` 和 `git diff`。
-- `robocopy /MIR` 会删除目标中源目录不存在的文件，必须先加 `/L` 预演。
+- 不再执行双目录镜像同步；`.git` 是当前仓库的历史与配置，不应被复制脚本覆盖。
+- `.gitattributes` 统一文本换行符；`tmp/`、`output/` 为本地生成文件，不提交。
 - 部署前必须成功执行 `pnpm check` 和 `pnpm build`。
 - 不理解时不要使用 `git reset --hard`、`git push --force` 或递归删除命令。
 

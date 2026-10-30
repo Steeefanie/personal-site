@@ -80,6 +80,8 @@ docs/                           设计规范和维护手册
 
 环境要求：Node.js 22.12 或更高版本、pnpm 11。
 
+开发、预览、提交和推送均在同一个 Git 工作目录内完成，无须同步到另一个目录。`.gitattributes` 约定文本文件使用 LF，仅 `.bat` 和 `.cmd` 脚本使用 CRLF。
+
 ```bash
 pnpm install
 pnpm dev

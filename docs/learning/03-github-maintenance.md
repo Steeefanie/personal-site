@@ -10,7 +10,7 @@ Git 是安装在电脑上的版本管理程序，负责比较文件变化、创�
 
 | 名词 | 含义 | 在本项目中是什么 |
 | --- | --- | --- |
-| 仓库 repository | 被 Git 管理的一组文件和历史 | `personal-site-git` 及 GitHub 仓库 |
+| 仓库 repository | 被 Git 管理的一组文件和历史 | 本地 `personal-site` 及 GitHub 仓库 |
 | 工作区 working tree | 当前看到并修改的文件 | Git 工作目录中的文件 |
 | 暂存区 staging area | 被选入下一次提交的变化 | 执行 `git add` 后的内容 |
 | 提交 commit | 带说明的一次本地快照 | 例如“新增食谱” |
@@ -28,26 +28,24 @@ Git 是安装在电脑上的版本管理程序，负责比较文件变化、创�
 - `git push` 才会把提交上传到 GitHub。
 - PR 合并到 `main` 后，服务器仍要另行部署。
 
-## 3. 为什么现在有两个本地目录
+## 3. 一个目录完成开发与版本管理
 
 ```text
 C:\Code\Website\personal-site
-    日常开发、Codex 修改、本地预览
-
-C:\Code\Website\personal-site-git
-    Git 提交、推送 GitHub、创建 PR
+    日常开发、Codex 修改、本地预览、Git 提交与推送
+    .git 保存完整提交历史、分支、远端配置和 reflog
 ```
 
-只有含 `.git` 目录的 `personal-site-git` 是 Git 仓库。开发目录中的修改不会自动进入 Git 仓库，必须主动同步。
+当前 `personal-site` 已是正常的 Git 工作目录，编辑后可直接查看差异、提交和推送，不再需要目录间同步。旧的独立 Git 目录已经归档，只作为备份，不继续在其中开发或提交。
 
 ## 4. 每次开始工作前
 
-### 4.1 更新 Git 工作目录的 `main`
+### 4.1 更新当前工作目录的 `main`
 
 在 Windows PowerShell 中：
 
 ```powershell
-cd C:\Code\Website\personal-site-git
+cd C:\Code\Website\personal-site
 git status -sb
 git switch main
 git pull --ff-only origin main
@@ -102,41 +100,28 @@ pnpm dev --host
 pnpm exec astro dev stop
 ```
 
-## 6. 同步到 Git 工作目录
+## 6. 本地排除与换行符
 
-当前使用 `robocopy`。`/MIR` 会让目标镜像源目录，目标中多出的文件可能被删除，所以必须先预演。
+开发文件就是当前 Git 工作区中的文件，不再运行双目录 `robocopy` 镜像。保留现有 `.git`，不要用恢复目录或旧备份覆盖它。
 
-### 6.1 预演，不写入
+- `.gitignore` 排除依赖、缓存、构建产物、环境文件，以及本地 `tmp/`、`output/` 目录；
+- `.git/info/exclude` 排除本机的 `AGENTS.md`，该文件不提交、不部署；
+- `.gitattributes` 约定文本文件使用 LF，Windows `.bat` 和 `.cmd` 脚本使用 CRLF；
+- 图片和字体等二进制文件不进行文本换行转换。
 
-```powershell
-robocopy "C:\Code\Website\personal-site" "C:\Code\Website\personal-site-git" /MIR /L /R:2 /W:1 /XD ".git" ".git-restore" ".agents" "node_modules" ".astro" "dist" ".pnpm-store" /XF ".env" ".env.*" "*.log" "CHANGELOG.md" "AGENTS.md"
-```
-
-`/L` 只列出计划复制、更新和删除的内容。必须确认没有误删个人文件或 Git 元数据。
-
-参数含义：
-
-- `/MIR`：镜像目录；
-- `/L`：只预演；
-- `/R:2`：失败后最多重试 2 次；
-- `/W:1`：重试等待 1 秒；
-- `/XD`：排除目录；
-- `/XF`：排除文件。
-
-### 6.2 实际同步
-
-确认预演正确后，只去掉 `/L`：
+开始暂存前检查本地说明是否仍被排除：
 
 ```powershell
-robocopy "C:\Code\Website\personal-site" "C:\Code\Website\personal-site-git" /MIR /R:2 /W:1 /XD ".git" ".git-restore" ".agents" "node_modules" ".astro" "dist" ".pnpm-store" /XF ".env" ".env.*" "*.log" "CHANGELOG.md" "AGENTS.md"
+git check-ignore -v AGENTS.md
+git ls-files -- AGENTS.md
 ```
 
-不要把源和目标写反：源是 `personal-site`，目标是 `personal-site-git`。
+第一条应显示 `.git/info/exclude` 中的规则，第二条应无输出。换行规则变更不要求立即重写全部源码，避免产生无关的大批格式差异。
 
 ## 7. 确定提交范围
 
 ```powershell
-cd C:\Code\Website\personal-site-git
+cd C:\Code\Website\personal-site
 git status -sb
 git diff --stat
 git diff
@@ -187,7 +172,7 @@ git log -1 --oneline
 
 正文使用 `Changes:` 和相邻的 `- ` 项目符号，每项以句号结尾。实际验证后才添加 `Validation:`，不得编造结果。提交信息写入项目外的 UTF-8 文件，并使用 `git commit -F`。不同目的的改动拆分为多个提交。
 
-推送前确认 `git check-ignore -v AGENTS.md` 命中本地排除规则，且 `AGENTS.md` 不在已跟踪和暂存文件中；该文件只保留在两个本地目录，不加入仓库。
+推送前确认 `git check-ignore -v AGENTS.md` 命中本地排除规则，且 `AGENTS.md` 不在已跟踪和暂存文件中；该文件只用于本地工作规则，不加入仓库。
 
 ## 9. 推送分支
 
@@ -252,9 +237,8 @@ git status -sb
 
 1. 保持同一工作分支；
 2. 在开发目录继续修改并检查；
-3. 再同步到 Git 工作目录；
-4. 检查差异；
-5. 新建提交并 `git push`。
+3. 在同一目录检查差异并选择提交范围；
+4. 新建提交并 `git push`。
 
 新提交会自动加入同一个 PR，不需要再开一个 PR。
 

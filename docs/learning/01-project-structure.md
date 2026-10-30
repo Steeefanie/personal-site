@@ -17,6 +17,8 @@
 
 ```text
 personal-site/
+├─ .git/               本地 Git 历史与配置，不作为项目文件提交
+├─ .gitattributes
 ├─ .gitignore
 ├─ astro.config.mjs
 ├─ package.json
@@ -116,6 +118,14 @@ personal-site/
 - 日志和系统临时文件
 
 它不是删除规则；文件仍在本地，只是 Git 默认不跟踪它们。
+
+`tmp/`、`output/` 等本地验证和导出目录也被忽略。`AGENTS.md` 使用 `.git/info/exclude` 在本机排除，不写入公开的 `.gitignore`。
+
+### `.gitattributes`：跨平台换行符规则
+
+文本文件在仓库和工作区统一使用 LF；Windows 的 `.bat`、`.cmd` 脚本使用 CRLF。Git 自动判断文本与二进制文件，图片和字体不按文本转换。已有文件不必为了修改换行规则而全部重写，后续编辑或检出时遵循该规则。
+
+本项目在 `personal-site` 一个目录中完成开发和 Git 操作，`.git/` 保存完整历史，无须再同步到另一份工作目录。
 
 ### `README.md`、`README-CN.md`、`CHANGELOG.md`
 

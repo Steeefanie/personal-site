@@ -370,9 +370,7 @@ pnpm dev 本地查看
               ↓
 pnpm check + pnpm build
               ↓
-预演并同步到 personal-site-git
-              ↓
-git status / diff 检查范围
+在当前 personal-site 目录执行 git status / diff 检查范围
               ↓
 git add、commit、push
               ↓
