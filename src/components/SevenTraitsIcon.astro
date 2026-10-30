@@ -1,0 +1,13 @@
+---
+interface Props { size?: number }
+const { size = 72 } = Astro.props;
+---
+<img
+  src="/images/seven-traits-emblem-v2.png"
+  width={size}
+  height={size}
+  alt=""
+  aria-hidden="true"
+  decoding="async"
+  style="display:block;object-fit:contain;transform:scaleX(-1)"
+/>

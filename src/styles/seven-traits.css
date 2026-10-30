@@ -1,0 +1,27 @@
+/* Shared typography, spacing, controls and reports come from four-elements.css.
+   Only the fourteen-axis chart and questionnaire-specific accent colors belong here. */
+.st-page { --st-sin: #23486f; --st-virtue: #aa4956; }
+.st-brand-title:not([hidden]) { display: flex; align-items: center; justify-content: center; gap: .35em; width: fit-content; margin-inline: auto; }
+.st-title-logo { display: inline-flex; align-items: center; justify-content: center; width: 3.6em; height: 3.6em; flex-shrink: 0; }
+.st-title-logo img { width: 100%; height: 100%; }
+.fe-app [data-st-resume] { margin: 16px 0 0; }
+[data-st-quiz] { scroll-margin-top: 90px; }
+.fe-app .fe-quiz-actions > [data-st-pause] { padding: 14px 0 8px; font-size: .82rem; }
+.st-chart { display: block; width: 100%; height: auto; border-radius: 16px; }
+.st-chart-desktop { max-width: 560px; margin-inline: auto; }
+.st-radar-panel { display: block; box-sizing: border-box; max-width: 480px; margin-inline: auto; }
+.st-chart-mobile { display: none; }
+:root[data-theme='dark'] .st-page { --st-sin: #8eafd0; --st-virtue: #d995a0; }
+@media (max-width: 560px) {
+  .st-chart-desktop { display: none; }
+  .st-chart-mobile { display: block; }
+  .st-radar-panel { padding: 20px 8px; }
+}
+
+.st-chart-legend { display: flex; justify-content: center; gap: 24px; margin: 18px 0 0; font-size: .82rem; }
+.st-chart-legend span { display: inline-flex; align-items: center; gap: 8px; }
+.st-chart-legend span::before { content: ''; width: 10px; height: 10px; border-radius: 50%; background: var(--st-sin); }
+.st-chart-legend .st-legend-virtue::before { background: var(--st-virtue); }
+.st-observation-question { margin: 24px 0; }
+.st-observation-question > p:last-child { font-size: .95rem; line-height: 1.8; }
+.fe-card-prose .fe-card-nuance { color: var(--muted); font-size: .85rem; }

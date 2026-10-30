@@ -1,0 +1,47 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import LocalizedText from '../components/LocalizedText.astro';
+import { text, type Locale } from '../lib/i18n';
+import ServiceBackLink from '../components/ServiceBackLink.astro';
+import SevenTraitsIcon from '../components/SevenTraitsIcon.astro';
+import { questions, labels, rounds } from '../lib/seven-traits';
+import '../styles/four-elements.css';
+import '../styles/seven-traits.css';
+import '../styles/questionnaire.css';
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+const titles = text('七宗罪 × 七美德', '七宗罪 × 七美德', 'Seven sins × seven virtues');
+const descriptions = text('通过 56 道题探索十四种行为倾向，提交后生成个人探索报告。', '透過 56 道題探索十四種行為傾向，提交後產生個人探索報告。', 'Explore fourteen tendencies through 56 questions. Original Chinese questionnaire, with an AI report after submission.');
+---
+<BaseLayout activeNav="home" titles={titles} descriptions={descriptions} locale={locale}>
+  <div class="site-shell fe-page st-page">
+    <ServiceBackLink locale={locale} />
+    {locale !== 'zh-CN' && <p class="fe-language-note st-note-language"><LocalizedText value={text('本测评使用原版简体中文题库。', '本測評使用原版簡體中文題庫及報告，以保留原始題意。', 'This questionnaire and its report use the original Simplified Chinese text.')} /></p>}
+    <div class="fe-app st-app" data-st-app data-stage="intro" lang="zh-CN">
+      <header class="fe-header st-header"><h1><span class="st-brand-title" data-st-title aria-label="七宗罪与七美德">七宗罪<span class="st-title-logo"><SevenTraitsIcon size={54} /></span>七美德</span><a href="#test-home" data-st-home hidden>七宗罪 × 七美德</a></h1><p class="fe-subtitle st-subtitle">56 道题，探索你的七宗罪与七美德倾向。</p></header>
+      <section id="test-home" data-st-intro aria-label="测试介绍">
+        <div class="fe-start-block st-start-block"><div class="fe-intro-actions st-intro-actions"><button type="button" class="fe-secondary" data-st-clear hidden>清除数据</button><button type="button" class="fe-primary st-primary" data-st-start>开始测试</button></div><p class="fe-small st-resume" data-st-resume hidden></p></div>
+        <details class="fe-about st-about" open><summary>测试说明</summary><p>按过去一两年的通常状态作答，没有标准答案，不必选择你认为“应该成为”的样子。<br />进度自动保存在当前浏览器，提交后本次作答将被发送至 DeepSeek，本服务器不保存数据。<br />仅供娱乐与自我探索，非标准化心理测验，不用于诊断。</p></details>
+      </section>
+      <section data-st-quiz hidden aria-label="答题区">
+        <div class="fe-progress-header st-progress"><strong data-st-count></strong><span class="fe-sr-only" data-st-step></span></div><progress data-st-progress max="56" value="0" aria-label="已完成题数"></progress>
+        <form data-st-form novalidate>
+          {rounds.map((round, page) => <section class="fe-question-page" data-st-question-page={page} hidden>
+            <h2 class="fe-sr-only" tabindex="-1">{round}</h2>
+            {questions.slice(page * 8, page * 8 + 8).map((question) => <fieldset class="fe-question" data-st-question={question.id}><legend><span class="fe-question-number st-number">{question.id}.</span>{question.text}</legend><div class="fe-options fe-scale st-options">{labels.map((label, i) => <label><input type="radio" name={`q${question.id}`} value={i + 1} required /><span><b>{i + 1}</b><small>{label}</small></span></label>)}</div></fieldset>)}
+          </section>)}
+          <p class="fe-error st-error" role="alert" data-st-error hidden></p>
+          <div class="fe-quiz-actions questionnaire-actions st-quiz-actions"><button type="button" class="fe-secondary" data-st-previous>上一轮</button><button type="button" class="fe-text-button st-link" data-st-pause>稍后继续</button><button type="submit" class="fe-primary st-primary" data-st-next>下一轮 →</button></div>
+        </form>
+      </section>
+      <section class="fe-submission st-submission" data-st-submission hidden aria-label="生成报告" aria-busy="false"><div class="fe-spinner questionnaire-spinner st-spinner" data-st-spinner aria-hidden="true"></div><h2 tabindex="-1" data-st-submission-title>正在生成报告</h2><p class="fe-small st-note" role="status" data-st-submission-status>正在逐题分析你的回答，请稍候。</p><div class="fe-submission-actions"><button type="button" class="fe-secondary" data-st-submission-home hidden>返回测试主页</button><button type="button" class="fe-primary st-primary" data-st-retry hidden>重试</button></div></section>
+      <section class="fe-report" data-st-report hidden aria-label="探索报告"><div class="fe-report-toolbar st-toolbar"><span>测试结果</span><div><button type="button" class="fe-primary st-primary" data-st-pdf>保存报告</button></div></div><p class="fe-small st-note" role="status" data-st-export-status hidden></p><div data-st-result></div><div class="fe-answer-section st-answer-section"><details class="fe-answer-details st-answer-review"><summary>查看全部作答</summary><ol data-st-answer-review></ol></details><button type="button" class="fe-text-button fe-answer-clear st-link st-answer-clear" data-st-clear hidden>清除数据</button></div></section>
+      <p class="fe-storage-status fe-small" role="status" data-st-storage hidden></p>
+      <noscript><p>请启用 JavaScript 以答题和计算报告。</p></noscript>
+      <dialog class="fe-clear-dialog" data-st-dialog aria-labelledby="st-clear-title"><h2 id="st-clear-title">清除数据？</h2><p>将删除当前浏览器中的答案和进度，清除后无法恢复。</p><div class="fe-actions st-actions"><button type="button" class="fe-secondary" data-st-cancel autofocus>取消</button><button type="button" class="fe-primary st-primary" data-st-confirm>清除数据</button></div></dialog>
+    </div>
+  </div>
+</BaseLayout>
+<script>
+  import '../scripts/seven-traits';
+</script>

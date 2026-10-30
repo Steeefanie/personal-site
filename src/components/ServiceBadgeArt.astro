@@ -1,0 +1,44 @@
+---
+import ServiceElementEmblem from './ServiceElementEmblem.astro';
+interface Props { kind: 'bead' | 'elements' }
+const { kind } = Astro.props;
+const beadColors = [
+  { fill: '#e46464', edge: '#b74646' },
+  { fill: '#e3bc4b', edge: '#b38f2e' },
+  { fill: '#569de0', edge: '#3777b3' },
+];
+const beads = Array.from({ length: 25 }, (_, index) => ({
+  row: Math.floor(index / 5), column: index % 5,
+}));
+---
+<svg class="service-badge-art" viewBox="0 0 72 72" width="72" height="72" fill="none" aria-hidden="true">
+  {kind === 'elements' && <path d="M43.86 8.60A28.5 28.5 0 0 1 63.40 28.14M63.40 43.86A28.5 28.5 0 0 1 43.86 63.40M28.14 63.40A28.5 28.5 0 0 1 8.60 43.86M8.60 28.14A28.5 28.5 0 0 1 28.14 8.60" stroke="#b78943" stroke-width="1" stroke-linecap="round" />}
+  {kind === 'elements' ? <g fill="#c7984b">
+    <path d="m36 3 1.4 3.6L41 8l-3.6 1.4L36 13l-1.4-3.6L31 8l3.6-1.4Z" />
+    <path d="m36 59 1.4 3.6L41 64l-3.6 1.4L36 69l-1.4-3.6L31 64l3.6-1.4Z" />
+    <path d="m7 32 1.2 2.8L11 36l-2.8 1.2L7 40l-1.2-2.8L3 36l2.8-1.2Zm58 0 1.2 2.8L69 36l-2.8 1.2L65 40l-1.2-2.8L61 36l2.8-1.2Z" />
+  </g> : null}
+  {kind === 'bead' ? (
+    <g transform="translate(-9 -9) scale(1.25)">
+      {beads.map(({ row, column }) => {
+        const color = beadColors[(row + column) % beadColors.length];
+        return <g>
+          <circle cx={20 + column * 8} cy={20 + row * 8} r="3.3" fill={color.fill} stroke={color.edge} stroke-width=".65" />
+          <circle cx={20 + column * 8} cy={20 + row * 8} r="1.15" fill="var(--service-icon-bg, #f6f0e5)" />
+          <path d={`M${18.3 + column * 8} ${19.1 + row * 8}q.6-1.1 1.8-1.1`} stroke="#fff" stroke-opacity=".55" stroke-width=".65" stroke-linecap="round" />
+        </g>;
+      })}
+    </g>
+  ) : (
+    <g>
+      <!-- Keep decoration outside the glyphs; offset each by its visible shape. -->
+      <path d="M14 36h4m36 0h4M36 14v4m0 36v4" stroke="#d6bd8e" stroke-width=".65" stroke-linecap="round" />
+      <circle cx="36" cy="35.5" r="7.5" stroke="#b78943" stroke-width=".65" />
+      <path d="m36 29 1.8 4.7 4.7 1.8-4.7 1.8L36 42l-1.8-4.7-4.7-1.8 4.7-1.8Z" fill="#bd914e" />
+      <g transform="translate(14.5 14)"><ServiceElementEmblem element="water" size={16} /></g>
+      <g transform="translate(41.5 14)"><ServiceElementEmblem element="fire" size={16} /></g>
+      <g transform="translate(16 38)"><ServiceElementEmblem element="earth" size={17} /></g>
+      <g transform="translate(40 41)"><ServiceElementEmblem element="wind" size={15} /></g>
+    </g>
+  )}
+</svg>

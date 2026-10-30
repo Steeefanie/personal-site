@@ -22,11 +22,12 @@ export default defineConfig({
       proxy: {
         '/api/v1/fuse-bead': 'http://127.0.0.1:8100',
         '/api/v1/four-elements': 'http://127.0.0.1:8101',
+        '/api/v1/seven-traits': 'http://127.0.0.1:8101',
       },
     },
     preview: {
       host: '0.0.0.0',
-      proxy: { '/api/v1/four-elements': 'http://127.0.0.1:8101' },
+      proxy: { '/api/v1/four-elements': 'http://127.0.0.1:8101', '/api/v1/seven-traits': 'http://127.0.0.1:8101' },
     },
   },
 });

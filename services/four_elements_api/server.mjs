@@ -4,9 +4,12 @@ import { isIP } from 'node:net';
 import { pathToFileURL } from 'node:url';
 import { buildAiEvidence, validateAiReport, aiReportVersion } from '../../src/lib/four-elements-ai.ts';
 import { SYSTEM_PROMPT } from './prompt.mjs';
+import * as sevenTraits from '../../src/lib/seven-traits-ai.ts';
+import { SYSTEM_PROMPT as SEVEN_TRAITS_PROMPT } from './seven-traits-prompt.mjs';
 
 const questionnaires = {
   'four-elements': { buildAiEvidence, validateAiReport, aiReportVersion, prompt: SYSTEM_PROMPT, maxTokens: 9000, maxLength: 40000 },
+  'seven-traits': { ...sevenTraits, prompt: SEVEN_TRAITS_PROMPT, maxTokens: 14000, maxLength: 60000 },
 };
 
 export function createReportServer({ env = process.env, fetchImpl = fetch, now = () => Date.now() } = {}) {
@@ -22,7 +25,7 @@ export function createReportServer({ env = process.env, fetchImpl = fetch, now =
   };
   return createServer(async (req, res) => {
     const path = req.url?.split('?')[0];
-    const match = /^\/api\/v1\/(four-elements)\/(health|report)$/.exec(path || '');
+    const match = /^\/api\/v1\/(four-elements|seven-traits)\/(health|report)$/.exec(path || '');
     if (!match) return reply(res, 404, { error: '接口不存在。' });
     const questionnaire = questionnaires[match[1]];
     if (req.method === 'GET' && match[2] === 'health') return reply(res, 200, { configured: Boolean(env.DEEPSEEK_API_KEY), model, version: questionnaire.aiReportVersion });

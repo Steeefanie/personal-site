@@ -1,10 +1,11 @@
 ---
 import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
+import SevenTraitsIcon from '../components/SevenTraitsIcon.astro';
 import GuestbookDialog from '../components/GuestbookDialog.astro';
 import LatestListItem from '../components/LatestListItem.astro';
 import LocalizedText from '../components/LocalizedText.astro';
-import ElementIcon from '../components/ElementIcon.astro';
+import ServiceBadgeArt from '../components/ServiceBadgeArt.astro';
 import { pairEntries } from '../lib/content';
 import { locales, text, ui, type Locale, type Localized } from '../lib/i18n';
 import { localizedPath } from '../lib/routes';
@@ -87,25 +88,19 @@ const latestContent = (group: LatestGroup): Localized<LatestContent> => Object.f
       <div class="service-grid">
         <a class="service-app" href={localizedPath(locale, '/services/fuse-bead-generator/')} data-service-link aria-labelledby="fuse-bead-service-label">
           <span class="service-card-icon service-card-icon--bead" aria-hidden="true">
-            <span></span><span></span><span></span><span></span>
-            <span></span><span></span><span></span><span></span>
-            <span></span><span></span><span></span><span></span>
-            <span></span><span></span><span></span><span></span>
+            <ServiceBadgeArt kind="bead" />
           </span>
           <span class="service-app-label" id="fuse-bead-service-label"><LocalizedText value={text('拼豆图纸生成器', '拼豆圖紙生成器', 'Fuse-bead pattern generator')} /></span>
         </a>
         <a class="service-app" href={localizedPath(locale, '/services/four-elements/')} data-service-link aria-labelledby="four-elements-service-label">
           <span class="service-card-icon service-card-icon--elements" aria-hidden="true">
-            <svg class="elements-emblem" viewBox="0 0 72 72" fill="none">
-              <circle class="elements-orbit" cx="36" cy="36" r="11" stroke="currentColor" stroke-width="1" stroke-dasharray="7 10.28" transform="rotate(25 36 36)" />
-              <path class="elements-star" d="m36 27 2.5 6.5L45 36l-6.5 2.5L36 45l-2.5-6.5L27 36l6.5-2.5Z" fill="currentColor" />
-              <g class="elements-water" transform="translate(10 9)"><ElementIcon element="water" size={20} /></g>
-              <g class="elements-fire" transform="translate(42 9)"><ElementIcon element="fire" size={20} /></g>
-              <g class="elements-earth" transform="translate(10 42)"><ElementIcon element="earth" size={20} /></g>
-              <g class="elements-wind" transform="translate(42 44)"><ElementIcon element="wind" size={20} /></g>
-            </svg>
+            <ServiceBadgeArt kind="elements" />
           </span>
           <span class="service-app-label" id="four-elements-service-label"><LocalizedText value={text('星象测试', '星象測試', 'Star elements test (Chinese)')} /></span>
+        </a>
+        <a class="service-app" href={localizedPath(locale, '/services/seven-traits/')} data-service-link aria-labelledby="seven-traits-service-label">
+          <span class="service-card-icon service-card-icon--traits" aria-hidden="true"><SevenTraitsIcon /></span>
+          <span class="service-app-label" id="seven-traits-service-label"><LocalizedText value={text('七宗罪 × 七美德', '七宗罪 × 七美德', 'Seven sins × seven virtues')} /><br /><LocalizedText value={text('测试', '測試', 'Test')} /></span>
         </a>
       </div>
     </section>
@@ -179,60 +174,36 @@ const latestContent = (group: LatestGroup): Localized<LatestContent> => Object.f
   }
 
   .service-card-icon {
-    --service-icon-bg: var(--surface-raised);
+    --service-icon-bg: #fff;
+    --service-icon-shadow: 0 2px 5px rgb(0 0 0 / .06), 0 6px 14px rgb(0 0 0 / .05);
     position: relative;
     display: grid;
+    place-items: center;
     width: 72px;
     aspect-ratio: 1;
     overflow: hidden;
     border-radius: 16px;
+    background: var(--service-icon-bg);
+    box-shadow: var(--service-icon-shadow);
     transition: transform var(--motion-fast) ease;
   }
 
+
+  :global(:root[data-theme='dark']) .service-card-icon {
+    --service-icon-bg: #090909;
+    --service-icon-shadow: 0 2px 6px rgb(255 255 255 / .025), 0 7px 16px rgb(255 255 255 / .015);
+  }
 
   .service-app:hover .service-card-icon {
     transform: translateY(-2px) scale(1.015);
   }
 
-
-  .service-card-icon--elements { background: var(--service-icon-bg); }
-  .elements-emblem { width: 100%; height: 100%; }
-  .elements-orbit { color: #a6a0ae; opacity: .55; }
-  .elements-star { color: #a18aa8; opacity: .8; }
-  .elements-water { color: #128eae; }
-  .elements-fire { color: #e56742; }
-  .elements-earth { color: #b98718; }
-  .elements-wind { color: #7c65d9; }
-  :global(:root[data-theme='dark']) .elements-water { color: #53cde5; }
-  :global(:root[data-theme='dark']) .elements-fire { color: #ff9a78; }
-  :global(:root[data-theme='dark']) .elements-earth { color: #efd06a; }
-  :global(:root[data-theme='dark']) .elements-wind { color: #b49aff; }
+  .service-card-icon :global(> svg), .service-card-icon :global(> img) { width: 100%; height: 100%; }
 
   .service-app:focus-visible .service-card-icon {
     outline: 2px solid var(--brand-interactive);
     outline-offset: 3px;
   }
-
-  .service-card-icon--bead {
-    grid-template-columns: repeat(4, 9px);
-    grid-auto-rows: 9px;
-    place-content: center;
-    gap: 3px;
-    background: var(--service-icon-bg);
-  }
-
-  .service-card-icon--bead span {
-    position: relative;
-    border-radius: 3px;
-    background: #36b5c3;
-    opacity: .9;
-  }
-
-  .service-card-icon--bead span::after { position: absolute; inset: 3px; border-radius: 50%; background: rgb(255 255 255 / .65); content: ''; }
-  .service-card-icon--bead span:nth-child(4n + 2) { background: #f18a64; }
-  .service-card-icon--bead span:nth-child(4n + 3) { background: #e3bc4b; }
-  .service-card-icon--bead span:nth-child(4n) { background: #a58ae7; }
-  .service-card-icon--bead span:nth-child(5n) { opacity: .45; }
 
   @media (max-width: 520px) {
     .service-grid {
