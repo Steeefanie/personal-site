@@ -1,0 +1,113 @@
+---
+title: Temporary File Sharing
+description: A personal file-sharing tool with expiration, download allowances, resumable and segmented transfers, a passkey-protected dashboard, an iOS interface, and resource monitoring.
+attribution: ChatGPT-assisted
+publishDate: 2026-10-22
+updatedDate: 2026-10-30
+lang: en
+stack: [JavaScript, Node.js, Express, SQLite, WebAuthn]
+featured: false
+draft: false
+---
+
+import ProjectScreenshot from '../../../components/ProjectScreenshot.astro';
+
+## Purpose
+
+Steeefanie Drive is a small tool I use for temporary file sharing. The administrator uploads a file, sets an expiration and download allowance, and sends the generated link to the recipient. Recipients open the sharing page and download without registering an account.
+
+The service follows the life of a share: when it expires, how many downloads remain, whether access should be paused, and how much traffic a transfer uses. Folders can be delivered as a single ZIP, making a collection of files one temporary handoff.
+
+## Administrator sign-in
+
+The dashboard uses WebAuthn passkeys, with single-use recovery codes as a fallback. Authentication is handled by the browser and operating system; the site does not receive fingerprints or facial data. Recipient sharing pages are separate from the dashboard and do not require an administrator account.
+
+<ProjectScreenshot locale="en" scene="desktop-login"
+  alt="Desktop administrator sign-in with passkey authentication and a recovery-code option"
+  caption="Administrator sign-in: passkeys provide the main entry point, with recovery codes as a fallback." />
+
+## Managing files and creating a share
+
+The dashboard separates files, resource monitoring, download records, and settings. On desktop, a sidebar provides navigation while the file area offers search, sorting, and state filters. File actions include copying the link, pausing, resuming, extending expiration, and deleting.
+
+<ProjectScreenshot locale="en" scene="desktop-files"
+  alt="Desktop file management with sidebar navigation, storage and transfer usage, search, filters, and the file list"
+  caption="Desktop file management brings together share states, remaining allowances, and expiration dates." />
+
+Uploads accept one or more files, photos, or folders, with drag-and-drop support for files. Further selections append to the current list before submission; items can be removed individually or cleared. Long lists scroll internally, and clicking a truncated filename reveals its full path. Retention starts when the upload succeeds, can be specified in hours or days up to 30 days, and is accompanied by a download allowance.
+
+A single ordinary file uploads directly. Multiple files, photos, or folder contents are packaged in the browser as one ZIP without compressing the contents, with an optional custom archive name. Packaging preserves Chinese filenames, nested paths, and empty files, but excludes empty directories. Archives allow up to 10,000 files within the upload size limit. Duplicate, case-equivalent, or Unicode-equivalent names receive numeric suffixes to prevent overwriting. The server does not extract the archive; the entire ZIP shares one expiration, download allowance, and set of management actions.
+
+<ProjectScreenshot locale="en" scene="desktop-upload"
+  alt="Desktop upload dialog with file and folder selection, retention, and download allowance"
+  caption="The upload dialog organizes selected items and sets retention and download allowances." />
+
+## Sharing links and download tasks
+
+Recipients see a dedicated sharing page rather than the dashboard or other uploads. The share link opens that page. Clicking download creates a temporary download URL, and a standard GET request transfers the file.
+
+Downloads support resuming and parallel segmented transfers. A temporary URL consumes one allowance on its first actual GET download. Subsequent ranges and resumed transfers belong to the same task. Opening the sharing page, creating a URL, HEAD probes, and failed validation do not consume allowances.
+
+A task can use several single-range connections at once, currently up to eight per temporary URL. The server provides range and validator information so browsers or download managers can continue a transfer. A multi-range list within one request receives the complete file instead of a multipart response.
+
+Temporary URLs last at most 24 hours and cannot outlive the file itself. A total retransmission limit prevents unlimited reuse. An expired URL or exhausted retransmission allowance requires starting a new task from the sharing page and consuming another download allowance. URLs are not bound to an IP address, allowing download-manager handoff and network changes, so they need the same care as share links.
+
+
+## Pausing, resuming, and expiration
+
+Share state and download tasks need separate handling. Exhausting the allowance should still let admitted tasks continue within their temporary URL limits. A manual pause, however, must revoke access for existing tasks immediately.
+
+| Action or state | Current behavior |
+| --- | --- |
+| Allowance exhausted | Pause new tasks, retain the share link, and let tasks that already consumed an allowance continue. |
+| Manual pause | Block new tasks, interrupt active connections, and revoke existing temporary download URLs. |
+| Resume | Set a new allowance while preserving the cumulative count and share link. Previously revoked temporary URLs remain invalid. |
+| Extend expiration | Require a later expiration no more than 30 days from the action. Leave the pause state and remaining allowance unchanged. |
+| Expire or delete | Reject further access and interrupt transfers. Background cleanup removes expired files; deletion removes files from disk directly. |
+
+Pausing does not stop the expiration clock, and an expired file cannot be extended. Access can be adjusted temporarily while the file still follows its retention lifecycle.
+
+## The iPhone and iPad interface
+
+iPhone and iPad receive a dedicated iOS appearance with four dashboard modules in a floating bottom bar. Module changes preserve the navigation element while its selection indicator slides from the current position. A menu on each file row holds copying, pausing, extending, and deleting actions, reducing persistent controls on narrow screens.
+
+Materials follow the role of the content. Navigation, toolbars, menus, and short dialogs use transparency, blur, and thin rim highlights. File lists, charts, settings groups, and long forms retain solid backgrounds. Continuous corners and nested control spacing are handled together without sacrificing body-text readability. Desktop retains its layout and shares the same monochrome SVG icons with iOS.
+
+The glass appearance combines browser backdrop filters with local edge corrections; it is not native system Liquid Glass. Scrolling hides stale correction layers, which are recalculated at rest. Reduced-motion, reduced-transparency, and increased-contrast preferences simplify animation or restore solid surfaces. Decorative layers do not handle interaction or read form values or recovery codes.
+
+Open dialogs lock background scrolling. Their headings and content scroll internally while bottom actions remain visible, with positioning adjusted for safe areas and the software keyboard. Long forms use solid backgrounds to keep layered effects from interfering with reading and input.
+
+<div className="project-phone-gallery">
+<ProjectScreenshot locale="en" scene="ios-login"
+  alt="iPhone administrator sign-in with passkey authentication and a recovery-code option"
+  caption="iPhone sign-in with passkeys and recovery codes." />
+<ProjectScreenshot locale="en" scene="ios-files"
+  alt="iPhone file management with usage cards, file filters, and floating bottom navigation"
+  caption="iPhone file management adapts the toolbar and floating navigation to a narrow screen." />
+</div>
+
+In iOS home-screen mode, pulling down from the top refreshes the current module while preserving search and filters. This refresh is disabled during dialogs, menus, input, and uploads. Regular browsers retain their native refresh behavior.
+
+The site supplies home-screen icons, a manifest, and standalone display settings for adding it from Safari. It remains an online web application, with no offline file or management-API cache. Initial language and theme follow the system's primary preferences; saved manual choices take priority afterward. The interface supports Simplified Chinese, Traditional Chinese for Taiwan, and English.
+
+## Download records, traffic, and resource monitoring
+
+Download records are now grouped by task. Segments and retransmissions accumulate in one record, so estimated transferred bytes can exceed the file size. The interface uses Sending, Sent, and Interrupted to describe server-side state, without treating a completed send as proof that the recipient saved the file successfully.
+
+Only response ranges that end normally count toward confirmed sent coverage. Interrupted connections still contribute estimated traffic, but cannot establish which bytes the recipient received. A record may therefore remain interrupted even after a client finishes through resuming. Date filters use Beijing time to select tasks within a chosen period.
+
+SQLite transactions coordinate allowances, task state, and traffic reservations. Each range connection reserves its requested bytes, then settles an estimate based on bytes written to the response stream. Monthly budgets follow Beijing calendar months. Connections within a task that crosses a month boundary are charged to the month each connection starts. Outstanding reservations are charged in full after a restart.
+
+The resource page monitors host CPU and memory, plus disk I/O for the device holding the files and network traffic for the default-route interface on Linux. Historical samples are summarized before database writes, with gaps for downtime or unavailable readings. Host network charts, application download accounting, and hosting-provider billing have different scopes.
+
+<ProjectScreenshot locale="en" scene="desktop-monitor"
+  alt="Desktop resource monitoring with time ranges and CPU, memory, disk, and network charts"
+  caption="Resource monitoring shows host metrics over a selected period, separately from application download accounting." />
+
+## Implementation and operating limits
+
+The backend uses Node.js 24, Express, and built-in SQLite, while the frontend uses vanilla JavaScript. File contents live on disk. File metadata, download tasks, passkey public keys and related credential data, recovery-code hashes, traffic, and monitoring records persist in the database. Administrator access uses WebAuthn passkeys with single-use recovery codes as a fallback.
+
+The service still runs as one process and one instance. Administrator sessions, active connections, and the upload lock live in process memory, so a restart requires signing in again. Temporary download URLs are persisted and remain usable while unexpired, unrevoked, and within their allowances.
+
+The repository includes automated tests for range downloads, concurrent accounting, task recovery, interface preferences, platform detection, and glass optics, alongside deployment and maintenance guidance. WebKit and desktop browser checks do not replace acceptance testing of home-screen installation, passkeys, and system downloads on actual iPhone and iPad devices. Third-party download-manager handoff also needs verification in the relevant client. The source remains private; this article describes the current implementation and its tradeoffs.
