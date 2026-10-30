@@ -6,6 +6,8 @@ import { buildNarrativeReport } from '../src/lib/four-elements-report.ts';
 import { scoreAnswers } from '../src/lib/four-elements.ts';
 import { createReportServer } from '../services/four_elements_api/server.mjs';
 import { mockAiReport } from './fixtures/four-elements/ai-response.mjs';
+import { syntheticPairedAnswers } from './fixtures/four-elements/ai-response.mjs';
+import { validateGeneratedAiReport } from '../src/lib/four-elements-ai.ts';
 const input = JSON.parse(readFileSync(new URL('./fixtures/four-elements/input.json', import.meta.url)));
 const answers = [...input.likert, ...input.forced];
 
@@ -55,7 +57,7 @@ test('API recomputes evidence, uses fixed upstream and coalesces identical reque
   const responses = await Promise.all([post(), post()]);
   assert.ok(responses.every(r => r.status === 200));
   assert.equal(calls, 1);
-  assert.equal((await responses[0].json()).report.version, 'deepseek-report-v3');
+  assert.equal((await responses[0].json()).report.version, 'deepseek-report-v4');
   assert.equal((await post()).status, 200); assert.equal(calls, 2); // Completed reports are never cached on the server.
 });
 
@@ -157,4 +159,18 @@ test('minor prose formatting differences preserve genuine text without bypassing
   assert.throws(() => validateAiReport(empty, answers));
   const oversized = mockAiReport(); oversized.readings[0].paragraphs = Array(3).fill('这段文字用于检查报告篇幅不能因为放宽段落数量而失去边界。'.repeat(8));
   assert.throws(() => validateAiReport(oversized, answers));
+});
+
+test('v4 generation enforces the new plan while v3 remains read-only compatible', () => {
+  const values = syntheticPairedAnswers(), old = mockAiReport({ answers: values, version: 'deepseek-report-v3' });
+  assert.deepEqual(validateAiReport(old, values).readings.map(r => r.elements.length), [3, 1]);
+  assert.throws(() => validateGeneratedAiReport(old, values), /版本较旧/);
+  const wrong = structuredClone(old); wrong.version = 'deepseek-report-v4';
+  assert.throws(() => validateGeneratedAiReport(wrong, values));
+  const report = mockAiReport({ answers: values });
+  assert.deepEqual(validateGeneratedAiReport(report, values).readings.map(r => r.elements.length), [2, 2]);
+  const context = buildAiEvidence(values);
+  assert.equal(context.presentation.overallClose, true);
+  assert.deepEqual(context.presentation.groups.map(g => g.length), [2, 2]);
+  assert.deepEqual(context.presentation.boundaryGaps.map(g => Number(g.toFixed(1))), [4.4]);
 });

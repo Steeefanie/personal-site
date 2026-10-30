@@ -2,7 +2,7 @@ import { PDFDocument, PDFFont, PDFPage, PDFName, PDFString, rgb, type RGB } from
 import fontkit from '@pdf-lib/fontkit';
 import { elementInfo, scoreAnswers, type Answers, type Element } from './four-elements.ts';
 import { buildNarrativeReport } from './four-elements-report.ts';
-import { reportMethod, readingNote } from './four-elements-reading.ts';
+import { reportMethod } from './four-elements-reading.ts';
 import { elementIconLayers, elementIconPalette } from './element-icons.ts';
 import { wrapPdfText } from './report-pdf-text.ts';
 import { layoutPdfRichText, drawPdfTextRows, pdfCardHeight, pdfNeedsPage } from './report-pdf-layout.ts';
@@ -131,7 +131,7 @@ export async function createReportPdf(answers: Answers, options: Options = {}): 
   paragraph('基于本次完整作答 · 仅供娱乐与自我探索', 9, muted, false);
 
   newPage('结果总览');
-  title('结果总览', '四种倾向，可以同时存在');
+  title('结果总览', model.distributionNote || '四种倾向，可以同时存在');
   const panelsTop = y, panelHeight = 420, chartWidth = 282, rightX = M + chartWidth + 16, textWidth = CW - chartWidth - 16;
   rounded(M, panelsTop, chartWidth, panelHeight);
   at('四元素倾向', M + 18, panelsTop + 18, 12, ink, true);
@@ -164,7 +164,7 @@ export async function createReportPdf(answers: Answers, options: Options = {}): 
     at(elementInfo[element].role, M + 62, y + 1, 10); y += 36;
   }
   y += 16; paragraph(reportMethod[2].text, 10.2, ink, true, reportMethod[2].emphasis);
-  paragraph(readingNote, 9, muted);
+  paragraph(model.readingNote, 9, muted, false);
   paragraph('本问卷不是标准化心理测验，不提供人群常模、能力评定或诊断结论。', 9, muted);
 
   model.readings.forEach(reading => {

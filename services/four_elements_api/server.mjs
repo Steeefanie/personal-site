@@ -2,7 +2,7 @@ import { createServer } from 'node:http';
 import { createHash } from 'node:crypto';
 import { isIP } from 'node:net';
 import { pathToFileURL } from 'node:url';
-import { buildAiEvidence, validateAiReport, aiReportVersion } from '../../src/lib/four-elements-ai.ts';
+import { buildAiEvidence, validateGeneratedAiReport as validateAiReport, aiReportVersion } from '../../src/lib/four-elements-ai.ts';
 import { SYSTEM_PROMPT } from './prompt.mjs';
 import * as sevenTraits from '../../src/lib/seven-traits-ai.ts';
 import { SYSTEM_PROMPT as SEVEN_TRAITS_PROMPT } from './seven-traits-prompt.mjs';

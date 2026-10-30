@@ -4,7 +4,9 @@ import test from 'node:test';
 import { PDFDocument, PDFName, PDFDict } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
 import { createReportPdf } from '../src/lib/four-elements-pdf.ts';
-import { mockAiReport } from './fixtures/four-elements/ai-response.mjs';
+import { mockAiReport, syntheticPairedAnswers } from './fixtures/four-elements/ai-response.mjs';
+import { questions, scoreAnswers } from '../src/lib/four-elements.ts';
+import { readingGroups } from '../src/lib/four-elements-reading.ts';
 
 const fonts = Object.fromEntries(['regular', 'semibold'].map(name => [name, readFileSync(new URL(`../public/fonts/star-report/${name}-cjk.ttf`, import.meta.url))]));
 const fixture = JSON.parse(readFileSync(new URL('./fixtures/four-elements/input.json', import.meta.url)));
@@ -84,4 +86,21 @@ test('AI report exports the same validated prose as selectable PDF text', async 
     const objects = page.node.Resources().lookupMaybe(PDFName.of('XObject'), PDFDict);
     assert.equal(objects?.keys().length ?? 0, 0);
   }
+});
+
+test('v3 and v4 export their own chapters, including single, paired, triple and four-member layouts', async () => {
+  const balanced = syntheticPairedAnswers().map((answer, index) => index < 36 ? 3 : answer);
+  const standout = balanced.map((answer, index) => index < 36 && questions[index].element === 'wind' ? 5 : answer);
+  const separate = [...Array(36).fill(3), ...Array(12).fill('A')];
+  const cases = [syntheticPairedAnswers(), sample, balanced, standout, separate];
+  const members = new Set();
+  for (const answers of cases) {
+    readingGroups(scoreAnswers(answers)).forEach(g => members.add(g.length));
+    const blob = await createReportPdf(answers, { fonts, ai: mockAiReport({ answers }) });
+    const doc = await PDFDocument.load(await blob.arrayBuffer());
+    assert.ok(doc.getPageCount() >= 6 && doc.getPageCount() <= 10);
+  }
+  assert.deepEqual([...members].sort(), [1, 2, 3, 4]);
+  const old = await createReportPdf(syntheticPairedAnswers(), { fonts, ai: mockAiReport({ answers: syntheticPairedAnswers(), version: 'deepseek-report-v3' }) });
+  assert.ok((await PDFDocument.load(await old.arrayBuffer())).getPageCount() >= 7);
 });

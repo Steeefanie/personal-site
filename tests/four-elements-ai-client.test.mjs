@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createAiReportClient } from '../src/scripts/four-elements-ai.ts';
-import { mockAiReport } from './fixtures/four-elements/ai-response.mjs';
+import { mockAiReport, sampleAnswers, syntheticPairedAnswers } from './fixtures/four-elements/ai-response.mjs';
 import { validateAiReport } from '../src/lib/four-elements-ai.ts';
-const answers = [...Array(36).fill(3), ...Array(12).fill('A')];
+const answers = sampleAnswers;
 function setup(t, fetchImpl) {
   const storage = new Map();
   t.mock.method(globalThis, 'fetch', fetchImpl);
@@ -59,4 +59,36 @@ test('an HTML page returned instead of the report API remains an explicit failur
   const client = createAiReportClient(() => answers);
   await assert.rejects(client.generate(), /报告接口返回内容异常/);
   assert.equal(client.getReport(), undefined);
+});
+
+test('v3 stays read-only and calling generate cannot replace it or start a paid request', async t => {
+  let calls = 0;
+  const values = syntheticPairedAnswers(), old = mockAiReport({ answers: values, version: 'deepseek-report-v3' });
+  const storage = setup(t, async () => { calls++; return Response.json({ error: '模拟生成失败' }, { status: 502 }); });
+  const key = 'four-elements-ai-v1', record = JSON.stringify({ answersKey: JSON.stringify(values), report: old, model: 'old-model', generatedAt: '2026-10-30T00:00:00Z' });
+  storage.set(key, record);
+  const client = createAiReportClient(() => values);
+  assert.equal(calls, 0);
+  assert.equal(client.getReport().version, 'deepseek-report-v3');
+  assert.deepEqual(client.getReport().readings.map(r => r.elements.length), [3, 1]);
+  await client.generate();
+  assert.equal(calls, 0); assert.equal(storage.get(key), record);
+  assert.equal(client.getReport().version, 'deepseek-report-v3');
+});
+
+test('v4 generation requires clearing old data and completing a new answer sheet', async t => {
+  let values = syntheticPairedAnswers(), calls = 0;
+  const old = mockAiReport({ answers: values, version: 'deepseek-report-v3' });
+  const storage = setup(t, async () => { calls++; return Response.json({ report: mockAiReport({ answers: values }), model: 'new-model', generatedAt: '2026-10-31T00:00:00Z' }); });
+  storage.set('four-elements-ai-v1', JSON.stringify({ answersKey: JSON.stringify(values), report: old, model: 'old-model', generatedAt: '2026-10-30T00:00:00Z' }));
+  const client = createAiReportClient(() => values);
+  client.invalidate(); values = Array(48).fill(null);
+  await assert.rejects(client.generate(), /完成全部题目/);
+  assert.equal(calls, 0); assert.equal(client.getReport(), undefined);
+  values = syntheticPairedAnswers();
+  await client.generate();
+  assert.equal(calls, 1);
+  assert.equal(client.getReport().version, 'deepseek-report-v4');
+  assert.deepEqual(client.getReport().readings.map(r => r.elements.length), [2, 2]);
+  assert.equal(createAiReportClient(() => values).getReport().version, 'deepseek-report-v4');
 });

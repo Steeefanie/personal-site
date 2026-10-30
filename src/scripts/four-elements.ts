@@ -6,6 +6,7 @@ import { createDraftStore } from '../lib/four-elements-draft';
 import { renderNarrativeReport } from './four-elements-report';
 import { createAiReportClient } from './four-elements-ai';
 import { downloadReport } from './questionnaire-download';
+import { legacyAiReportVersion } from '../lib/four-elements-ai';
 
 const app = document.querySelector<HTMLElement>('[data-fe-app]');
 if (app) initialize(app);
@@ -260,6 +261,7 @@ function initialize(app: HTMLElement) {
   function showReport() {
     const result = scoreAnswers(answers);
     const heading = renderNarrativeReport(find('[data-fe-result]'), result, aiControls.getReport(), find('[data-fe-source-slot]'));
+    find('[data-fe-legacy-report]').hidden = aiControls.getReport()?.version !== legacyAiReportVersion;
     show('result');
     heading.focus({ preventScroll: true });
     app.scrollIntoView({ block: 'start', behavior: 'instant' });

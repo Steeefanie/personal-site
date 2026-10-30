@@ -1,6 +1,6 @@
 import { elementInfo, questions, type Element, type Score } from '../lib/four-elements';
 import { buildNarrativeReport } from '../lib/four-elements-report';
-import { reportMethod, readingNote } from '../lib/four-elements-reading';
+import { reportMethod } from '../lib/four-elements-reading';
 import { elementIconLayers, elementIconPalette } from '../lib/element-icons';
 import { reportProse, reportCardGrid } from './report-dom';
 import type { AiReport, ReportCard as AiReportCard } from '../lib/four-elements-ai';
@@ -55,11 +55,12 @@ export function renderNarrativeReport(container: HTMLElement, result: Score, ai?
     fill.style.width = `${result.composite[element]}%`; track.append(fill); row.append(track); chart.append(row);
   });
   chart.append(node('p', '综合倾向分 / 100 · 用于本次作答内部比较', 'fe-small'));
+  if (model.distributionNote) chart.append(node('p', model.distributionNote, 'fe-small'));
   overview.append(chart); container.append(overview);
 
   const method = node('details', undefined, 'fe-method'); method.append(node('summary', '如何得到这个结果'));
   const methodContent = node('div', undefined, 'fe-method-content');
-  const methodNote = prose([readingNote]);
+  const methodNote = prose([model.readingNote]);
   methodNote.classList.add('fe-method-note');
   methodContent.append(cardGrid(reportMethod.map(part => ({ title: part.title, body: [part.text],
     emphasis: part.emphasis,

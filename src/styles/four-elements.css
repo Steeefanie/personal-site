@@ -82,6 +82,7 @@
 .fe-quiz-actions > :last-child { justify-self: end; }
 .fe-app .fe-quiz-actions > [data-fe-pause] { padding: 14px 0 8px; font-size: .82rem; }
 .fe-bottom-actions { margin-top: 24px; justify-content: space-between; }
+.fe-legacy-report { margin-bottom: 24px; }
 .fe-report-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 24px; }
 .fe-report-toolbar > span { font-size: .9rem; color: var(--muted); }
 .fe-report-toolbar > div { display: flex; gap: 8px; }

@@ -1,13 +1,14 @@
-import { elements, questions, scoreAnswers, type Answers, type Element } from './four-elements.ts';
+import { elements, questions, scoreAnswers, type Answers, type Element, type Score } from './four-elements.ts';
 
-import { readingGroups, readingPlans, type ReadingLayout } from './four-elements-reading.ts';
+import { readingGroups, readingPlans, readingPresentation, legacyReadingPlans, type ReadingLayout } from './four-elements-reading.ts';
 import { literalEmphasis } from './report-emphasis.ts';
 
-export const aiReportVersion = 'deepseek-report-v3';
+export const aiReportVersion = 'deepseek-report-v4';
+export const legacyAiReportVersion = 'deepseek-report-v3';
 export type ReportCard = { title: string; body: string[]; emphasis: string[]; element?: Element };
 type Evidence = { evidenceIds: number[] };
 export interface AiReport {
-  version: typeof aiReportVersion;
+  version: typeof aiReportVersion | typeof legacyAiReportVersion;
   overview: Evidence & { headline: string; summary: string; coreSentence: string; emphasis: string[] };
   elements: (Evidence & { element: Element; title: string; paragraphs: string[]; nuance: string })[];
   conflicts: (Evidence & { pair: string; interpretation: string })[];
@@ -19,7 +20,7 @@ export type AiReportRecord = { answersKey: string; report: AiReport; model: stri
 export const answerKey = (answers: Answers) => JSON.stringify(answers);
 
 /** Validate structure and source IDs at both API and browser boundaries. */
-export function validateAiReport(value: unknown, answers?: Answers): AiReport {
+export function validateAiReport(value: unknown, answers?: Answers | Score): AiReport {
   let location = 'root';
   const fail = (reason = 'structure', bounds?: { length: number; min: number; max: number }): never => { throw new Error('AI 解读格式或题目依据不完整，请重试。', { cause: { code: 'invalid-report', field: location, reason, ...bounds } }); };
   const object = (v: unknown): Record<string, unknown> => v !== null && typeof v === 'object' && !Array.isArray(v) ? v as Record<string, unknown> : fail();
@@ -52,7 +53,7 @@ export function validateAiReport(value: unknown, answers?: Answers): AiReport {
     return { title: text(p.title, 2, 22), body, emphasis: emphasis(p.emphasis, body), ...(p.element ? { element: p.element as Element } : {}) };
   };
   const root = object(value);
-  if (root.version !== aiReportVersion) return fail();
+  if (root.version !== aiReportVersion && root.version !== legacyAiReportVersion) return fail();
   const allIds = questions.map(q => q.id);
   const overview = object(root.overview), integration = object(root.integration), conclusion = object(root.conclusion);
   if (!Array.isArray(root.elements) || root.elements.length !== 4 || !Array.isArray(root.conflicts) || root.conflicts.length !== 6) return fail();
@@ -99,8 +100,11 @@ export function validateAiReport(value: unknown, answers?: Answers): AiReport {
       keySentence: text(p.keySentence, 15, 100), layout, cards, emphasis: emphasis(p.emphasis, prose), evidenceIds: evidence(p.evidenceIds, allowed) };
   });
   if (covered.size !== 4 || readings.flatMap(r => r.elements).length !== 4) return fail();
-  if (answers && JSON.stringify(readings.map(r => r.elements)) !== JSON.stringify(readingGroups(scoreAnswers(answers)))) return fail();
-  if (answers && JSON.stringify(readings.map(r => ({ elements: r.elements, layout: r.layout }))) !== JSON.stringify(readingPlans(scoreAnswers(answers)))) return fail('reading-plan');
+  if (answers) {
+    const result = Array.isArray(answers) ? scoreAnswers(answers) : answers;
+    const plans = root.version === legacyAiReportVersion ? legacyReadingPlans(result) : readingPlans(result);
+    if (JSON.stringify(readings.map(r => ({ elements: r.elements, layout: r.layout }))) !== JSON.stringify(plans)) return fail('reading-plan');
+  }
   location = 'overview';
   const overviewResult = { headline: text(overview.headline, 6, 45), summary: text(overview.summary, 60, 180), coreSentence: text(overview.coreSentence, 15, 100), evidenceIds: evidence(overview.evidenceIds, allIds), emphasis: emphasis(overview.emphasis, String(overview.summary)) };
   location = 'integration';
@@ -111,7 +115,14 @@ export function validateAiReport(value: unknown, answers?: Answers): AiReport {
   const integrationResult = { roles, emphasis: emphasis(integration.emphasis, integrationProse), title: text(integration.title, 5, 45), paragraphs: integrationProse, evidenceIds: evidence(integration.evidenceIds, allIds, 3) };
   location = 'conclusion';
   const conclusionResult = { highlights: conclusion.highlights.map(card), emphasis: emphasis(conclusion.emphasis, String(conclusion.summary)), summary: text(conclusion.summary, 25, 180), reflection: text(conclusion.reflection, 15, 150), evidenceIds: evidence(conclusion.evidenceIds, allIds) };
-  return { version: aiReportVersion, overview: overviewResult, elements: profiles, conflicts, readings, integration: integrationResult, conclusion: conclusionResult };
+  return { version: root.version, overview: overviewResult, elements: profiles, conflicts, readings, integration: integrationResult, conclusion: conclusionResult };
+}
+
+/** New paid generations must use the current contract; v3 is read-only compatibility. */
+export function validateGeneratedAiReport(value: unknown, answers: Answers): AiReport {
+  const report = validateAiReport(value, answers);
+  if (report.version !== aiReportVersion) throw new Error('报告服务版本较旧，请刷新页面后重试。本次作答已保留。');
+  return report;
 }
 
 /** A related forced choice can support an element, whichever option was selected. */
@@ -131,6 +142,7 @@ export function buildAiEvidence(answers: Answers) {
       : { id: q.id, type: q.type, question: q.stem, options: q.options, answer: answers[q.id - 1], selectedText: q.options[answers[q.id - 1] as 'A' | 'B'].text }),
     scores,
     readingGroups: readingGroups(scores),
+    presentation: readingPresentation(scores),
     readingPlan: readingPlans(scores).map(plan => ({ ...plan, allowedEvidenceIds: elementEvidenceIds(plan.elements) })),
     evidencePolicy: {
       elements: elements.map(element => ({ element, allowedEvidenceIds: elementEvidenceIds([element]) })),

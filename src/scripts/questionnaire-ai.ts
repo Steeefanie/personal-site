@@ -1,5 +1,5 @@
 const answerKey = (answers: unknown[]) => JSON.stringify(answers);
-export function createQuestionnaireAiClient<A extends unknown[], R>(getAnswers: () => A, config: { storageKey: string; endpoint: string; validate: (value: unknown) => R; isComplete: (answers: A) => boolean }) {
+export function createQuestionnaireAiClient<A extends unknown[], R>(getAnswers: () => A, config: { storageKey: string; endpoint: string; validate: (value: unknown) => R; validateGenerated?: (value: unknown) => R; isComplete: (answers: A) => boolean }) {
   let current: { answersKey: string; report: R; model: string; generatedAt: string } | undefined, controller: AbortController | undefined, revision = 0;
   try {
     const stored = JSON.parse(localStorage.getItem(config.storageKey) || 'null');
@@ -20,7 +20,7 @@ export function createQuestionnaireAiClient<A extends unknown[], R>(getAnswers: 
         : response.status === 404 ? '当前页面未连接到报告接口（HTTP 404）。请刷新页面后重试。'
         : `报告服务连接失败（HTTP ${response.status}），请稍后重试。本次作答已保留。`);
       if (!data || typeof data !== 'object') throw new Error('报告接口返回内容异常，请刷新页面后重试。本次作答已保留。');
-      const report = config.validate(data.report);
+      const report = (config.validateGenerated ?? config.validate)(data.report);
       if (typeof data.model !== 'string' || typeof data.generatedAt !== 'string') throw new Error('AI 服务返回的信息不完整，请重试。');
       if (requestRevision !== revision || key !== answerKey(getAnswers())) throw new DOMException('Request cancelled', 'AbortError');
       current = { answersKey: key, report, model: data.model, generatedAt: data.generatedAt };
