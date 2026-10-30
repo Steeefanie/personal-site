@@ -156,7 +156,7 @@ const errorText = text(
       script.dataset.mapping = 'specific';
       script.dataset.term = root.dataset.discussionTerm ?? location.pathname;
       script.dataset.strict = '1';
-      script.dataset.loading = 'lazy';
+      script.dataset.loading = 'eager';
     }
 
     script.addEventListener('error', () => {
