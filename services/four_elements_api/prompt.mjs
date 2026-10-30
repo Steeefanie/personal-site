@@ -24,7 +24,8 @@ conclusion：summary 六十至一百二十字收束，highlights 恰好三张短
 【输出与依据】
 只输出一个合法 json 对象，不加 Markdown、代码围栏、HTML 或 emoji。所有正文不写阿拉伯数字、分数、百分比、题号和计数，页面会负责数值。正文只用常见简体中文、英文和标点。
 保留 elements 与 conflicts 作为可展开的核对材料：每个元素两段简洁说明，每段二十五至八十字；六组情境对照各二十五至八十字。它们不在主文重复展示。
-所有 evidenceIds 必须来自实际支持该结论的题目，不得重复或编造。readings 可引用本组元素的评分题，以及选项涉及本组元素的两两选择题；elements 只能引用自己的评分题；综合材料可跨元素。题目解释必须与实际回答一致。
+所有 evidenceIds 必须来自实际支持该结论的题目，不得重复或编造。严格查阅输入 evidencePolicy：elements 只能从该元素的 allowedEvidenceIds 中选择；readings 只能从本章 readingPlan.allowedEvidenceIds 中选择。这些集合包含本元素评分题及涉及本元素的两两选择题，选择了另一元素也可以支持情境取舍的解释，但不能反写实际答案。conflicts 必须逐项复制 requiredEvidenceIds。不能按连续题号猜测元素，不能把其他元素评分题当作当前元素的依据。综合材料可跨元素。
+输出前自行核对：所有元素均出现一次；readings 与 readingPlan 的成员、顺序和 layout 一致；每个 evidenceIds 是允许集合的子集且满足数量要求；readings 每章优先两段、每段四十至八十字；nuance 十五至六十字，勿因过短遗漏补充信息。不要为了满足格式编造依据。
 
 严格返回以下 json 字段，示例文字只是字段说明，不可照抄：
 {

@@ -29,13 +29,14 @@ export function validateAiReport(value: unknown, answers?: Answers): AiReport {
       || /\d/u.test(v)) return fail();
     return v.trim();
   };
-  const evidence = (v: unknown, allowed: number[], min = 2, max = 12): number[] => {
-    if (!Array.isArray(v) || v.length < min || v.length > max || new Set(v).size !== v.length
-      || !v.every(id => Number.isInteger(id) && allowed.includes(id))) return fail('evidence');
-    return v as number[];
+  const evidence = (v: unknown, allowed: number[], min = 2, max = allowed.length): number[] => {
+    if (!Array.isArray(v) || !v.every(id => Number.isInteger(id) && allowed.includes(id))) return fail('evidence');
+    const unique = [...new Set(v)] as number[];
+    if (unique.length < min || unique.length > max) return fail('evidence');
+    return unique;
   };
   const paragraphs = (v: unknown, max = 3) => {
-    if (!Array.isArray(v) || v.length < 2 || v.length > max) return fail('paragraph-count');
+    if (!Array.isArray(v) || v.length < 1 || v.length > max) return fail('paragraph-count');
     return v.map(p => text(p, 25, 280));
   };
   const emphasis = (value: unknown, body: string): string[] => {
@@ -60,8 +61,8 @@ export function validateAiReport(value: unknown, answers?: Answers): AiReport {
     const p = object(v), element = p.element as Element; location = 'elements';
     if (!elements.includes(element) || seen.has(element)) return fail();
     seen.add(element); location = `element:${element}`;
-    const ownIds = questions.filter(q => q.type === 'likert' && q.element === element).map(q => q.id);
-    return { element, title: text(p.title, 4, 45), paragraphs: paragraphs(p.paragraphs), nuance: text(p.nuance, 15, 180), evidenceIds: evidence(p.evidenceIds, ownIds, 2, 9) };
+    const ownIds = elementEvidenceIds([element]);
+    return { element, title: text(p.title, 4, 45), paragraphs: paragraphs(p.paragraphs), nuance: text(p.nuance, 8, 180), evidenceIds: evidence(p.evidenceIds, ownIds) };
   });
   const pairs = new Map<string, number[]>();
   for (let i = 0; i < elements.length; i++) for (let j = i + 1; j < elements.length; j++) {
@@ -83,8 +84,8 @@ export function validateAiReport(value: unknown, answers?: Answers): AiReport {
     if (!Array.isArray(p.elements) || !p.elements.length || p.elements.some(e => !elements.includes(e as Element) || covered.has(e as Element))) return fail();
     const members = p.elements as Element[]; location = `reading:${members.join('-')}`;
     members.forEach(e => covered.add(e));
-    const allowed = questions.filter(q => q.type === 'likert' ? members.includes(q.element) : Object.values(q.options).some(option => members.includes(option.element))).map(q => q.id);
-    const prose = paragraphs(p.paragraphs, 2);
+    const allowed = elementEvidenceIds(members);
+    const prose = paragraphs(p.paragraphs);
     if (!['features', 'paired', 'contrast'].includes(p.layout as string) || !Array.isArray(p.cards)) return fail('layout');
     const layout = p.layout as ReadingLayout;
     const cards = p.cards.map(card);
@@ -95,7 +96,7 @@ export function validateAiReport(value: unknown, answers?: Answers): AiReport {
     if (prose.join('').length + cards.flatMap(c => c.body).join('').length + String(p.keySentence).length > 620) return fail('chapter-length');
     if (prose.join('').length > 720) return fail('chapter-length', { length: prose.join('').length, min: 50, max: 720 });
     return { elements: members, title: text(p.title, 5, 45), paragraphs: prose,
-      keySentence: text(p.keySentence, 15, 100), layout, cards, emphasis: emphasis(p.emphasis, prose.join('')), evidenceIds: evidence(p.evidenceIds, allowed, 2, 12) };
+      keySentence: text(p.keySentence, 15, 100), layout, cards, emphasis: emphasis(p.emphasis, prose.join('')), evidenceIds: evidence(p.evidenceIds, allowed) };
   });
   if (covered.size !== 4 || readings.flatMap(r => r.elements).length !== 4) return fail();
   if (answers && JSON.stringify(readings.map(r => r.elements)) !== JSON.stringify(readingGroups(scoreAnswers(answers)))) return fail();
@@ -112,6 +113,12 @@ export function validateAiReport(value: unknown, answers?: Answers): AiReport {
   return { version: aiReportVersion, overview: overviewResult, elements: profiles, conflicts, readings, integration: integrationResult, conclusion: conclusionResult };
 }
 
+/** A related forced choice can support an element, whichever option was selected. */
+function elementEvidenceIds(members: Element[]): number[] {
+  return questions.filter(q => q.type === 'likert' ? members.includes(q.element)
+    : Object.values(q.options).some(option => members.includes(option.element))).map(q => q.id);
+}
+
 /** Full original questionnaire and selected answers, alongside authoritative scores. */
 export function buildAiEvidence(answers: Answers) {
   const scores = scoreAnswers(answers);
@@ -123,7 +130,14 @@ export function buildAiEvidence(answers: Answers) {
       : { id: q.id, type: q.type, question: q.stem, options: q.options, answer: answers[q.id - 1], selectedText: q.options[answers[q.id - 1] as 'A' | 'B'].text }),
     scores,
     readingGroups: readingGroups(scores),
-    readingPlan: readingPlans(scores),
+    readingPlan: readingPlans(scores).map(plan => ({ ...plan, allowedEvidenceIds: elementEvidenceIds(plan.elements) })),
+    evidencePolicy: {
+      elements: elements.map(element => ({ element, allowedEvidenceIds: elementEvidenceIds([element]) })),
+      conflicts: elements.flatMap((a, i) => elements.slice(i + 1).map(b => ({ pair: `${a}-${b}`,
+        requiredEvidenceIds: questions.filter(q => q.type === 'forced_choice'
+          && [a, b].includes(q.options.A.element) && [a, b].includes(q.options.B.element)).map(q => q.id) }))),
+      rule: '依据只能引用对应 allowedEvidenceIds 中实际支持文字的题号，不要按连续题号猜测元素归属。情境对照必须使用 requiredEvidenceIds。',
+    },
     caveat: '本问卷为娱乐与自我探索，不是标准化心理测验，不能诊断或推断真实能力。',
   };
 }

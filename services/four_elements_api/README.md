@@ -44,6 +44,7 @@ location /api/v1/four-elements/ {
     proxy_set_header X-Real-IP $remote_addr;
     proxy_set_header Origin $http_origin;
     proxy_read_timeout 110s;
+    proxy_intercept_errors off;
 }
 ```
 
@@ -59,3 +60,9 @@ location /api/v1/four-elements/ {
 - 客户端只保留与当前答案完全匹配的 AI 解读；提交后锁定作答，生成失败可按原答案重试；清除数据同时清除 AI 缓存并解除锁定。取消后的迟到响应不会覆盖新答案。已经发出的上游调用仍可能计费。
 - 末页提交时，作答会离开浏览器，经本站服务发送至 DeepSeek；不能继续宣称“所有答案永不上传”。
 - 网页和文字 PDF 使用同一份 AI 内容。PDF 自带中文字体覆盖常见汉字；若包含极少见的不支持字符会明确提示重新生成，避免静默缺字。
+
+## 生成格式兼容
+
+输入提供各元素和章节的 allowedEvidenceIds，以及各情境对照的 requiredEvidenceIds，模型应按显式集合选择依据，不猜测连续题号。元素解读可引用自身评分题和相关的两两选择题；无关题号仍拒绝。校验保留一至三段的原文，允许简短补充说明并去重依据题号，不补写结论或替换错误依据。章节、卡片、总体篇幅和文本安全限制保持有效。
+
+若浏览器只显示通用 HTTP 502，而服务日志出现 invalid-report，检查 Nginx 是否拦截上游错误；上述 location 中的 proxy_intercept_errors off 可保留后端的 JSON 错误提示。健康接口正常仅说明服务和配置可用，不代表报告已生成成功。

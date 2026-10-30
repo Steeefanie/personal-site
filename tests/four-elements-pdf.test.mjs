@@ -10,6 +10,16 @@ const fonts = Object.fromEntries(['regular', 'semibold'].map(name => [name, read
 const fixture = JSON.parse(readFileSync(new URL('./fixtures/four-elements/input.json', import.meta.url)));
 const sample = [...fixture.likert, ...fixture.forced];
 
+test('accepted paragraph variants still export as a text PDF', async () => {
+  const report = mockAiReport();
+  report.readings[0].paragraphs = [report.readings[0].paragraphs.join('')];
+  report.readings[1].paragraphs.push(report.readings[1].paragraphs[0]);
+  report.elements[1].nuance = '保留感受，也需要自己的节奏。';
+  const blob = await createReportPdf(sample, { fonts, ai: report });
+  const doc = await PDFDocument.load(await blob.arrayBuffer());
+  assert.ok(doc.getPageCount() >= 7 && doc.getPageCount() <= 10);
+});
+
 test('report uses embedded text fonts and vectors on A4 pages without image XObjects', async () => {
   const blob = await createReportPdf(sample, { fonts, date: new Date('2026-10-29T10:00:00Z') });
   assert.equal(blob.type, 'application/pdf');

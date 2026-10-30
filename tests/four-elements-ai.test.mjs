@@ -114,3 +114,47 @@ test('card layouts enforce counts and paired element ownership; emphasis stays l
   const keywords = mockAiReport(); keywords.readings[0].cards[0].emphasis = ['not present', '自动测试'];
   assert.deepEqual(validateAiReport(keywords).readings[0].cards[0].emphasis, ['自动测试']);
 });
+
+test('generation receives explicit valid evidence IDs for every element, chapter and pair', () => {
+  const input = buildAiEvidence(answers);
+  for (const policy of input.evidencePolicy.elements) {
+    const expected = input.questionnaire.filter(q => q.type === 'likert' ? q.element === policy.element
+      : Object.values(q.options).some(o => o.element === policy.element)).map(q => q.id);
+    assert.deepEqual(policy.allowedEvidenceIds, expected);
+    assert.equal(expected.length, 15);
+  }
+  for (const plan of input.readingPlan) {
+    const expected = [...new Set(input.evidencePolicy.elements.filter(p => plan.elements.includes(p.element)).flatMap(p => p.allowedEvidenceIds))].sort((a, b) => a - b);
+    assert.deepEqual(plan.allowedEvidenceIds, expected);
+  }
+  assert.deepEqual(input.evidencePolicy.conflicts, mockAiReport().conflicts.map(p => ({ pair: p.pair, requiredEvidenceIds: p.evidenceIds })));
+});
+
+test('element evidence accepts related choices, deduplicates IDs and rejects unrelated sources', () => {
+  const related = mockAiReport(); related.elements[0].evidenceIds = [1, 37, 40, 40];
+  assert.deepEqual(validateAiReport(related, answers).elements[0].evidenceIds, [1, 37, 40]);
+  // Observed Flash output: ten valid references failed the old nine-ID cap.
+  related.elements[0].evidenceIds = [1, 6, 9, 13, 25, 29, 33, 37, 40, 46];
+  assert.deepEqual(validateAiReport(related, answers).elements[0].evidenceIds, related.elements[0].evidenceIds);
+  related.readings[0].evidenceIds = buildAiEvidence(answers).readingPlan[0].allowedEvidenceIds;
+  assert.deepEqual(validateAiReport(related, answers).readings[0].evidenceIds, related.readings[0].evidenceIds);
+  for (const ids of [[1, 42], [1, 49], [1, '37'], [1, 1]]) {
+    const invalid = mockAiReport(); invalid.elements[0].evidenceIds = ids;
+    assert.throws(() => validateAiReport(invalid, answers));
+  }
+});
+
+test('minor prose formatting differences preserve genuine text without bypassing page limits', () => {
+  const report = mockAiReport();
+  report.readings[0].paragraphs = [report.readings[0].paragraphs.join('')];
+  report.readings[1].paragraphs.push(report.readings[1].paragraphs[0]);
+  report.elements[1].nuance = '保留感受，也需要自己的节奏。';
+  const result = validateAiReport(report, answers);
+  assert.deepEqual(result.readings[0].paragraphs, report.readings[0].paragraphs);
+  assert.equal(result.readings[1].paragraphs.length, 3);
+  assert.equal(result.elements[1].nuance, report.elements[1].nuance);
+  const empty = mockAiReport(); empty.readings[0].paragraphs = [];
+  assert.throws(() => validateAiReport(empty, answers));
+  const oversized = mockAiReport(); oversized.readings[0].paragraphs = Array(3).fill('这段文字用于检查报告篇幅不能因为放宽段落数量而失去边界。'.repeat(8));
+  assert.throws(() => validateAiReport(oversized, answers));
+});
