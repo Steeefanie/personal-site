@@ -164,8 +164,12 @@ html.guestbook-open .top-chrome {
   text-align: center;
 }
 
-.giscus-comments[data-giscus-state='loading'] [data-giscus-mount] { visibility: hidden; }
-.giscus-comments[data-giscus-state='error'] [data-giscus-mount] { display: none; }
+/* Keep the frame laid out so a slow response can still report its ready height. */
+.giscus-comments[data-giscus-state='error'] [data-giscus-mount] {
+  visibility: hidden;
+  height: 0;
+  overflow: hidden;
+}
 
 .giscus-error a {
   color: var(--brand-readable);

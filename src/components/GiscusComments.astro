@@ -106,8 +106,9 @@ type Locale = 'zh-CN' | 'zh-TW' | 'en';
       : root.dataset.themeLight ?? 'light';
   };
 
-  const showError = (root: HTMLElement) => {
+  const showError = (root: HTMLElement, reason: 'failure' | 'timeout' = 'failure') => {
     root.dataset.giscusState = 'error';
+    root.dataset.giscusError = reason;
     window.clearTimeout(loadTimers.get(root));
     root.querySelector<HTMLElement>('[data-giscus-status]')?.setAttribute('hidden', '');
     root.querySelector<HTMLElement>('[data-giscus-error]')?.removeAttribute('hidden');
@@ -115,6 +116,7 @@ type Locale = 'zh-CN' | 'zh-TW' | 'en';
 
   const showFrame = (root: HTMLElement) => {
     root.dataset.giscusState = 'ready';
+    delete root.dataset.giscusError;
     window.clearTimeout(loadTimers.get(root));
     root.querySelector<HTMLElement>('[data-giscus-status]')?.setAttribute('hidden', '');
     root.querySelector<HTMLElement>('[data-giscus-error]')?.setAttribute('hidden', '');
@@ -147,6 +149,16 @@ type Locale = 'zh-CN' | 'zh-TW' | 'en';
       return;
     }
 
+    // Match the published integration: let giscus render as soon as it creates
+    // its frame; a resize notification is not a reliable loading handshake.
+    const observer = new MutationObserver(() => {
+      if (!root.querySelector('iframe.giscus-frame')) return;
+      showFrame(root);
+      observer.disconnect();
+    });
+    observer.observe(mount, { childList: true, subtree: true });
+    scope.cleanup(() => observer.disconnect());
+
     const script = document.createElement('script');
     script.src = 'https://giscus.app/client.js';
     script.async = true;
@@ -174,12 +186,13 @@ type Locale = 'zh-CN' | 'zh-TW' | 'en';
     }
 
     script.addEventListener('error', () => {
+      observer.disconnect();
       showError(root);
     }, { once: true });
     mount.append(script);
 
     loadTimers.set(root, window.setTimeout(() => {
-      if (root.dataset.giscusState !== 'ready') showError(root);
+      if (!root.querySelector('iframe.giscus-frame')) showError(root, 'timeout');
     }, 12000));
   };
 
@@ -207,7 +220,7 @@ type Locale = 'zh-CN' | 'zh-TW' | 'en';
       const message = event.data.giscus;
       if (message.error && !String(message.error).toLowerCase().includes('discussion not found')) {
         showError(root);
-      } else if (root.dataset.giscusState !== 'error' && typeof message.resizeHeight === 'number' && Number.isFinite(message.resizeHeight) && message.resizeHeight > 0) {
+      } else if ((root.dataset.giscusState !== 'error' || root.dataset.giscusError === 'timeout') && typeof message.resizeHeight === 'number' && Number.isFinite(message.resizeHeight) && message.resizeHeight > 0) {
         showFrame(root);
       }
     });
