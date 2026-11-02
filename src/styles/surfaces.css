@@ -22,6 +22,14 @@
   .filter-options { gap: 4px; }
   .filter-chip, .text-button { min-height: 44px; padding: 8px 16px; border-radius: 999px; }
   .filter-chip { transition: background-color 150ms ease, color 150ms ease; }
+  .listing-filters .filter-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 44px;
+    padding-block: 0;
+    line-height: 1;
+  }
   .filter-chip::after, .pagination-button[aria-current='page']::after { display: none; }
   .filter-chip:hover:where(:root:not([data-input-modality='touch']) *) { background: var(--control-hover); }
   .filter-chip[aria-pressed='true'] { color: var(--brand); background: var(--brand-soft); }

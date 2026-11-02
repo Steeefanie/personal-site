@@ -5,9 +5,7 @@ import SiteFooter from '../components/SiteFooter.astro';
 import LocalizedText from '../components/LocalizedText.astro';
 import { locales, text, ui, type Locale, type Localized } from '../lib/i18n';
 import { localizedAbsoluteUrls, logicalPathname, openGraphLocales } from '../lib/routes';
-import '../styles/global.css';
-import '../styles/surfaces.css';
-import '../styles/controls.css';
+import '../styles/site.css';
 
 interface Props {
   titles?: Localized<string>;
