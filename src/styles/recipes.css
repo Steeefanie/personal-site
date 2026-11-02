@@ -27,19 +27,6 @@
   background: var(--surface-raised);
 }
 
-.recipe-view-thumb {
-  position: absolute;
-  inset: 3px auto 3px 3px;
-  width: calc((100% - 6px) / 2);
-  border-radius: inherit;
-  background: var(--surface);
-  box-shadow: 0 1px 4px rgb(0 0 0 / 12%);
-  transition: transform 180ms ease;
-  pointer-events: none;
-}
-
-[data-recipe-listing][data-view='list'] .recipe-view-thumb { transform: translateX(100%); }
-
 .recipe-view-switch button {
   position: relative;
   display: grid;
@@ -93,21 +80,71 @@
   align-items: center;
   gap: 24px;
 }
-.recipes-listing .content-list-item > a:hover { padding-right: 0; padding-left: 0; }
+.recipes-listing .content-list-item > a:hover:where(:root:not([data-input-modality='touch']) *) { padding-right: 0; padding-left: 0; }
+body .recipes-listing[data-view='list'] .content-list { gap: 8px; }
+body .recipes-listing[data-view='list'] .content-list-item > a {
+  padding: 16px;
+  border-radius: 24px;
+  transition: background-color 150ms ease;
+}
+body .recipes-listing[data-view='list'] .content-list-item > a:focus-visible {
+  background: color-mix(in srgb, var(--text) 4%, transparent);
+}
+@media (hover: hover) {
+  body .recipes-listing[data-view='list'] .content-list-item > a:hover:where(:root:not([data-input-modality='touch']) *) {
+    background: color-mix(in srgb, var(--text) 4%, transparent);
+  }
+}
+@media (hover: none) {
+  body .recipes-listing[data-view='list'] .content-list-item > a:active {
+    background: color-mix(in srgb, var(--text) 4%, transparent);
+  }
+}
 .recipes-listing[data-view='grid'] .content-list {
-  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-  gap: 28px 20px;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  grid-auto-rows: auto;
+  align-items: start;
+  gap: 20px;
 }
 .recipes-listing[data-view='grid'] .content-list-item > a {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  height: 100%;
+  height: auto;
   padding: 0;
   text-align: center;
 }
+body .recipes-listing[data-view='grid'] .recipe-media {
+  width: min(136px, 100%);
+  height: auto;
+  aspect-ratio: 1;
+  padding: 12px;
+  border-radius: 24px;
+  transition: background-color 150ms ease;
+}
+.recipes-listing[data-view='grid'] .recipe-copy { width: 100%; }
+.recipes-listing[data-view='grid'] .recipe-image { object-fit: contain; }
+.recipes-listing[data-view='grid'] .content-list-item > a:focus-visible {
+  outline: none;
+}
+.recipes-listing[data-view='grid'] .content-list-item > a:focus-visible .recipe-media {
+  background: color-mix(in srgb, var(--text) 4%, transparent);
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+@media (hover: hover) {
+  .recipes-listing[data-view='grid'] .content-list-item > a:hover:where(:root:not([data-input-modality='touch']) *) .recipe-media {
+    background: color-mix(in srgb, var(--text) 4%, transparent);
+  }
+}
+@media (hover: none) {
+  .recipes-listing[data-view='grid'] .content-list-item > a:active .recipe-media {
+    background: color-mix(in srgb, var(--text) 4%, transparent);
+  }
+}
 .recipes-listing[data-view='grid'] .item-title { margin: 0; font-size: calc(var(--font-size-unit) * 1); line-height: 1.5; }
+.recipes-listing[data-view='grid'] .recipe-title-ending { white-space: nowrap; }
 .recipes-listing[data-view='grid'] .item-description,
 .recipes-listing[data-view='grid'] .item-meta { display: none; }
 
@@ -118,10 +155,12 @@
 }
 @media (max-width: 560px) {
   .recipe-toolbar { gap: 12px; }
-  .recipes-listing[data-view='grid'] .content-list { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 24px 12px; }
+  .recipes-listing[data-view='grid'] .content-list { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 12px; }
+  body .recipes-listing[data-view='grid'] .recipe-media { width: min(112px, 100%); height: auto; padding: 8px; }
   .recipes-listing[data-view='list'] .content-list-item > a { column-gap: 14px; }
+  body .recipes-listing[data-view='list'] .content-list-item > a { padding: 14px 12px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .recipe-view-thumb, .recipe-view-switch button { transition: none; }
+  .recipe-view-switch button, body .recipes-listing[data-view='grid'] .recipe-media { transition: none; }
 }

@@ -1,7 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import LocalizedText from '../components/LocalizedText.astro';
-import ServiceBackLink from '../components/ServiceBackLink.astro';
 import { text, type Locale } from '../lib/i18n';
 import { localizedPath } from '../lib/routes';
 import '../styles/fuse-bead-generator.css';
@@ -20,7 +19,6 @@ const pageDescription = text(
 
 <BaseLayout activeNav="home" titles={pageTitle} descriptions={pageDescription} locale={locale}>
   <div class="site-shell service-page">
-    <ServiceBackLink locale={locale} />
 
     <header class="service-header">
       <h1><LocalizedText value={pageTitle} /></h1>
@@ -35,12 +33,12 @@ const pageDescription = text(
             <span class="upload-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M5 14.5v3A2.5 2.5 0 0 0 7.5 20h9a2.5 2.5 0 0 0 2.5-2.5v-3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>
             <span class="upload-copy">
               <strong><LocalizedText value={text('点击选择或将图片拖到这里', '點擊選擇或將圖片拖到這裡', 'Choose an image or drop it here')} /></strong>
-              <span>JPEG、PNG、WebP 或 HEIF · <LocalizedText value={text('最大 20 MB', '最大 20 MB', 'Up to 20 MB')} /></span>
+              <span><LocalizedText value={text('JPEG、PNG、WebP 或 HEIF', 'JPEG、PNG、WebP 或 HEIF', 'JPEG, PNG, WebP or HEIF')} /> · <LocalizedText value={text('最大 20 MB', '最大 20 MB', 'Up to 20 MB')} /></span>
             </span>
           </label>
           <div class="file-summary" data-file-summary hidden>
             <span class="file-summary-name" data-file-name></span><span data-file-meta></span>
-            <button type="button" data-file-remove><LocalizedText value={text('移除', '移除', 'Remove')} /></button>
+            <button type="button" class="glass-button" data-file-remove><LocalizedText value={text('移除', '移除', 'Remove')} /></button>
           </div>
           <p class="upload-privacy"><LocalizedText value={text('图片仅用于本次生成，处理完成后即删除。', '圖片僅用於本次產生，處理完成後即刪除。', 'Your image is used only for this request and deleted after processing.')} /></p>
           <p class="upload-apple-note"><LocalizedText value={text('使用 Apple 设备上传带透明背景的 HEIF 图片时，请先存储到“文件”App，再从“文件”中选择，以免透明区域显示为黑色。', '使用 Apple 裝置上傳帶透明背景的 HEIF 圖片時，請先儲存到「檔案」App，再從「檔案」中選擇，以免透明區域顯示為黑色。', 'When uploading a HEIF image with a transparent background from an Apple device, save it to the Files app first and then select it from Files to prevent transparent areas from appearing black.')} /></p>
@@ -50,7 +48,7 @@ const pageDescription = text(
         <fieldset class="form-group">
           <legend><span>2</span><LocalizedText value={text('设置图纸尺寸', '設定圖紙尺寸', 'Set pattern size')} /></legend>
           <div class="size-row">
-            <div class="side-switch" role="radiogroup" aria-label={text('固定宽度或高度', '固定寬度或高度', 'Choose a fixed width or height')[locale]}>
+            <div class="side-switch radio-slider-group" role="radiogroup" aria-label={text('固定宽度或高度', '固定寬度或高度', 'Choose a fixed width or height')[locale]}>
               <label><input type="radio" name="fixed_side" value="width" /><span><LocalizedText value={text('按宽度', '依寬度', 'By width')} /></span></label>
               <label><input type="radio" name="fixed_side" value="height" checked /><span><LocalizedText value={text('按高度', '依高度', 'By height')} /></span></label>
             </div>
@@ -62,16 +60,16 @@ const pageDescription = text(
 
         <fieldset class="form-group">
           <legend><span>3</span><LocalizedText value={text('选择颜色模式', '選擇色彩模式', 'Choose colour mode')} /></legend>
-          <div class="mode-grid">
-            <label class="mode-option"><input type="radio" name="mode" value="cm" /><span><strong><LocalizedText value={text('多色', '多色', 'More colours')} /></strong><small>CM</small></span></label>
-            <label class="mode-option"><input type="radio" name="mode" value="cms" checked /><span><strong><LocalizedText value={text('适中', '適中', 'Balanced')} /></strong><small>CMS</small></span></label>
-            <label class="mode-option"><input type="radio" name="mode" value="cs" /><span><strong><LocalizedText value={text('少色', '少色', 'Fewer colours')} /></strong><small>CS</small></span></label>
-            <label class="mode-option"><input type="radio" name="mode" value="bw" /><span><strong><LocalizedText value={text('黑白', '黑白', 'Monochrome')} /></strong><small>BW</small></span></label>
+          <div class="mode-grid radio-slider-group" role="radiogroup" aria-label={text('选择颜色模式', '選擇色彩模式', 'Choose colour mode')[locale]}>
+            <label class="mode-option"><input type="radio" name="mode" value="cm" /><span><strong><LocalizedText value={text('多色', '多色', 'More colours')} /></strong></span></label>
+            <label class="mode-option"><input type="radio" name="mode" value="cms" checked /><span><strong><LocalizedText value={text('适中', '適中', 'Balanced')} /></strong></span></label>
+            <label class="mode-option"><input type="radio" name="mode" value="cs" /><span><strong><LocalizedText value={text('少色', '少色', 'Fewer colours')} /></strong></span></label>
+            <label class="mode-option"><input type="radio" name="mode" value="bw" /><span><strong><LocalizedText value={text('黑白', '黑白', 'Monochrome')} /></strong></span></label>
           </div>
         </fieldset>
 
         <div class="form-submit-row">
-          <button class="generate-button" type="submit" disabled data-generate-button><span data-button-label><LocalizedText value={text('生成图纸', '產生圖紙', 'Generate pattern')} /></span><span aria-hidden="true">→</span></button>
+          <button class="generate-button" type="submit" disabled data-generate-button><span data-button-label><LocalizedText value={text('生成图纸', '產生圖紙', 'Generate pattern')} /></span></button>
         </div>
         <p class="form-message" role="status" aria-live="polite" data-form-message hidden></p>
       </form>
@@ -79,7 +77,6 @@ const pageDescription = text(
       <section class="preview-panel" aria-labelledby="preview-heading">
         <div class="preview-heading-row">
           <div><p><LocalizedText value={text('预览', '預覽', 'Preview')} /></p><h2 id="preview-heading" data-preview-title><LocalizedText value={text('等待上传图片', '等待上傳圖片', 'Waiting for an image')} /></h2></div>
-          <span class="preview-mode" data-preview-mode>CMS</span>
         </div>
         <div class="preview-stage">
           <div class="preview-empty" data-preview-empty><p><LocalizedText value={text('上传后可在这里检查原图和生成结果。', '上傳後可在這裡檢查原圖與產生結果。', 'Your source image and generated result will appear here.')} /></p></div>

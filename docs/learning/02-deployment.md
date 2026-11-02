@@ -185,6 +185,13 @@ server {
         add_header Access-Control-Allow-Origin "https://giscus.app" always;
     }
 
+    location ^~ /fonts/site/ {
+        try_files $uri =404;
+        expires 7d;
+        add_header Cache-Control "public";
+        add_header Access-Control-Allow-Origin "https://giscus.app" always;
+    }
+
     location ~* \.(?:css|js|svg|png|jpg|jpeg|webp|avif|ico|woff2?)$ {
         try_files $uri =404;
         expires 7d;
@@ -200,6 +207,7 @@ server {
 - `root`：网页根目录使用 `current` 链接，所以切换版本不需要改 Nginx 配置。
 - `try_files`：依次寻找请求文件、目录和目录中的 `index.html`。
 - `giscus-*.css` 专用规则：允许 giscus iframe 跨域读取本站托管的评论主题；该规则必须放在通用静态资源正则规则之前。
+- `/fonts/site/` 专用规则：允许正式 giscus iframe 加载本站字体，主站同源字体加载无需额外权限。发布字体功能时需同步该规则；本地模拟留言同源，不受这一限制影响。
 
 启用站点：
 

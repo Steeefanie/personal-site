@@ -1,0 +1,12 @@
+--- a/src/backdrop/capture.ts
++++ b/src/backdrop/capture.ts
+@@ -8,0 +9 @@
++ sections?:()=>HTMLElement[];
+@@ -119 +120 @@
+-  const merged=parseFloat(style.opacity)!==1||style.filter!=='none'||style.mixBlendMode!=='normal'||[...root.childNodes].some(n=>n.nodeType===Node.TEXT_NODE&&n.textContent?.trim())||children.some((el,i)=>{
++  const merged=!options.sections&&(parseFloat(style.opacity)!==1||style.filter!=='none'||style.mixBlendMode!=='normal'||[...root.childNodes].some(n=>n.nodeType===Node.TEXT_NODE&&n.textContent?.trim())||children.some((el,i)=>{
+@@ -121,2 +122,2 @@
+-  });
+-  const elements=merged?[root]:[...(shell?[root]:[]),...children];
++  }));
++  const elements=options.sections?options.sections().filter(el=>!ignored(el)):merged?[root]:[...(shell?[root]:[]),...children];

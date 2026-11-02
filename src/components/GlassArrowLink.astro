@@ -1,0 +1,32 @@
+---
+interface Props {
+  href: string;
+  label: string;
+  direction: 'left' | 'right';
+  ariaLabel?: string;
+  rel?: string;
+  class?: string;
+}
+const { href, label, direction, ariaLabel, rel, class: className } = Astro.props;
+---
+
+<a class:list={['glass-arrow-link', `glass-arrow-link--${direction}`, className]} href={href} rel={rel} aria-label={ariaLabel}>
+  <span class="glass-arrow glass-surface glass-surface--static" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d={direction === 'left' ? 'M14.5 5 7.5 12l7 7' : 'm9.5 5 7 7-7 7'} />
+    </svg>
+  </span>
+  <span class="glass-arrow-label">{label}</span>
+</a>
+
+<style>
+  .glass-arrow-link { display: inline-flex; flex-direction: row; align-items: center; gap: 12px; max-width: 100%; padding: 0; background: transparent; text-decoration: none; }
+  .glass-arrow-link--right { flex-direction: row-reverse; }
+  .glass-arrow { display: grid; place-items: center; flex: 0 0 48px; width: 48px; height: 48px; border-radius: 50%; color: var(--text); }
+  .glass-arrow svg { width: 22px; height: 22px; }
+  .glass-arrow-label { min-width: 0; font-size: calc(var(--font-size-unit) * .92); line-height: 1.5; overflow-wrap: anywhere; transition: color 150ms ease; }
+  .glass-arrow-label { color: var(--text); }
+  .glass-arrow-link:is(:hover, :focus-visible, :active) .glass-arrow { color: var(--brand-interactive); }
+  .glass-arrow-link:focus-visible { outline: none; }
+  .glass-arrow-link:focus-visible .glass-arrow { outline: 2px solid var(--muted); outline-offset: 3px; }
+</style>

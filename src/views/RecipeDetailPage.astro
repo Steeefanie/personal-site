@@ -2,11 +2,11 @@
 import { render, type CollectionEntry } from 'astro:content';
 import '../styles/recipes.css';
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { recipeCategorySlug } from '../lib/recipe-categories';
 import ArticleComments from '../components/ArticleComments.astro';
+import ArticlePagerLink from '../components/ArticlePagerLink.astro';
 import ProseLayout from '../components/ProseLayout.astro';
-import LocalizedText from '../components/LocalizedText.astro';
-import ListingBackLink from '../components/ListingBackLink.astro';
-import { locales, text, ui, type Locale, type Localized } from '../lib/i18n';
+import { locales, ui, type Locale, type Localized } from '../lib/i18n';
 import { localizedPath } from '../lib/routes';
 import imageLeftInsets from '../lib/recipe-image-left-insets.json';
 
@@ -34,7 +34,6 @@ const descriptions = Object.fromEntries(locales.map((locale) => [locale, entries
   <article class:list={['article-with-comments', { 'cocktail-detail': base.category === 'cocktail', 'flour-detail': base.category === 'flour' }]}>
     <header class="article-header">
       <div class="reading-shell">
-        <ListingBackLink href={localizedPath(locale, '/recipes/')} label={text('返回食谱', '返回食譜', 'Back to Recipes')} />
         <div class="recipe-detail-heading" style={`--recipe-icon-left-inset: ${imageLeftInset}; --recipe-icon-visible-width: ${imageVisibleWidth}`}>
           {base.cover && <div class="recipe-detail-art" aria-hidden="true"><img class="recipe-detail-icon" src={base.cover} alt="" width="256" height="256" decoding="async" /></div>}
           <div class="recipe-detail-copy">
@@ -55,21 +54,26 @@ const descriptions = Object.fromEntries(locales.map((locale) => [locale, entries
     </ProseLayout>
     {(previous || next) && (
       <nav class="reading-shell article-pager" data-recipe-pager="all" aria-label={ui.common.adjacentRecipes[locale]}>
-        {previous && <div class="pager-slot pager-slot--previous"><a class="pager-link" href={localizedPath(locale, `/recipes/${previous.slug}/`)}><span class="pager-label"><LocalizedText value={text('上一篇', '上一篇', 'Previous')} /></span><span class="pager-title">{previous.titles[locale]}</span></a></div>}
-        {next && <div class="pager-slot pager-slot--next"><a class="pager-link" href={localizedPath(locale, `/recipes/${next.slug}/`)}><span class="pager-label"><LocalizedText value={text('下一篇', '下一篇', 'Next')} /></span><span class="pager-title">{next.titles[locale]}</span></a></div>}
+        {previous && <div class="pager-slot pager-slot--previous"><ArticlePagerLink href={localizedPath(locale, `/recipes/${previous.slug}/`)} title={previous.titles[locale]} direction="previous" locale={locale} /></div>}
+        {next && <div class="pager-slot pager-slot--next"><ArticlePagerLink href={localizedPath(locale, `/recipes/${next.slug}/`)} title={next.titles[locale]} direction="next" locale={locale} /></div>}
       </nav>
     )}
     {(categoryAdjacent?.previous || categoryAdjacent?.next) && (
       <nav class="reading-shell article-pager" data-recipe-pager={base.category} aria-label={ui.common.adjacentRecipes[locale]} hidden>
-        {categoryAdjacent.previous && <div class="pager-slot pager-slot--previous"><a class="pager-link" href={`${localizedPath(locale, `/recipes/${categoryAdjacent.previous.slug}/`)}?category=${base.category}`}><span class="pager-label"><LocalizedText value={text('上一篇', '上一篇', 'Previous')} /></span><span class="pager-title">{categoryAdjacent.previous.titles[locale]}</span></a></div>}
-        {categoryAdjacent.next && <div class="pager-slot pager-slot--next"><a class="pager-link" href={`${localizedPath(locale, `/recipes/${categoryAdjacent.next.slug}/`)}?category=${base.category}`}><span class="pager-label"><LocalizedText value={text('下一篇', '下一篇', 'Next')} /></span><span class="pager-title">{categoryAdjacent.next.titles[locale]}</span></a></div>}
+        {categoryAdjacent.previous && <div class="pager-slot pager-slot--previous"><ArticlePagerLink href={`${localizedPath(locale, `/recipes/${categoryAdjacent.previous.slug}/`)}?category=${recipeCategorySlug(base.category)}`} title={categoryAdjacent.previous.titles[locale]} direction="previous" locale={locale} /></div>}
+        {categoryAdjacent.next && <div class="pager-slot pager-slot--next"><ArticlePagerLink href={`${localizedPath(locale, `/recipes/${categoryAdjacent.next.slug}/`)}?category=${recipeCategorySlug(base.category)}`} title={categoryAdjacent.next.titles[locale]} direction="next" locale={locale} /></div>}
       </nav>
     )}
-    <script is:inline data-category={base.category}>
+    <script is:inline data-astro-rerun data-category={base.category} data-category-slug={recipeCategorySlug(base.category)}>
       (() => {
         const script = document.currentScript;
         const category = new URLSearchParams(location.search).get('category');
-        const scope = category === script?.dataset.category ? category : 'all';
+        const scope = category === script?.dataset.category || category === script?.dataset.categorySlug ? script.dataset.category : 'all';
+        if (category === script?.dataset.category) {
+          const url = new URL(location.href);
+          url.searchParams.set('category', script.dataset.categorySlug);
+          history.replaceState(history.state, '', `${url.pathname}${url.search}${url.hash}`);
+        }
         script?.closest('article')?.querySelectorAll('[data-recipe-pager]').forEach((pager) => {
           pager.hidden = pager.dataset.recipePager !== scope;
         });
@@ -80,7 +84,11 @@ const descriptions = Object.fromEntries(locales.map((locale) => [locale, entries
 </BaseLayout>
 
 <script>
-  document.querySelectorAll<HTMLElement>('.recipe-detail-heading').forEach((heading) => {
+
+import { onPageLoad } from '../scripts/page-lifecycle';
+onPageLoad((scope) => {
+  const addEventListener = scope.onWindow;
+document.querySelectorAll<HTMLElement>('.recipe-detail-heading').forEach((heading) => {
     const copy = heading.querySelector<HTMLElement>('.recipe-detail-copy');
     if (!copy || !heading.querySelector('.recipe-detail-art')) return;
     // Match the text block while retaining room for text on narrow screens.
@@ -92,10 +100,12 @@ const descriptions = Object.fromEntries(locales.map((locale) => [locale, entries
       }
     };
     const observer = new ResizeObserver(() => requestAnimationFrame(syncIconSize));
+    scope.cleanup(() => observer.disconnect());
     observer.observe(copy);
     observer.observe(heading);
     syncIconSize();
     addEventListener('pagehide', () => observer.disconnect(), { once: true });
     addEventListener('pageshow', () => { observer.observe(copy); observer.observe(heading); syncIconSize(); });
   });
+});
 </script>

@@ -1,0 +1,17 @@
+---
+import { text, type Locale } from '../lib/i18n';
+import GlassArrowLink from './GlassArrowLink.astro';
+
+interface Props {
+  href: string;
+  title: string;
+  direction: 'previous' | 'next';
+  locale: Locale;
+}
+const { href, title, direction, locale } = Astro.props;
+const label = direction === 'previous'
+  ? text('上一篇', '上一篇', 'Previous')[locale]
+  : text('下一篇', '下一篇', 'Next')[locale];
+---
+
+<GlassArrowLink href={href} label={title} direction={direction === 'previous' ? 'left' : 'right'} rel={direction === 'previous' ? 'prev' : 'next'} ariaLabel={`${label}：${title}`} class="pager-link" />

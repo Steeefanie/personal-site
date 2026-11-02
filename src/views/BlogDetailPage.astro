@@ -2,11 +2,10 @@
 import { render, type CollectionEntry } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ArticleComments from '../components/ArticleComments.astro';
+import ArticlePagerLink from '../components/ArticlePagerLink.astro';
 import ArticleToc from '../components/ArticleToc.astro';
 import ProseLayout from '../components/ProseLayout.astro';
-import LocalizedText from '../components/LocalizedText.astro';
-import ListingBackLink from '../components/ListingBackLink.astro';
-import { localeDateFormats, locales, text, ui, type Locale, type Localized } from '../lib/i18n';
+import { localeDateFormats, locales, ui, type Locale, type Localized } from '../lib/i18n';
 import { localizedPath } from '../lib/routes';
 
 interface Adjacent { slug: string; titles: Localized<string> }
@@ -30,7 +29,6 @@ const descriptions = Object.fromEntries(locales.map((locale) => [locale, entries
   <article class="article-with-comments article-toc-page" data-article-toc-page>
     <header class="article-header">
       <div class="reading-shell">
-        <ListingBackLink href={localizedPath(locale, '/blog/')} label={text('返回随笔', '返回隨筆', 'Back to Blog')} />
         <h1>{entry.data.title}</h1>
         <p class="article-deck">{entry.data.attribution && <span class="content-attribution">{entry.data.attribution}</span>}{entry.data.description}</p>
         <div class="article-meta">
@@ -45,8 +43,8 @@ const descriptions = Object.fromEntries(locales.map((locale) => [locale, entries
     </ProseLayout>
     {(previous || next) && (
       <nav class="reading-shell article-pager" aria-label={ui.common.adjacentPosts[locale]}>
-        {previous && <div class="pager-slot pager-slot--previous"><a class="pager-link" href={localizedPath(locale, `/blog/${previous.slug}/`)}><span class="pager-label"><LocalizedText value={text('上一篇', '上一篇', 'Previous')} /></span><span class="pager-title">{previous.titles[locale]}</span></a></div>}
-        {next && <div class="pager-slot pager-slot--next"><a class="pager-link" href={localizedPath(locale, `/blog/${next.slug}/`)}><span class="pager-label"><LocalizedText value={text('下一篇', '下一篇', 'Next')} /></span><span class="pager-title">{next.titles[locale]}</span></a></div>}
+        {previous && <div class="pager-slot pager-slot--previous"><ArticlePagerLink href={localizedPath(locale, `/blog/${previous.slug}/`)} title={previous.titles[locale]} direction="previous" locale={locale} /></div>}
+        {next && <div class="pager-slot pager-slot--next"><ArticlePagerLink href={localizedPath(locale, `/blog/${next.slug}/`)} title={next.titles[locale]} direction="next" locale={locale} /></div>}
       </nav>
     )}
     <ArticleComments />

@@ -1,8 +1,14 @@
+@import url('/fonts/site/fonts.css');
+
 :host,
 html {
-  --font-family-sans: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  color-scheme: light;
+  background: transparent;
+  --font-family-sans: Inter, "Noto Sans SC", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
   --font-family-default: var(--font-family-sans);
 }
+
+html:lang(zh-TW) { --font-family-sans: Inter, "Noto Sans TC", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; }
 
 html body main {
   color-scheme: light;
@@ -45,7 +51,7 @@ html body main {
 html body main .gsc-main,
 html body main .gsc-main .gsc-comment-box,
 html body main .gsc-main .gsc-comment {
-  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  font-family: var(--font-family-default);
 }
 
 html body main .gsc-main .gsc-header,
@@ -281,4 +287,90 @@ html body main .gsc-main .gsc-comment-content {
 
 @keyframes giscus-theme-loading {
   to { transform: rotate(360deg); }
+}
+
+html body main { --comment-glass: rgb(255 255 255 / .13); --comment-selected: rgb(0 0 0 / .07); --comment-highlight: inset 0 1px 1px rgb(255 255 255 / .8), 0 1px 3px rgb(0 0 0 / .08); }
+
+/* Static glass: same tint/highlight as site buttons, without backdrop work. */
+html body main .gsc-main :is(.gsc-comment-box, .gsc-comment > div) {
+  border: 0 !important;
+  border-radius: 24px !important;
+  background: var(--comment-glass) !important;
+  box-shadow: var(--comment-highlight) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+html body main .gsc-main .gsc-comment-box:focus-within {
+  outline: 2px solid var(--color-fg-muted);
+  outline-offset: 2px;
+}
+html body main .gsc-main :is(.gsc-comment-box-tabs, .gsc-comment-box-bottom) { border: 0 !important; }
+html body main .gsc-main .gsc-comment-box-tabs button {
+  min-height: 44px;
+  border-radius: 999px !important;
+}
+html body main .gsc-main .gsc-comment-box-tabs button.color-text-primary {
+  color: var(--color-accent-fg) !important;
+  background: var(--comment-selected) !important;
+  box-shadow: var(--comment-highlight) !important;
+}
+html body main .gsc-main .gsc-comment-box-tabs button.color-text-primary::after { display: none; }
+html body main .gsc-main :is(.btn, .btn-primary, .gsc-right-header.BtnGroup) {
+  min-height: 44px;
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: var(--comment-glass) !important;
+  color: var(--color-fg-default) !important;
+  box-shadow: var(--comment-highlight) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+html body main .gsc-main :is(.btn-primary, .btn:hover, .btn:focus-visible) { color: var(--color-accent-fg) !important; }
+html body main .gsc-main .btn:disabled { color: var(--color-fg-muted) !important; }
+html body main .gsc-main .gsc-right-header .BtnGroup-item { background: transparent !important; box-shadow: none !important; border: 0 !important; }
+html body main .gsc-main .gsc-comment-box-is-reply:not(:focus-within) { border-radius: 16px !important; }
+@media (forced-colors: active) {
+  html body main .gsc-main :is(.gsc-comment-box, .gsc-comment > div, .btn, .gsc-right-header.BtnGroup) { background: Canvas !important; color: CanvasText !important; border: 1px solid ButtonText !important; box-shadow: none !important; }
+}
+
+html body main { --comment-slider-expansion: 0px; --comment-slider-bg: rgb(0 0 0 / .07); }
+
+/* Sorting uses one physical thumb, including inside the cross-origin widget. */
+html body main .gsc-main .gsc-right-header.BtnGroup {
+  position: relative; isolation: isolate; display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px;
+  padding: 6px; margin: 0; list-style: none;
+  --comment-sort-index: 0;
+}
+html body main .gsc-main .gsc-right-header.BtnGroup::before {
+  content: ''; position: absolute; z-index: 0; pointer-events: none;
+  left: calc(6px - var(--comment-slider-expansion)); top: calc(6px - var(--comment-slider-expansion));
+  width: calc((100% - 16px) / 2 + 2 * var(--comment-slider-expansion));
+  height: calc(44px + 2 * var(--comment-slider-expansion));
+  border-radius: 999px; background: var(--comment-slider-bg);
+  box-shadow: var(--comment-highlight);
+  transform: translateX(calc(var(--comment-sort-index) * (100% + 4px - 2 * var(--comment-slider-expansion))));
+  transition: transform 240ms cubic-bezier(.2,.8,.2,1);
+}
+html body main .gsc-main .gsc-right-header:has(.BtnGroup-item:nth-child(2)[aria-current='true']) { --comment-sort-index: 1; }
+html body main .gsc-main .gsc-right-header:has(.BtnGroup-item:nth-child(1):hover) { --comment-sort-index: 0; }
+html body main .gsc-main .gsc-right-header:has(.BtnGroup-item:nth-child(2):hover) { --comment-sort-index: 1; }
+html body main .gsc-main .gsc-right-header .BtnGroup-item {
+  position: relative; z-index: 1; min-width: 0;
+  background: transparent !important; box-shadow: none !important;
+}
+html body main .gsc-main .gsc-right-header .btn,
+html body main .gsc-main .gsc-right-header .btn:is(:hover, :focus-visible) {
+  display: block; width: 100%; height: 44px; padding: 8px 16px;
+  border-radius: 999px !important; font-size: .82rem; line-height: 1;
+  background: transparent !important; box-shadow: none !important;
+  color: var(--color-fg-default) !important;
+}
+html body main .gsc-main .gsc-right-header .BtnGroup-item[aria-current='true'] .btn { color: var(--color-accent-fg) !important; }
+html body main .gsc-main .gsc-comment-box-tabs button { border-radius: 12px !important; }
+@media (prefers-reduced-motion: reduce) {
+  html body main .gsc-main .gsc-right-header.BtnGroup::before { transition: none; }
+}
+@media (forced-colors: active) {
+  html body main .gsc-main .gsc-right-header.BtnGroup::before { background: Highlight; box-shadow: none; }
 }

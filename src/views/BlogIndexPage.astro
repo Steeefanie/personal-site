@@ -16,8 +16,9 @@ const posts = pairEntries(entries);
 
 <BaseLayout activeNav="blog" titles={text('随笔｜Steeefanie', '隨筆｜Steeefanie', 'Blog | Steeefanie')} descriptions={text('各种各样的技术笔记、踩坑经历、碎碎念。', '各式各樣的技術筆記、踩雷經歷與生活碎念。', 'Technical notes, lessons learned, and assorted thoughts.')} locale={locale}>
   <div class="site-shell">
-    <section class="listing-section" aria-label={text('随笔', '隨筆', 'Blog')[locale]}>
-      <ul class="content-list">
+    <h1 class="sr-only">{text('随笔', '隨筆', 'Blog')[locale]}</h1>
+    <section class="listing-section blog-listing" aria-label={text('随笔', '隨筆', 'Blog')[locale]}>
+      <ul class="content-list text-list">
         {posts.map((post) => <PostListItem slug={post.slug} locales={localizedData(post)} locale={locale} />)}
       </ul>
       <ListingPagination pageSize={20} />

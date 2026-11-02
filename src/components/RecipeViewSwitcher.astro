@@ -10,8 +10,9 @@ const labels = {
 };
 ---
 
-<div class="recipe-view-switch" role="group" aria-label={labels.group[locale]} data-recipe-view-switch>
-  <span class="recipe-view-thumb" aria-hidden="true"></span>
+<div class="recipe-view-switch glass-control" role="group" aria-label={labels.group[locale]} data-recipe-view-switch>
+  <div class="top-chrome-surface glass-surface" data-glass="control" aria-hidden="true"></div>
+  <span class="selection-slider" aria-hidden="true"></span>
   <button type="button" data-view-option="grid" aria-pressed="true" aria-label={labels.grid[locale]} title={labels.grid[locale]}>
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1.2"></rect>
@@ -30,7 +31,7 @@ const labels = {
   </button>
 </div>
 
-<script is:inline>
+<script is:inline data-astro-rerun>
   (() => {
     const section = document.currentScript?.closest('[data-recipe-listing]');
     if (!section) return;
@@ -45,7 +46,11 @@ const labels = {
 </script>
 
 <script>
-  type RecipeView = 'grid' | 'list';
+
+import { onPageLoad } from '../scripts/page-lifecycle';
+onPageLoad((scope) => {
+  const addEventListener = scope.onWindow;
+type RecipeView = 'grid' | 'list';
   document.querySelectorAll<HTMLElement>('[data-recipe-listing]').forEach((section) => {
     const controls = section.querySelector<HTMLElement>('[data-recipe-view-switch]');
     const buttons = [...(controls?.querySelectorAll<HTMLButtonElement>('[data-view-option]') ?? [])];
@@ -82,4 +87,5 @@ const labels = {
     restore();
     addEventListener('pageshow', restore);
   });
+});
 </script>

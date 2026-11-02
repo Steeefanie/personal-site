@@ -82,7 +82,7 @@ html[lang='en'] .prose p {
   text-decoration-color: color-mix(in srgb, var(--brand-interactive) 45%, transparent);
 }
 
-.prose a:hover { text-decoration-color: var(--brand-interactive); }
+.prose a:hover:where(:root:not([data-input-modality='touch']) *) { text-decoration-color: var(--brand-interactive); }
 
 .prose blockquote {
   margin: 1.5em 0;

@@ -1,4 +1,4 @@
-const giscusThemeVersion = '20261004-1';
+const giscusThemeVersion = '20261101-3';
 
 export const giscusConfig = {
   repo: 'Steeefanie/steeefanie-comments',

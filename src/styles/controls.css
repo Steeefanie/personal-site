@@ -1,0 +1,234 @@
+/* Glass bodies use the arrow control's tint. Only moving selection sliders use
+   --glass-selection-bg; fixed controls share highlights without backdrop work. */
+@media screen {
+  .glass-button,
+  body .fe-page .fe-app button,
+  body .service-page :is(button:not(.upload-icon), .download-button),
+  body .fe-page .fe-options label > span,
+  body .service-page :is(.side-switch label > span, .mode-option > span) {
+    border: 0;
+    background: var(--glass-tint);
+    color: var(--text);
+    box-shadow: var(--glass-selection-shadow);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .glass-button { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 10px 20px; border-radius: 999px; text-decoration: none; cursor: pointer; }
+  .glass-button:is(:hover:where(:root:not([data-input-modality='touch']) *), :focus-visible, :active):not(:disabled),
+  body .fe-page .fe-app button:is(:hover:where(:root:not([data-input-modality='touch']) *), :focus-visible, :active):not(:disabled),
+  body .service-page :is(button, .download-button):is(:hover:where(:root:not([data-input-modality='touch']) *), :focus-visible, :active):not(:disabled),
+  body .fe-page .fe-options label:is(:hover:where(:root:not([data-input-modality='touch']) *), :focus-within) > span,
+  body .service-page :is(.side-switch label, .mode-option):is(:hover:where(:root:not([data-input-modality='touch']) *), :focus-within) > span {
+    color: var(--brand-interactive);
+  }
+  body .fe-page .fe-options input:checked + span,
+  body .service-page :is(.side-switch, .mode-option) input:checked + span {
+    color: var(--brand-readable);
+    background: var(--glass-tint);
+    border-color: transparent;
+    box-shadow: var(--glass-selection-shadow);
+  }
+  body .fe-page .fe-options input:checked + span {
+    background: var(--control-hover);
+  }
+  body .fe-page .fe-app button:not(:disabled):hover:where(:root:not([data-input-modality='touch']) *) { filter: none; }
+  body .listing-pagination .pagination-button,
+  body .listing-filters .text-button,
+  body .search-panel-heading .glass-button,
+  body .guestbook-close,
+  body .service-page .upload-icon {
+    background: var(--glass-tint);
+    box-shadow: var(--glass-selection-shadow);
+  }
+  body .fe-page .fe-app .glass-arrow-button {
+    display: grid; place-items: center; flex: 0 0 48px;
+    width: 48px; height: 48px; min-height: 48px; padding: 0; border-radius: 50%;
+  }
+  body .fe-page .fe-app .fe-quiz-actions > :is([data-fe-pause], [data-st-pause]) {
+    display: inline-flex; align-items: center; justify-content: center;
+    justify-self: center; height: 48px; min-height: 48px;
+    padding: 0 20px; line-height: 1; border-radius: 999px;
+  }
+  body .fe-page .fe-app .fe-answer-clear {
+    display: inline-flex; align-items: center; justify-content: center;
+    height: 48px; min-height: 48px; padding: 0 20px;
+    line-height: 1; border-radius: 999px;
+  }
+  body .fe-page .fe-app .confirmation-dialog {
+    width: min(420px, calc(100% - 32px)); padding: 24px;
+    border: 0; border-radius: 28px; background: var(--glass-bg);
+    box-shadow: var(--hyalite-edge, var(--glass-selection-shadow)), var(--shadow-overlay);
+    -webkit-backdrop-filter: var(--hyalite, blur(var(--glass-blur, 2px))); backdrop-filter: var(--hyalite, blur(var(--glass-blur, 2px)));
+  }
+  .confirmation-dialog[open] { animation: panel-reveal 200ms ease-out backwards; }
+  .confirmation-dialog:focus { outline: none; }
+  body .fe-page .confirmation-dialog > p {
+    margin: 12px 0 24px;
+  }
+  body .fe-page .confirmation-dialog .fe-actions {
+    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px;
+  }
+  body .fe-page .fe-app .confirmation-dialog .fe-actions button {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 0; min-height: 48px; padding: 0 16px; line-height: 1.4;
+  }
+  body .fe-page .fe-app .confirmation-dialog :is([data-fe-confirm-clear], [data-st-confirm]) { color: var(--brand-readable); font-weight: 600; }
+  .confirmation-dialog button:focus-visible { outline-color: var(--muted); outline-offset: 3px; }
+  @media (prefers-reduced-motion: reduce) { .confirmation-dialog[open] { animation: none; } }
+  .glass-arrow-button svg { width: 22px; height: 22px; }
+  .glass-arrow-button .submit-glyph { display: none; }
+  .glass-arrow-button[data-submit='true'] .arrow-glyph { display: none; }
+  .glass-arrow-button[data-submit='true'] .submit-glyph { display: block; }
+  .project-demo-link.glass-button { min-height: 48px; padding: 10px 24px; font-weight: 500; color: var(--text); }
+  .project-demo-link.glass-button:is(:hover:where(:root:not([data-input-modality='touch']) *), :focus-visible, :active) { color: var(--brand-interactive); }
+  .project-demo-link.glass-button:hover:where(:root:not([data-input-modality='touch']) *) { text-decoration: none; }
+
+  body .service-page .radio-slider-group {
+    position: relative; isolation: isolate; display: grid;
+    gap: 4px; padding: 6px; border: 0; border-radius: 999px;
+    background: var(--glass-tint); box-shadow: var(--glass-selection-shadow);
+  }
+  body .service-page .mode-grid.radio-slider-group { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  body .service-page .radio-slider-group > label { position: relative; z-index: 1; min-width: 0; }
+  body .service-page .radio-slider-group label > span,
+  body .service-page .radio-slider-group input:checked + span {
+    min-height: 44px; height: 100%; border: 0; border-radius: 999px;
+    background: transparent; box-shadow: none; color: var(--text);
+  }
+  body .service-page .radio-slider-group label:is(:hover:where(:root:not([data-input-modality='touch']) *), :focus-within) > span { color: var(--text); }
+  body .service-page .radio-slider-group input:checked + span { color: var(--brand-readable); }
+  body .service-page .side-switch.radio-slider-group label > span,
+  body .service-page .side-switch.radio-slider-group label:is(:hover:where(:root:not([data-input-modality='touch']) *), :focus-within) > span { color: var(--muted); }
+  body .service-page .side-switch.radio-slider-group input:checked + span { color: var(--brand-readable); }
+  body .service-page .file-summary [data-file-remove],
+  body .service-page .file-summary [data-file-remove]:focus-visible,
+  body .fe-page .fe-app .fe-text-button,
+  body .fe-page .fe-app .fe-text-button:focus-visible { color: var(--muted); }
+  body .service-page .file-summary [data-file-remove]:hover:where(:root:not([data-input-modality='touch']) *) { color: var(--brand-interactive); }
+  body .fe-page .fe-app .fe-text-button:hover:where(:root:not([data-input-modality='touch']) *) { color: var(--text); }
+  body .service-page .radio-slider-group > .selection-slider {
+    display: block; min-height: 0; border-radius: 999px;
+    background: var(--glass-selection-bg, var(--control-hover));
+    box-shadow: var(--glass-selection-shadow);
+  }
+  body .service-page .size-input {
+    min-height: 56px; padding-inline: 16px; border: 0; border-radius: 999px;
+    background: var(--glass-tint); box-shadow: var(--glass-selection-shadow);
+  }
+  body .service-page .size-input input { min-width: 0; }
+  body .service-page .generate-button:disabled { opacity: 1; color: color-mix(in srgb, var(--muted) 75%, transparent); }
+  body .service-page .file-summary [data-file-remove] {
+    align-self: center; min-height: 44px; padding: 0 16px; border-radius: 999px;
+  }
+
+  .header-utilities .utility-button { background: transparent; box-shadow: none; }
+  .header-utilities .utility-button:is(:hover:where(:root:not([data-input-modality='touch']) *), :focus-visible, :active, [aria-expanded='true']) {
+    background: transparent;
+    box-shadow: none;
+    color: var(--brand-interactive);
+  }
+  .header-actions > .menu-switcher { position: relative; isolation: isolate; background: transparent; width: 56px; height: 56px; min-height: 56px; padding: 6px; border-radius: 50%; }
+  .header-actions > .menu-switcher svg { position: relative; z-index: 1; }
+  .hero-contact-button.glass-button { width: 48px; height: 48px; flex-basis: 48px; padding: 0; border-radius: 50%; background: var(--glass-tint); box-shadow: var(--glass-selection-shadow); color: var(--muted); }
+  .hero-contact-button.glass-button:is(:hover:where(:root:not([data-input-modality='touch']) *), :focus-visible, :active) { color: var(--brand-interactive); }
+  body .hero-note.glass-surface { background: var(--glass-tint); box-shadow: var(--glass-selection-shadow); }
+  body .services-section .service-card-icon {
+    --service-icon-bg: var(--glass-tint);
+    --service-focus-shadow: 0 6px 16px rgb(0 0 0 / .18), 0 2px 6px rgb(0 0 0 / .12);
+    background: var(--glass-tint);
+    box-shadow: var(--glass-selection-shadow);
+    -webkit-backdrop-filter: none; backdrop-filter: none;
+    transition: transform var(--motion-fast) ease, box-shadow var(--motion-fast) ease;
+  }
+  :root[data-theme='dark'] body .services-section .service-card-icon {
+    --service-focus-shadow: 0 6px 16px rgb(0 0 0 / .4), 0 2px 6px rgb(0 0 0 / .24);
+  }
+  @media (forced-colors: none) {
+    body .services-section .service-app:is(:hover:where(:root:not([data-input-modality='touch']) *), :focus-visible, :active) .service-card-icon {
+      box-shadow: var(--glass-selection-shadow), var(--service-focus-shadow);
+    }
+  }
+
+  .search-panel.glass-surface,
+  .guestbook-dialog.glass-surface { box-shadow: var(--hyalite-edge, var(--glass-selection-shadow)), var(--shadow-overlay); }
+  .search-field-wrap { border: 0; background: var(--glass-tint); box-shadow: var(--glass-selection-shadow); }
+  .search-field-wrap:focus-within { outline: none; }
+  .search-panel[data-keyboard-focus] .search-field-wrap:focus-within { outline: 2px solid var(--muted); outline-offset: 2px; }
+  .search-field-wrap input { appearance: none; -webkit-appearance: none; }
+  .search-field-wrap input:focus-visible { outline: none; box-shadow: none; }
+  .search-scopes.glass-control { border: 0; background: var(--glass-tint); box-shadow: var(--glass-selection-shadow); }
+  .search-result-link:is(:hover:where(:root:not([data-input-modality='touch']) *), .is-active) { background: var(--glass-tint); }
+  .search-panel .utility-button { padding: 0; }
+
+  .footer-inner { flex-direction: row; align-items: center; justify-content: space-between; }
+  .footer-language { position: relative; margin-left: auto; }
+  .footer-language .language-switcher,
+  .footer-language .language-switcher:is(:hover:where(:root:not([data-input-modality='touch']) *), :focus-visible, :active, [aria-expanded='true']) {
+    padding: 0; background: transparent; box-shadow: none; color: var(--muted);
+  }
+  .footer-language .footer-language-panel {
+    position: absolute; top: auto; bottom: calc(100% + 12px); right: 0;
+    width: max-content; max-width: calc(100vw - 32px); max-height: calc(100dvh - 100px);
+  }
+  html[data-article-toc-layout='overlay'] .top-chrome > .site-name {
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .article-toc[data-open][data-mode] .article-toc-toggle { top: var(--toc-toggle-top); left: var(--toc-toggle-left); width: 56px; height: 56px; transition: color var(--motion-fast) ease; }
+  .article-toc-toggle-surface { position: absolute; inset: 0; border-radius: inherit; pointer-events: none; }
+  .article-toc[data-mode='dock'] .article-toc-toggle-surface { -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .article-toc-toggle svg { z-index: 1; }
+  .article-toc .article-toc-panel { left: var(--toc-panel-left); }
+  .article-toc[data-open='false'] .article-toc-panel { visibility: hidden; }
+  .article-toc .article-toc-header { padding-left: 20px; border-bottom: 0; }
+  .toc-choice-group { position: relative; isolation: isolate; }
+  .article-toc-nav .toc-choice-group a { z-index: 1; padding: 8px 16px; border-radius: 22px; background: transparent; }
+  .article-toc-nav .toc-choice-group a:is(:hover:where(:root:not([data-input-modality='touch']) *), :focus-visible, [aria-current]) { background: transparent; }
+  .article-toc-nav .toc-choice-group a[data-depth='3'] { padding-left: 34px; }
+  .article-toc-nav .toc-choice-group a:hover:where(:root:not([data-input-modality='touch']) *) { color: var(--text); }
+  .article-toc-nav .toc-choice-group a[aria-current='location'] { color: var(--brand-readable); }
+  .article-toc-nav .toc-choice-group a::before { display: none; }
+  .toc-choice-group > .selection-slider { border-radius: calc(22px + var(--selection-expansion)); }
+  .article-toc[data-open] .article-toc-panel.glass-menu { transition: none; }
+  .article-toc[data-toc-motion='interactive'][data-open='true'] .article-toc-panel.glass-menu:not(.is-closing) { animation: panel-reveal 200ms ease-out backwards; }
+  .article-toc:not([data-initialized='true']) { visibility: hidden; }
+  .article-toc[data-toc-motion='initial'] .article-toc-toggle svg,
+  html:has(.article-toc[data-toc-motion='initial']) .article-toc-page { transition: none; }
+  .article-toc-panel .article-toc-content { position: relative; z-index: 1; }
+  .article-toc-panel .article-toc-nav { padding: 6px; }
+  .article-toc-nav .toc-choice-group { display: grid; gap: 4px; padding: 0; }
+  .article-toc-panel :is(.article-toc-header, .article-toc-nav, .article-toc-resizer) { transition: none; }
+  @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+    body .fe-page .fe-app .confirmation-dialog { background: var(--surface); -webkit-backdrop-filter: none; backdrop-filter: none; }
+    body .service-page :is(.radio-slider-group, .size-input) { background: var(--surface); }
+    body .listing-pagination .pagination-button, body .listing-filters .text-button,
+    body .search-panel-heading .glass-button,
+    body .guestbook-close, body .service-page .upload-icon,
+    body .service-page :is(.side-switch, .mode-option) input:checked + span,
+    body .fe-page .fe-options input:checked + span,
+    .glass-button, body .fe-page .fe-app button, body .fe-page .fe-options label > span,
+    body .service-page :is(button, .download-button, .side-switch label > span, .mode-option > span),
+    body .hero-note.glass-surface, body .services-section .service-card-icon,
+    .hero-contact-button.glass-button, .search-field-wrap, .search-scopes.glass-control,
+    .article-toc :is(.article-toc-panel, .article-toc-toggle-surface) { background: var(--surface); }
+    body .service-page .radio-slider-group input:checked + span { background: transparent; }
+  }
+  @media (forced-colors: active) {
+    body .fe-page .fe-app .confirmation-dialog { background: Canvas; border: 1px solid CanvasText; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
+    body .service-page :is(.radio-slider-group, .size-input) { background: Canvas; border: 1px solid ButtonText; box-shadow: none; }
+    body .service-page .radio-slider-group > .selection-slider { background: Highlight; box-shadow: none; }
+    body .listing-pagination .pagination-button, body .listing-filters .text-button,
+    body .search-panel-heading .glass-button,
+    body .guestbook-close, body .service-page .upload-icon,
+    body .service-page :is(.side-switch, .mode-option) input:checked + span,
+    body .fe-page .fe-options input:checked + span,
+    .glass-button, body .fe-page .fe-app button, body .fe-page .fe-options label > span,
+    body .service-page :is(button, .download-button, .side-switch label > span, .mode-option > span),
+    .header-utilities .utility-button, body .hero-note.glass-surface, body .services-section .service-card-icon {
+      background: Canvas; color: CanvasText; border: 1px solid ButtonText; box-shadow: none;
+    }
+    body .service-page .radio-slider-group input:checked + span,
+    body .fe-page .fe-options input:checked + span { background: Highlight; color: HighlightText; }
+  }
+}

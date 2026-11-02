@@ -1,0 +1,11 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+interface Props extends HTMLAttributes<'button'> { direction: 'left' | 'right' }
+const { direction, class: className, ...attributes } = Astro.props;
+---
+<button {...attributes} class:list={['glass-button', 'glass-arrow-button', className]}>
+  <svg class="arrow-glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d={direction === 'left' ? 'M14.5 5 7.5 12l7 7' : 'm9.5 5 7 7-7 7'} />
+  </svg>
+  {direction === 'right' && <svg class="submit-glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6" /></svg>}
+</button>

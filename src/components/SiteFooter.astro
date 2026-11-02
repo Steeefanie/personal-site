@@ -1,5 +1,28 @@
+---
+import LanguageSwitcher from './LanguageSwitcher.astro';
+import { localeNames, locales, ui } from '../lib/i18n';
+import { localeRoutePrefixes, localizedPath, logicalPathname, localeFromPathname } from '../lib/routes';
+const locale = localeFromPathname(Astro.url.pathname);
+const currentLogicalPath = logicalPathname(Astro.url.pathname);
+---
 <footer class="site-footer">
   <div class="site-shell footer-inner">
     <span>© {new Date().getFullYear()} Steeefanie</span>
+    <div class="footer-language" data-footer-language>
+      <LanguageSwitcher />
+      <section id="language-panel" class="header-panel language-panel glass-menu footer-language-panel" data-panel="language" aria-label={ui.common.languageMenu[locale]} hidden>
+        <div class="top-chrome-surface glass-surface" data-glass="menu" aria-hidden="true"></div>
+        <div class="site-shell panel-inner language-panel-inner menu-choice-group">
+          {locales.map((candidate) => (
+            <a class="language-option" href={localizedPath(candidate, currentLogicalPath)} data-language-option={localeRoutePrefixes[candidate].slice(1)} aria-current={locale === candidate ? 'page' : undefined} lang={candidate} hreflang={candidate}>
+              <span>{localeNames[candidate]}</span>
+            </a>
+          ))}
+        </div>
+      </section>
+    </div>
   </div>
 </footer>
+<script>
+  import '../scripts/footer-language';
+</script>

@@ -28,9 +28,12 @@ const locale = localeFromPathname(Astro.url.pathname);
 </nav>
 
 <script>
-  import { rememberListingPosition } from '../scripts/listing-navigation';
-
-  type Locale = 'zh-CN' | 'zh-TW' | 'en';
+import { rememberListingPosition } from '../scripts/listing-navigation';
+import { parseRecipeCategory, recipeCategorySlug } from '../lib/recipe-categories';
+import { onPageLoad } from '../scripts/page-lifecycle';
+onPageLoad((scope) => {
+  const addEventListener = scope.onWindow;
+type Locale = 'zh-CN' | 'zh-TW' | 'en';
 
   const paginationRoots = document.querySelectorAll<HTMLElement>('[data-listing-pagination]');
 
@@ -111,7 +114,7 @@ const locale = localeFromPathname(Astro.url.pathname);
           const link = item.querySelector<HTMLAnchorElement>('a[href]');
           if (!link) return;
           const url = new URL(link.href);
-          if (values.category) url.searchParams.set('category', values.category);
+          if (values.category) url.searchParams.set('category', recipeCategorySlug(values.category));
           else url.searchParams.delete('category');
           link.href = `${url.pathname}${url.search}${url.hash}`;
         });
@@ -129,17 +132,20 @@ const locale = localeFromPathname(Astro.url.pathname);
       groups.forEach((group) => {
         const param = group.dataset.filterParam ?? '';
         const value = group.querySelector<HTMLButtonElement>('[aria-pressed="true"]')?.dataset.filterValue ?? '';
-        if (value) params.set(param, value); else params.delete(param);
+        if (value) params.set(param, param === 'category' ? recipeCategorySlug(value) : value); else params.delete(param);
       });
       if (currentPage > 1) params.set('page', String(currentPage)); else params.delete('page');
       const query = params.toString();
-      history.pushState(null, '', `${location.pathname}${query ? `?${query}` : ''}${location.hash}`);
+      history.pushState(history.state, '', `${location.pathname}${query ? `?${query}` : ''}${location.hash}`);
     };
 
     const syncFromUrl = () => {
       const params = new URLSearchParams(location.search);
       groups.forEach((group) => {
-        const value = params.get(group.dataset.filterParam ?? '') ?? '';
+        const param = group.dataset.filterParam ?? '';
+        const raw = params.get(param) ?? '';
+        const value = param === 'category' ? parseRecipeCategory(raw) ?? raw : raw;
+        if (param === 'category' && parseRecipeCategory(raw)) params.set(param, recipeCategorySlug(raw));
         const buttons = [...group.querySelectorAll<HTMLButtonElement>('[data-filter-value]')];
         const target = buttons.find((button) => button.dataset.filterValue === value) ?? buttons[0];
         buttons.forEach((button) => button.setAttribute('aria-pressed', String(button === target)));
@@ -147,11 +153,11 @@ const locale = localeFromPathname(Astro.url.pathname);
       const requested = Number(params.get('page') ?? '1');
       currentPage = Number.isInteger(requested) && requested > 0 ? requested : 1;
       const totalPages = render();
-      if (requested > totalPages || !Number.isInteger(requested) || requested < 1) {
-        const normalized = new URLSearchParams(location.search);
+      if (params.toString() !== new URLSearchParams(location.search).toString() || requested > totalPages || !Number.isInteger(requested) || requested < 1) {
+        const normalized = params;
         if (currentPage > 1) normalized.set('page', String(currentPage)); else normalized.delete('page');
         const query = normalized.toString();
-        history.replaceState(null, '', `${location.pathname}${query ? `?${query}` : ''}${location.hash}`);
+        history.replaceState(history.state, '', `${location.pathname}${query ? `?${query}` : ''}${location.hash}`);
       }
     };
 
@@ -204,6 +210,7 @@ const locale = localeFromPathname(Astro.url.pathname);
 
     addEventListener('popstate', syncFromUrl);
     syncFromUrl();
-    if (section) rememberListingPosition(section);
+    if (section) rememberListingPosition(section, addEventListener);
   });
+});
 </script>

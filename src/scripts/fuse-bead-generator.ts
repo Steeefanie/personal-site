@@ -1,5 +1,9 @@
-import { isHeifFile, visibleContentSize } from '../lib/fuse-bead/image';
 
+import { isHeifFile, visibleContentSize } from '../lib/fuse-bead/image';
+import { onPageLoad } from './page-lifecycle';
+onPageLoad((scope) => {
+if (!document.querySelector('[data-generator-form]')) return;
+  const addEventListener = scope.onWindow;
 type Locale = 'zh-CN' | 'zh-TW' | 'en';
 
 const form = document.querySelector<HTMLFormElement>('[data-generator-form]');
@@ -18,7 +22,6 @@ const previewEmpty = document.querySelector<HTMLElement>('[data-preview-empty]')
 const previewImage = document.querySelector<HTMLImageElement>('[data-preview-image]');
 const previewLoading = document.querySelector<HTMLElement>('[data-preview-loading]');
 const previewTitle = document.querySelector<HTMLElement>('[data-preview-title]');
-const previewMode = document.querySelector<HTMLElement>('[data-preview-mode]');
 const resultMeta = document.querySelector<HTMLElement>('[data-result-meta]');
 const resultSize = document.querySelector<HTMLElement>('[data-result-size]');
 const resultMode = document.querySelector<HTMLElement>('[data-result-mode]');
@@ -121,7 +124,6 @@ const formatEstimate = (width: number, height: number, count: number) => {
 
 const updateEstimate = () => {
   const estimate = calculatedSize();
-  if (previewMode) previewMode.textContent = selectedMode();
   if (!estimate || !sizeEstimate) return;
   sizeEstimate.hidden = false;
   sizeEstimate.textContent = formatEstimate(estimate.width, estimate.height, estimate.count);
@@ -130,7 +132,6 @@ const updateEstimate = () => {
     generateButton.disabled = generateButton.dataset.loading === 'true' || !selectedFile || !estimate.valid;
   }
   if (!estimate.valid) showMessage(t('tooManyCells'));
-  else clearMessage();
 };
 
 const resetResult = () => {
@@ -315,6 +316,7 @@ const setFile = async (file: File) => {
 };
 
 const handleConfigurationChange = () => {
+  clearMessage();
   if (generationController) cancelGeneration();
   resetResult();
   if (previewImage && sourceUrl) previewImage.src = sourceUrl;
@@ -399,7 +401,17 @@ form?.addEventListener('submit', async (event) => {
 
     const blob = await response.blob();
     if (!isCurrentRequest()) return;
-    resultUrl = URL.createObjectURL(blob);
+    const candidateUrl = URL.createObjectURL(blob);
+    try {
+      const resultProbe = new Image();
+      resultProbe.src = candidateUrl;
+      try { await resultProbe.decode(); }
+      catch { throw new Error(t('failed')); }
+      if (!isCurrentRequest()) return;
+      resultUrl = candidateUrl;
+    } finally {
+      if (resultUrl !== candidateUrl) URL.revokeObjectURL(candidateUrl);
+    }
     if (previewImage) {
       previewImage.src = resultUrl;
       previewImage.alt = t('resultPreview');
@@ -434,4 +446,5 @@ addEventListener('beforeunload', () => {
   generationController?.abort();
   if (sourceUrl) URL.revokeObjectURL(sourceUrl);
   if (resultUrl) URL.revokeObjectURL(resultUrl);
+});
 });

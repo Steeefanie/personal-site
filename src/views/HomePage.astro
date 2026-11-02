@@ -53,7 +53,7 @@ const latestContent = (group: LatestGroup): Localized<LatestContent> => Object.f
         <p class="hero-intro"><LocalizedText value={ui.home.intro} /></p>
       </div>
       <div class="hero-aside">
-        <div class="hero-note">
+        <div class="hero-note glass-surface glass-surface--static">
           <strong><LocalizedText value={ui.home.aboutTitle} /></strong>
           <p class="hero-about-text"><LocalizedText value={ui.home.aboutText} /></p>
         </div>
@@ -61,7 +61,7 @@ const latestContent = (group: LatestGroup): Localized<LatestContent> => Object.f
           <span class="hero-email">Contact: taichieh3@gmail.com</span>
           <div class="hero-contact-actions">
             <button
-              class="hero-contact-button"
+              class="hero-contact-button glass-button"
               type="button"
               data-guestbook-open
               aria-label={ui.guestbook.open[locale]}
@@ -70,8 +70,8 @@ const latestContent = (group: LatestGroup): Localized<LatestContent> => Object.f
                 <path d="M5.5 5.5h13a2 2 0 0 1 2 2v7.5a2 2 0 0 1-2 2H11l-4.7 3.2.85-3.2H5.5a2 2 0 0 1-2-2V7.5a2 2 0 0 1 2-2Z" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" />
               </svg>
             </button>
-            <a class="hero-contact-button" href="https://github.com/Steeefanie" target="_blank" rel="noreferrer" aria-label="GitHub">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
+            <a class="hero-contact-button glass-button" href="https://github.com/Steeefanie" target="_blank" rel="noreferrer" aria-label="GitHub">
+              <svg viewBox="-1.64 -0.63 24 24" aria-hidden="true">
                 <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3.28-.36 6.72-1.61 6.72-7a5.4 5.4 0 0 0-1.42-3.73 5 5 0 0 0-.08-3S17.06.4 14 2.25a13.38 13.38 0 0 0-7 0C3.94.4 2.78.77 2.78.77a5 5 0 0 0-.08 3A5.4 5.4 0 0 0 1.28 7.5c0 5.42 3.44 6.67 6.72 7C7.31 15.1 6.69 16.25 7 17.5V22" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" />
                 <path d="M7 18c-4.51 2-5-2-7-2" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" />
               </svg>
@@ -96,11 +96,11 @@ const latestContent = (group: LatestGroup): Localized<LatestContent> => Object.f
           <span class="service-card-icon service-card-icon--elements" aria-hidden="true">
             <ServiceBadgeArt kind="elements" />
           </span>
-          <span class="service-app-label" id="four-elements-service-label"><LocalizedText value={text('星象测试', '星象測試', 'Star elements test (Chinese)')} /></span>
+          <span class="service-app-label" id="four-elements-service-label"><LocalizedText value={text('星象测试', '星象測試', 'Star elements test')} /></span>
         </a>
         <a class="service-app" href={localizedPath(locale, '/services/seven-traits/')} data-service-link aria-labelledby="seven-traits-service-label">
           <span class="service-card-icon service-card-icon--traits" aria-hidden="true"><SevenTraitsIcon /></span>
-          <span class="service-app-label" id="seven-traits-service-label"><LocalizedText value={text('七宗罪 × 七美德', '七宗罪 × 七美德', 'Seven sins × seven virtues')} /><br /><LocalizedText value={text('测试', '測試', 'Test')} /></span>
+          <span class="service-app-label" id="seven-traits-service-label"><LocalizedText value={text('七宗罪 × 七美德', '七宗罪 × 七美德', 'Seven sins × seven virtues')} /><br /><LocalizedText value={text('测试', '測試', ' test')} /></span>
         </a>
       </div>
     </section>
@@ -109,7 +109,7 @@ const latestContent = (group: LatestGroup): Localized<LatestContent> => Object.f
       <div class="section-heading">
         <h2 id="latest-heading"><LocalizedText value={ui.home.latest} /></h2>
       </div>
-      <ul class="content-list">
+      <ul class="content-list text-list">
         {latest.map(({ section, group, base }) => (
           <LatestListItem
             section={section}
@@ -194,7 +194,7 @@ const latestContent = (group: LatestGroup): Localized<LatestContent> => Object.f
     --service-icon-shadow: 0 2px 6px rgb(255 255 255 / .025), 0 7px 16px rgb(255 255 255 / .015);
   }
 
-  .service-app:hover .service-card-icon {
+  :global(:root:not([data-input-modality='touch'])) .service-app:hover .service-card-icon {
     transform: translateY(-2px) scale(1.015);
   }
 
@@ -223,7 +223,12 @@ const latestContent = (group: LatestGroup): Localized<LatestContent> => Object.f
 </style>
 
 <script>
-  document.querySelectorAll<HTMLAnchorElement>('[data-service-link]').forEach((serviceLink) => serviceLink.addEventListener('click', () => {
+
+import { onPageLoad } from '../scripts/page-lifecycle';
+onPageLoad((scope) => {
+  if (!document.querySelector('[data-service-link]')) return;
+  const addEventListener = scope.onWindow;
+document.querySelectorAll<HTMLAnchorElement>('[data-service-link]').forEach((serviceLink) => serviceLink.addEventListener('click', () => {
     try { sessionStorage.setItem('home-service-scroll-y', String(window.scrollY)); } catch (_) { /* Storage may be unavailable. */ }
   }));
 
@@ -236,5 +241,6 @@ const latestContent = (group: LatestGroup): Localized<LatestContent> => Object.f
     } catch (_) { /* Storage may be unavailable. */ }
   };
   restoreHomeScroll();
-  window.addEventListener('pageshow', restoreHomeScroll);
+  addEventListener('pageshow', restoreHomeScroll);
+});
 </script>

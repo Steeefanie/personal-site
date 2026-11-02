@@ -1,6 +1,6 @@
 ---
 import LocalizedText from './LocalizedText.astro';
-import { ui } from '../lib/i18n';
+import { text, ui } from '../lib/i18n';
 import { localeFromPathname } from '../lib/routes';
 
 type SearchScope = 'all' | 'blog' | 'projects' | 'recipes';
@@ -17,8 +17,14 @@ const scopes = [
 ] as const;
 ---
 
-<section id="search-panel" class="header-panel search-panel" data-panel="search" data-default-scope={defaultScope} aria-labelledby="search-panel-title" hidden>
+<section id="search-panel" class="header-panel search-panel glass-surface glass-surface--panel" role="dialog" aria-modal="true" data-glass="search" data-panel="search" data-default-scope={defaultScope} aria-labelledby="search-panel-title" hidden>
   <div class="site-shell panel-inner search-panel-inner">
+    <div class="search-panel-heading">
+      <h2><LocalizedText value={ui.common.search} /></h2>
+      <button class="utility-button glass-button" type="button" data-panel-close aria-label={text('关闭搜索', '關閉搜尋', 'Close search')[locale]}>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" /></svg>
+      </button>
+    </div>
     <div class="search-field-wrap">
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.75" cy="10.75" r="6.75" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="m15.7 15.7 4.05 4.05" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
       <label id="search-panel-title" class="sr-only" for="site-search"><LocalizedText value={ui.search.label} /></label>
@@ -31,7 +37,7 @@ const scopes = [
         placeholder={ui.search.placeholder[locale]}
       />
     </div>
-    <div class="filter-options search-scopes" role="group" aria-label={ui.common.searchSection[locale]}>
+    <div class="filter-options search-scopes glass-control" role="group" aria-label={ui.common.searchSection[locale]}>
       {scopes.map((scope) => (
         <button type="button" class="filter-chip" data-search-scope={scope.id} aria-pressed={scope.id === defaultScope ? 'true' : 'false'}>
           <LocalizedText value={scope.label} />
@@ -178,6 +184,10 @@ const scopes = [
   };
 
   input?.addEventListener('input', () => { void renderResults(); });
+  panel?.addEventListener('keydown', (event) => {
+    if (event.key === 'Tab') panel.dataset.keyboardFocus = 'true';
+  });
+  panel?.addEventListener('pointerdown', () => panel.removeAttribute('data-keyboard-focus'));
   input?.addEventListener('keydown', (event) => {
     if (event.key === 'ArrowDown') { event.preventDefault(); setActive(activeIndex + 1); }
     if (event.key === 'ArrowUp') { event.preventDefault(); setActive(activeIndex - 1); }
@@ -200,7 +210,9 @@ const scopes = [
 
   window.addEventListener('site:panel-opened', (event) => {
     if ((event as CustomEvent).detail?.panel !== 'search') return;
-    selectScope(defaultScope);
+    panel?.removeAttribute('data-keyboard-focus');
+    const candidate = panel?.dataset.defaultScope;
+    selectScope(candidate === 'blog' || candidate === 'projects' || candidate === 'recipes' ? candidate : 'all');
     requestAnimationFrame(() => input?.focus());
     void renderResults();
     void loadIndex();

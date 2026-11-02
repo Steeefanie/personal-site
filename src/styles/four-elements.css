@@ -42,7 +42,7 @@
 .fe-secondary { border: 1px solid var(--border); background: var(--surface); color: var(--text); }
 .fe-app button:disabled { opacity: .4; cursor: default; }
 .fe-app .fe-text-button { background: none; color: var(--muted); border: none; padding-left: 0; padding-right: 0; text-decoration: none; }
-.fe-text-button:hover { color: var(--text); }
+.fe-text-button:hover:where(:root:not([data-input-modality='touch']) *) { color: var(--text); }
 .fe-app .fe-small, .fe-disclaimer, .fe-page-help, .fe-language-note { font-size: .82rem; color: var(--muted); line-height: 1.8; }
 .fe-disclaimer { margin: 20px 0; max-width: 60em; }
 .fe-app [data-fe-resume] { margin: 16px 0 0; }
@@ -70,7 +70,7 @@
 .fe-options small { font-size: .72rem; line-height: 1.6; text-align: center; margin-top: 4px; }
 .fe-options input:checked + span { border-color: var(--brand-readable); color: var(--brand-readable); background: var(--brand-soft); box-shadow: inset 0 0 0 1px var(--brand-readable); }
 .fe-options input:focus-visible + span { outline: 2px solid var(--focus); outline-offset: 3px; }
-.fe-options label:hover > span { border-color: var(--brand-readable); }
+.fe-options label:hover:where(:root:not([data-input-modality='touch']) *) > span { border-color: var(--brand-readable); }
 .fe-forced { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .fe-forced label > span { align-items: start; padding: 16px; }
 .fe-forced small { text-align: left; font-size: .85rem; }
@@ -111,9 +111,9 @@
 .fe-app .fe-boundary { color: var(--muted); font-size: .8rem; margin-top: 20px; margin-bottom: 0; }
 .fe-answer-section { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; margin-bottom: 20px; }
 .fe-source-slot { grid-area: 1 / 1 / 2 / 3; min-width: 0; }
-.fe-source-slot .fe-report-sources > summary { max-width: calc(100% - 90px); padding-block: 0; line-height: 44px; }
+.fe-source-slot .fe-report-sources > summary { max-width: calc(100% - 120px); padding-block: 0; line-height: 48px; }
 .fe-answer-details { grid-area: 1 / 1 / 2 / 3; padding: 0; margin: 0; font-size: .85rem; }
-.fe-answer-details > summary { width: fit-content; max-width: calc(100% - 90px); }
+.fe-answer-details > summary { width: fit-content; max-width: calc(100% - 120px); }
 .fe-app .fe-answer-clear { grid-area: 1 / 2; position: relative; align-self: start; height: 44px; min-height: 44px; padding: 0; font-size: .85rem; }
 .fe-answer-details summary { cursor: pointer; }
 .fe-answer-details ol { list-style: none; padding: 0; margin-top: 12px; }
@@ -144,7 +144,7 @@
 .fe-method, .fe-report-sources { color: var(--muted); font-size: .85rem; margin-bottom: 24px; }
 .fe-method > summary, .fe-report-sources > summary { width: fit-content; }
 .fe-answer-details > summary, .fe-report-sources > summary { color: var(--muted); }
-.fe-answer-details > summary:hover, .fe-report-sources > summary:hover { color: var(--text); }
+.fe-answer-details > summary:hover:where(:root:not([data-input-modality='touch']) *), .fe-report-sources > summary:hover:where(:root:not([data-input-modality='touch']) *) { color: var(--text); }
 .fe-method h3, .fe-report-sources h3 { font-size: 1rem; margin: 24px 0 10px; font-weight: 500; color: var(--text); }
 .fe-method .prose { font-size: .9rem; }
 .fe-report-sources ul { padding-left: 1.5em; }

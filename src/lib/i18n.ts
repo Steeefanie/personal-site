@@ -105,8 +105,8 @@ export const ui = {
     category: text('类别', '類別', 'Category'),
   },
   category: {
-    'home-cooking': text('家常菜', '家常菜', 'Home cooking'),
-    flour: text('面食', '麵食', 'Flour dishes'),
-    cocktail: text('鸡尾酒', '調酒', 'Cocktail'),
+    'home-cooking': text('家常菜', '家常菜', 'Meals'),
+    flour: text('面食', '麵食', 'Dough'),
+    cocktail: text('鸡尾酒', '調酒', 'Cocktails'),
   },
 } as const;

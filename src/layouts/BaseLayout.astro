@@ -1,10 +1,13 @@
 ---
 import SiteHeader from '../components/SiteHeader.astro';
+import { ClientRouter } from 'astro:transitions';
 import SiteFooter from '../components/SiteFooter.astro';
 import LocalizedText from '../components/LocalizedText.astro';
 import { locales, text, ui, type Locale, type Localized } from '../lib/i18n';
 import { localizedAbsoluteUrls, logicalPathname, openGraphLocales } from '../lib/routes';
 import '../styles/global.css';
+import '../styles/surfaces.css';
+import '../styles/controls.css';
 
 interface Props {
   titles?: Localized<string>;
@@ -35,10 +38,12 @@ const alternateLocales = locales.filter((candidate) => candidate !== locale);
 ---
 
 <!doctype html>
-<html lang={locale} data-language={locale}>
+<html lang={locale} data-language={locale} transition:animate="none">
   <head>
+    <ClientRouter />
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="/fonts/site/fonts.css" />
     <meta name="description" content={description} />
     <meta name="theme-color" content="#f5f5f5" />
     <link rel="canonical" href={canonicalUrl} />
@@ -56,7 +61,7 @@ const alternateLocales = locales.filter((candidate) => candidate !== locale);
     <link rel="alternate" hreflang="x-default" href={xDefaultUrl} />
     <link id="site-favicon" rel="icon" href="/brand/favicon-light-nobg.svg" type="image/svg+xml" />
     <title>{title}</title>
-    <script is:inline>
+    <script is:inline data-astro-rerun>
       (() => {
         try {
           const savedTheme = localStorage.getItem('theme');
@@ -75,7 +80,7 @@ const alternateLocales = locales.filter((candidate) => candidate !== locale);
         }
       })();
     </script>
-    <script is:inline>
+    <script is:inline data-astro-rerun>
       (() => {
         try {
           const raw = sessionStorage.getItem('language-route-scroll');
@@ -100,7 +105,11 @@ const alternateLocales = locales.filter((candidate) => candidate !== locale);
     </main>
     <SiteFooter />
     <script>
-      try {
+
+import { onPageLoad } from '../scripts/page-lifecycle';
+onPageLoad((scope) => {
+  const addEventListener = scope.onWindow;
+try {
         const key = 'language-route-scroll';
         const raw = sessionStorage.getItem(key);
         if (raw) {
@@ -177,6 +186,11 @@ const alternateLocales = locales.filter((candidate) => candidate !== locale);
           } else sessionStorage.removeItem(key);
         }
       } catch (_) { /* Storage or stored data may be unavailable. */ }
+});
+</script>
+    <script>
+      import '../scripts/input-modality';
+      import '../scripts/webgl-glass';
     </script>
   </body>
 </html>

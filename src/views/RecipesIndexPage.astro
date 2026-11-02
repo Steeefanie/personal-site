@@ -19,6 +19,7 @@ const recipes = pairEntries(entries);
 
 <BaseLayout activeNav="recipes" titles={text('食谱｜Steeefanie', '食譜｜Steeefanie', 'Recipes | Steeefanie')} descriptions={text('记录做过的菜、调过的酒，以及值得在下一次调整的细节。', '記錄做過的菜、調過的酒，以及下次值得調整的細節。', 'Dishes I’ve cooked, drinks I’ve mixed, and the details worth adjusting next time.')} locale={locale}>
   <div class="site-shell">
+    <h1 class="sr-only">{text('食谱', '食譜', 'Recipes')[locale]}</h1>
     <section class="listing-section recipes-listing" data-recipe-listing data-view="grid" aria-label={text('食谱', '食譜', 'Recipes')[locale]}>
       <div class="recipe-toolbar">
         <ListingFilters showLabels={false} groups={[
@@ -37,3 +38,7 @@ const recipes = pairEntries(entries);
     </section>
   </div>
 </BaseLayout>
+
+<script>
+  import '../scripts/recipe-toolbar';
+</script>

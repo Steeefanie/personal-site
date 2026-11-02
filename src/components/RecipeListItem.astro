@@ -24,6 +24,7 @@ interface Props {
 const { slug, locales: entries, locale, priority = false } = Astro.props;
 const entry = entries[locale];
 const cover = entry.cover;
+const keepTitleEnding = slug === 'lemon-onion-corn-chicken' && locale !== 'en';
 ---
 
 <li class="content-list-item" data-filter-item data-category={entry.category}>
@@ -32,7 +33,7 @@ const cover = entry.cover;
       {cover && <img class="recipe-image" src={cover} alt="" width="256" height="256" loading={priority ? 'eager' : 'lazy'} decoding="async" />}
     </div>
     <div class="recipe-copy">
-      <h2 class="item-title">{entry.title}</h2>
+      <h2 class="item-title">{keepTitleEnding ? <>{entry.title.slice(0, -3)}<span class="recipe-title-ending">{entry.title.slice(-3)}</span></> : entry.title}</h2>
       <p class="item-description">{entry.description}</p>
     </div>
     <div class="item-meta">

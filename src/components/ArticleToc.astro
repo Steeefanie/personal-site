@@ -27,7 +27,7 @@ const labels = {
 ---
 
 {shouldRender && (
-  <div class="article-toc" data-article-toc data-open="false" data-mode="overlay">
+  <div class="article-toc" data-article-toc data-open="false" data-mode="overlay" data-toc-motion="initial">
     <button
       class="article-toc-toggle"
       type="button"
@@ -38,6 +38,7 @@ const labels = {
       data-open-label={labels.open[locale]}
       data-close-label={labels.close[locale]}
     >
+      <span class="article-toc-toggle-surface glass-surface" data-glass="contents" aria-hidden="true"></span>
       <svg class="article-toc-list-icon" viewBox="0 0 24 24" aria-hidden="true">
         <circle cx="5" cy="6" r="1.25"></circle>
         <circle cx="5" cy="12" r="1.25"></circle>
@@ -49,16 +50,16 @@ const labels = {
       </svg>
     </button>
 
-    <button class="article-toc-backdrop" type="button" tabindex="-1" aria-label={labels.close[locale]} data-article-toc-backdrop></button>
-
     <aside
-      class="article-toc-panel"
+      class="article-toc-panel glass-menu"
       id="article-toc-panel"
       aria-labelledby="article-toc-title"
       aria-hidden="true"
       inert
       data-article-toc-panel
     >
+      <div class="top-chrome-surface glass-surface article-toc-panel-surface" data-glass="contents" aria-hidden="true"></div>
+      <div class="article-toc-content">
       <header class="article-toc-header">
         <strong id="article-toc-title"><LocalizedText value={labels.title} /></strong>
         <button class="article-toc-reset" type="button" hidden data-article-toc-reset>
@@ -67,15 +68,13 @@ const labels = {
       </header>
 
       <nav class="article-toc-nav" aria-labelledby="article-toc-title">
-        <ol>
+        <div class="toc-choice-group menu-choice-group" data-article-toc-list>
           {visibleHeadings.map((heading) => (
-            <li data-depth={heading.depth}>
-              <a href={`#${heading.slug}`} data-article-toc-link data-slug={heading.slug} data-depth={heading.depth}>
-                <span data-article-toc-title>{heading.text}</span>
-              </a>
-            </li>
+            <a class="mobile-nav-link" href={`#${heading.slug}`} data-article-toc-link data-slug={heading.slug} data-depth={heading.depth}>
+              <span data-article-toc-title>{heading.text}</span>
+            </a>
           ))}
-        </ol>
+        </div>
       </nav>
 
       <div
@@ -88,6 +87,7 @@ const labels = {
         tabindex="0"
         data-article-toc-resizer
       ></div>
+      </div>
     </aside>
   </div>
 )}

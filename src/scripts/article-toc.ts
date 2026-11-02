@@ -1,3 +1,8 @@
+
+
+import { onPageLoad } from './page-lifecycle';
+onPageLoad((scope) => {
+  const addEventListener = scope.onWindow;
 const root = document.querySelector<HTMLElement>('[data-article-toc]');
 
 if (root && root.dataset.initialized !== 'true') {
@@ -5,12 +10,10 @@ if (root && root.dataset.initialized !== 'true') {
 
   const panel = root.querySelector<HTMLElement>('[data-article-toc-panel]');
   const toggle = root.querySelector<HTMLButtonElement>('[data-article-toc-toggle]');
-  const backdrop = root.querySelector<HTMLButtonElement>('[data-article-toc-backdrop]');
   const resizer = root.querySelector<HTMLElement>('[data-article-toc-resizer]');
   const resetButton = root.querySelector<HTMLButtonElement>('[data-article-toc-reset]');
   const panelHeader = root.querySelector<HTMLElement>('.article-toc-header');
   const panelNav = root.querySelector<HTMLElement>('.article-toc-nav');
-  const page = document.querySelector<HTMLElement>('[data-article-toc-page]');
   const storageKey = 'article-toc-width';
   const minWidth = 240;
   const maxWidth = 440;
@@ -18,6 +21,10 @@ if (root && root.dataset.initialized !== 'true') {
   const maxAutoWidth = 380;
   const fixedPanelSpace = 72;
   let open = false;
+  let initializing = true;
+  let layoutMode: string | undefined;
+  let dragStartX = 0;
+  let dragStartWidth = 0;
   let currentWidth = 300;
   let automaticWidth = 300;
   let manualWidth: number | null = null;
@@ -25,6 +32,15 @@ if (root && root.dataset.initialized !== 'true') {
   let pendingDragWidth = 0;
   let scrollFrame = 0;
   let measurementFrame = 0;
+  let closeAnimationTimer = 0;
+  scope.cleanup(() => {
+    open = false;
+    clearTimeout(closeAnimationTimer);
+    [dragFrame, scrollFrame, measurementFrame].forEach(cancelAnimationFrame);
+    for (const name of ['data-article-toc-open', 'data-article-toc-mode', 'data-article-toc-resizing', 'data-article-toc-layout']) {
+      document.documentElement.removeAttribute(name);
+    }
+  });
 
   const numberToken = (name: string, fallback: number) => {
     const value = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name));
@@ -37,7 +53,7 @@ if (root && root.dataset.initialized !== 'true') {
   const viewportMaximum = () => Math.max(minWidth, Math.min(maxWidth, layoutViewportWidth() - panelEdge() * 2));
   const preferredWidth = () => manualWidth ?? automaticWidth;
   const headingTopOffset = (headerVisible: boolean) => (
-    (headerVisible ? numberToken('--header-height', 72) : 0)
+    (headerVisible ? numberToken('--header-height', 72) + numberToken('--chrome-top', 12) : 0)
     + (root.dataset.mode === 'overlay' ? panelEdge() + 56 : 24)
   );
 
@@ -65,7 +81,7 @@ if (root && root.dataset.initialized !== 'true') {
   };
 
   const syncPanelHeight = () => {
-    const activeList = root.querySelector<HTMLOListElement>('.article-toc-nav > ol');
+    const activeList = root.querySelector<HTMLElement>('[data-article-toc-list]');
     if (!activeList || !panelNav) return;
 
     // Measure the list at its expanded width without resizing the visible shell.
@@ -86,7 +102,19 @@ if (root && root.dataset.initialized !== 'true') {
         ? toggle.dataset.closeLabel ?? 'Close contents'
         : toggle.dataset.openLabel ?? 'Open contents');
     }
-    if (backdrop) backdrop.setAttribute('aria-label', toggle?.dataset.closeLabel ?? 'Close contents');
+  };
+
+  const syncControlPosition = () => {
+    if (panel?.classList.contains('is-closing')) return;
+    const headerTop = numberToken('--chrome-top', 12) + (numberToken('--header-height', 72) - 56) / 2;
+    const brand = document.querySelector<HTMLElement>('.top-chrome > .site-name')?.getBoundingClientRect();
+    const left = brand?.left ?? Math.max(16, (layoutViewportWidth() - numberToken('--content-wide', 1080)) / 2);
+    const overlay = root.dataset.mode === 'overlay';
+    const top = overlay ? headerTop : Math.max(headerTop, (brand?.bottom ?? headerTop + 24) + 24);
+    root.style.setProperty('--toc-toggle-left', `${left}px`);
+    root.style.setProperty('--toc-toggle-top', `${top}px`);
+    root.style.setProperty('--toc-panel-left', `${left}px`);
+    root.style.setProperty('--article-toc-top', `${top + 64}px`);
   };
 
   const updateLayoutMode = () => {
@@ -97,13 +125,15 @@ if (root && root.dataset.initialized !== 'true') {
     const reservedWidth = currentWidth + panelEdge() * 2;
     const canDock = viewportWidth - reservedWidth >= originalContentWidth + gutter * 2;
     const mode = canDock ? 'dock' : 'overlay';
+    const changed = layoutMode !== mode;
+    layoutMode = mode;
     root.dataset.mode = mode;
+    document.documentElement.dataset.articleTocLayout = mode;
+    if (changed) setOpen(mode === 'dock');
+    syncControlPosition();
 
     if (open) {
       document.documentElement.dataset.articleTocMode = mode;
-      if (page) page.inert = mode === 'overlay';
-    } else if (page) {
-      page.inert = false;
     }
   };
 
@@ -153,6 +183,7 @@ if (root && root.dataset.initialized !== 'true') {
 
   const updateActiveHeading = () => {
     scrollFrame = 0;
+    syncControlPosition();
     const headings = contentHeadings();
     if (headings.length === 0) return;
     const headerHidden = document.querySelector('.site-header')?.classList.contains('is-hidden') ?? false;
@@ -177,14 +208,27 @@ if (root && root.dataset.initialized !== 'true') {
     scrollFrame = requestAnimationFrame(updateActiveHeading);
   };
 
-  const setOpen = (nextOpen: boolean, restoreFocus = false, focusCurrentLink = false) => {
+  const setOpen = (nextOpen: boolean, restoreFocus = false, focusCurrentLink = false, animate = !initializing) => {
     if (!panel || !toggle) return;
+    root.dataset.tocMotion = animate ? 'interactive' : 'initial';
+    const animateClose = animate && open && !nextOpen && !matchMedia('(prefers-reduced-motion: reduce)').matches;
+    clearTimeout(closeAnimationTimer);
+    panel.classList.remove('is-closing');
     open = nextOpen;
-    root.dataset.open = String(open);
+    root.dataset.open = String(open || animateClose);
+    if (animateClose) {
+      panel.classList.add('is-closing');
+      closeAnimationTimer = window.setTimeout(() => {
+        panel.classList.remove('is-closing');
+        root.dataset.open = 'false';
+        syncControlPosition();
+      }, 180);
+    }
     toggle.setAttribute('aria-expanded', String(open));
     panel.setAttribute('aria-hidden', String(!open));
     panel.inert = !open;
     syncLabels();
+    syncControlPosition();
 
     if (open) {
       applyWidth(preferredWidth());
@@ -210,7 +254,6 @@ if (root && root.dataset.initialized !== 'true') {
     } else {
       document.documentElement.removeAttribute('data-article-toc-open');
       document.documentElement.removeAttribute('data-article-toc-mode');
-      if (page) page.inert = false;
       if (restoreFocus) toggle.focus();
     }
   };
@@ -233,10 +276,10 @@ if (root && root.dataset.initialized !== 'true') {
     if (persist) saveManualWidth();
   };
 
-  toggle?.addEventListener('click', (event) => setOpen(!open, open, event.detail === 0));
-  backdrop?.addEventListener('click', () => setOpen(false, true));
-  backdrop?.addEventListener('wheel', closeOverlayOnContentScroll, { passive: true });
-  backdrop?.addEventListener('touchmove', closeOverlayOnContentScroll, { passive: true });
+  toggle?.addEventListener('click', (event) => setOpen(!open, open, event.detail === 0, true));
+  addEventListener('pointerdown', (event) => {
+    if (open && root.dataset.mode === 'overlay' && !root.contains(event.target as Node)) setOpen(false);
+  });
   resetButton?.addEventListener('click', resetAutomaticWidth);
 
   root.querySelectorAll<HTMLAnchorElement>('[data-article-toc-link]').forEach((link) => {
@@ -250,7 +293,7 @@ if (root && root.dataset.initialized !== 'true') {
       if (overlay) setOpen(false);
       const url = new URL(location.href);
       url.hash = slug;
-      history.pushState(null, '', url);
+      history.pushState(history.state, '', url);
 
       const targetTop = window.scrollY + target.getBoundingClientRect().top;
       const headerHidden = document.querySelector('.site-header')?.classList.contains('is-hidden') ?? false;
@@ -272,13 +315,15 @@ if (root && root.dataset.initialized !== 'true') {
     if (event.button !== 0) return;
     event.preventDefault();
     resizer.setPointerCapture(event.pointerId);
+    dragStartX = event.clientX;
+    dragStartWidth = currentWidth;
     root.dataset.resizing = 'true';
     document.documentElement.dataset.articleTocResizing = 'true';
   });
 
   resizer?.addEventListener('pointermove', (event) => {
     if (!resizer.hasPointerCapture(event.pointerId)) return;
-    pendingDragWidth = event.clientX - panelEdge();
+    pendingDragWidth = dragStartWidth + event.clientX - dragStartX;
     if (dragFrame) return;
     dragFrame = requestAnimationFrame(() => {
       dragFrame = 0;
@@ -335,8 +380,9 @@ if (root && root.dataset.initialized !== 'true') {
     // Font and stylesheet loading can resize the contents after initialization.
     // Watching only the clipped panel leaves an early, undersized measurement stuck.
     observer.observe(panel ?? root);
+    scope.cleanup(() => observer.disconnect());
     if (panelHeader) observer.observe(panelHeader);
-    const list = root.querySelector<HTMLOListElement>('.article-toc-nav > ol');
+    const list = root.querySelector<HTMLElement>('[data-article-toc-list]');
     if (list) observer.observe(list);
   }
   manualWidth = readStoredWidth();
@@ -345,11 +391,13 @@ if (root && root.dataset.initialized !== 'true') {
   refreshAutomaticWidth();
   if (manualWidth !== null) applyWidth(manualWidth);
   updateActiveHeading();
-  void document.fonts?.ready.then(() => {
+  void Promise.resolve(document.fonts?.ready).then(() => {
+    if (!root.isConnected) return;
     if (manualWidth === null) refreshAutomaticWidth();
     else syncPanelHeight();
     updateLayoutMode();
     queueActiveHeadingUpdate();
+    initializing = false;
   });
   const refreshMeasurements = () => {
     if (manualWidth === null) refreshAutomaticWidth();
@@ -360,3 +408,4 @@ if (root && root.dataset.initialized !== 'true') {
   else addEventListener('load', refreshMeasurements, { once: true });
   addEventListener('pageshow', refreshMeasurements);
 }
+});

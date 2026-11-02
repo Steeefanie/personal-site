@@ -126,4 +126,5 @@ const darkLabels = text('切换到深色模式', '切換至深色模式', 'Switc
   });
 
   updateThemeLabel();
+  document.addEventListener('astro:page-load', updateThemeLabel);
 </script>

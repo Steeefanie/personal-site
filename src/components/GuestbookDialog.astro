@@ -8,8 +8,9 @@ const locale = localeFromPathname(Astro.url.pathname);
 ---
 
 <dialog
-  class="guestbook-dialog"
+  class="guestbook-dialog glass-surface glass-surface--panel"
   data-guestbook-dialog
+  data-glass="dialog"
   tabindex="-1"
   autofocus
   aria-labelledby="guestbook-title"
@@ -47,9 +48,10 @@ const locale = localeFromPathname(Astro.url.pathname);
 </dialog>
 
 <script>
-  import { lockPageScroll, unlockPageScroll } from '../lib/scroll-lock';
-
-  const dialog = document.querySelector<HTMLDialogElement>('[data-guestbook-dialog]');
+import { lockPageScroll, unlockPageScroll } from '../lib/scroll-lock';
+import { onPageLoad } from '../scripts/page-lifecycle';
+onPageLoad((scope) => {
+const dialog = document.querySelector<HTMLDialogElement>('[data-guestbook-dialog]');
   const openButton = document.querySelector<HTMLButtonElement>('[data-guestbook-open]');
   const closeButton = dialog?.querySelector<HTMLButtonElement>('[data-guestbook-close]');
   let closeTimer = 0;
@@ -77,7 +79,7 @@ const locale = localeFromPathname(Astro.url.pathname);
     window.dispatchEvent(new CustomEvent('site:guestbook-closing'));
     window.clearTimeout(closeTimer);
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) finishClose();
-    else closeTimer = window.setTimeout(finishClose, 220);
+    else closeTimer = window.setTimeout(finishClose, 180);
   };
 
   openButton?.addEventListener('click', () => {
@@ -102,4 +104,7 @@ const locale = localeFromPathname(Astro.url.pathname);
     event.preventDefault();
     requestClose();
   });
+
+  scope.cleanup(finishClose);
+});
 </script>

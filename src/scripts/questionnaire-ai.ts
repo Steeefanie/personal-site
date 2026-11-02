@@ -34,6 +34,7 @@ export function createQuestionnaireAiClient<A extends unknown[], R>(getAnswers: 
   };
   return {
     generate,
+    dispose() { revision++; controller?.abort(); },
     getReport: () => config.isComplete(getAnswers()) && current?.answersKey === answerKey(getAnswers()) ? current.report : undefined,
     invalidate() {
       revision++; controller?.abort(); current = undefined;

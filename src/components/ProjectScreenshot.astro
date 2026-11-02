@@ -31,7 +31,11 @@ const placeholder = `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http:/
 <noscript><style>[data-themed-image] { display: none !important; }</style></noscript>
 
 <script>
-  const updateScreenshots = () => {
+
+import { onPageLoad } from '../scripts/page-lifecycle';
+onPageLoad((scope) => {
+  const addEventListener = scope.onWindow;
+const updateScreenshots = () => {
     const theme = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
     document.querySelectorAll<HTMLAnchorElement>('[data-project-screenshot]').forEach((link) => {
       const { base, width, smallWidth } = link.dataset;
@@ -43,7 +47,8 @@ const placeholder = `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http:/
     });
   };
   updateScreenshots();
-  window.addEventListener('site:theme-change', updateScreenshots);
+  addEventListener('site:theme-change', updateScreenshots);
+});
 </script>
 
 <style>

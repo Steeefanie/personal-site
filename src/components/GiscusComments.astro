@@ -47,11 +47,20 @@ const errorText = text(
 </div>
 
 <script>
-  type Locale = 'zh-CN' | 'zh-TW' | 'en';
+
+import { onPageLoad } from '../scripts/page-lifecycle';
+import { mountCommentsPreview } from '../scripts/comments-preview';
+onPageLoad((scope) => {
+  const addEventListener = scope.onWindow;
+type Locale = 'zh-CN' | 'zh-TW' | 'en';
   type Theme = 'light' | 'dark';
 
   const roots = [...document.querySelectorAll<HTMLElement>('[data-giscus-root]')];
   const localThemeCache = new Map<string, Promise<string>>();
+  const loadTimers = new Map<HTMLElement, number>();
+  let disposed = false;
+  const preview = import.meta.env.DEV && new URLSearchParams(location.search).get('comments-preview') === '1';
+  scope.cleanup(() => { disposed = true; loadTimers.forEach((timer) => window.clearTimeout(timer)); });
 
   const currentLocale = (): Locale => {
     const value = document.documentElement.dataset.language;
@@ -98,11 +107,15 @@ const errorText = text(
   };
 
   const showError = (root: HTMLElement) => {
+    root.dataset.giscusState = 'error';
+    window.clearTimeout(loadTimers.get(root));
     root.querySelector<HTMLElement>('[data-giscus-status]')?.setAttribute('hidden', '');
     root.querySelector<HTMLElement>('[data-giscus-error]')?.removeAttribute('hidden');
   };
 
   const showFrame = (root: HTMLElement) => {
+    root.dataset.giscusState = 'ready';
+    window.clearTimeout(loadTimers.get(root));
     root.querySelector<HTMLElement>('[data-giscus-status]')?.setAttribute('hidden', '');
     root.querySelector<HTMLElement>('[data-giscus-error]')?.setAttribute('hidden', '');
   };
@@ -115,6 +128,13 @@ const errorText = text(
   const mountGiscus = async (root: HTMLElement) => {
     if (root.dataset.initialized === 'true') return;
     root.dataset.initialized = 'true';
+    root.dataset.giscusState = 'loading';
+
+    if (preview && root.dataset.giscusMode === 'guestbook') {
+      try { await mountCommentsPreview(root, scope.cleanup, () => showFrame(root)); }
+      catch { showError(root); }
+      return;
+    }
 
     if (root.dataset.giscusReady !== 'true') {
       showError(root);
@@ -126,13 +146,6 @@ const errorText = text(
       showError(root);
       return;
     }
-
-    const observer = new MutationObserver(() => {
-      if (!root.querySelector('iframe.giscus-frame')) return;
-      showFrame(root);
-      observer.disconnect();
-    });
-    observer.observe(mount, { childList: true, subtree: true });
 
     const script = document.createElement('script');
     script.src = 'https://giscus.app/client.js';
@@ -146,6 +159,7 @@ const errorText = text(
     script.dataset.emitMetadata = '0';
     script.dataset.inputPosition = 'top';
     script.dataset.theme = await themeFor(root, currentTheme());
+    if (disposed) return;
     script.dataset.lang = currentLocale();
 
     if (root.dataset.giscusMode === 'guestbook') {
@@ -160,38 +174,43 @@ const errorText = text(
     }
 
     script.addEventListener('error', () => {
-      observer.disconnect();
       showError(root);
     }, { once: true });
     mount.append(script);
 
-    window.setTimeout(() => {
-      if (!root.querySelector('iframe.giscus-frame')) showError(root);
-    }, 12000);
+    loadTimers.set(root, window.setTimeout(() => {
+      if (root.dataset.giscusState !== 'ready') showError(root);
+    }, 12000));
   };
 
   roots.forEach((root) => {
     if (root.dataset.giscusMode === 'article') void mountGiscus(root);
   });
 
-  window.addEventListener('site:guestbook-open', () => {
+  addEventListener('site:guestbook-open', () => {
     roots
       .filter((root) => root.dataset.giscusMode === 'guestbook')
       .forEach((root) => { void mountGiscus(root); });
   });
-  window.addEventListener('site:theme-change', () => {
+  addEventListener('site:theme-change', () => {
     const theme = currentTheme();
     roots.forEach((root) => {
+      if (root.dataset.giscusPreview === 'true') return;
       void themeFor(root, theme).then((value) => sendConfig(root, { theme: value }));
     });
   });
-  window.addEventListener('message', (event) => {
-    if (event.origin !== 'https://giscus.app' || !event.data?.giscus?.error) return;
-    const error = String(event.data.giscus.error).toLowerCase();
-    if (error.includes('discussion not found')) return;
+  addEventListener('message', (event) => {
+    if (event.origin !== 'https://giscus.app' || !event.data?.giscus) return;
     roots.forEach((root) => {
       const iframe = root.querySelector<HTMLIFrameElement>('iframe.giscus-frame');
-      if (iframe?.contentWindow === event.source) showError(root);
+      if (iframe?.contentWindow !== event.source) return;
+      const message = event.data.giscus;
+      if (message.error && !String(message.error).toLowerCase().includes('discussion not found')) {
+        showError(root);
+      } else if (root.dataset.giscusState !== 'error' && typeof message.resizeHeight === 'number' && Number.isFinite(message.resizeHeight) && message.resizeHeight > 0) {
+        showFrame(root);
+      }
     });
   });
+});
 </script>

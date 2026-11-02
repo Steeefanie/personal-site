@@ -1,3 +1,5 @@
+import { parseRecipeCategory, recipeCategorySlug } from '../lib/recipe-categories';
+
 interface ListingPosition {
   url: string;
   scrollY: number;
@@ -29,11 +31,14 @@ const readPosition = (key: string, pathname: string): ListingPosition | null => 
   }
 };
 
-export const rememberListingPosition = (section: HTMLElement) => {
+export const rememberListingPosition = (section: HTMLElement, listen: typeof window.addEventListener = addEventListener) => {
+  const pathname = location.pathname;
+  let url = currentUrl();
   const save = () => {
+    if (location.pathname === pathname) url = currentUrl();
     try {
-      sessionStorage.setItem(positionKey(location.pathname), JSON.stringify({
-        url: currentUrl(),
+      sessionStorage.setItem(positionKey(pathname), JSON.stringify({
+        url,
         scrollY: window.scrollY,
       } satisfies ListingPosition));
     } catch { /* Storage may be unavailable. */ }
@@ -43,7 +48,7 @@ export const rememberListingPosition = (section: HTMLElement) => {
   section.addEventListener('click', (event) => {
     if ((event.target as Element).closest('a[href]')) save();
   }, { capture: true });
-  addEventListener('pagehide', save);
+  listen('pagehide', save);
 
   const position = readPosition(returnKey, location.pathname);
   if (!position || position.url !== currentUrl()) return;
@@ -62,26 +67,26 @@ export const rememberListingPosition = (section: HTMLElement) => {
     removeEventListener('pointerdown', cancel);
     history.scrollRestoration = 'auto';
   };
-  addEventListener('wheel', cancel, { passive: true });
-  addEventListener('touchstart', cancel, { passive: true });
-  addEventListener('keydown', cancel);
-  addEventListener('pointerdown', cancel);
+  listen('wheel', cancel, { passive: true });
+  listen('touchstart', cancel, { passive: true });
+  listen('keydown', cancel);
+  listen('pointerdown', cancel);
   // Restore after filtering, then after pageshow/native scroll restoration.
   // A load handler alone can run before the browser resets a new entry to top.
   restore();
   const finishAfterPageShow = () => requestAnimationFrame(finish);
   if (document.readyState === 'complete') finishAfterPageShow();
-  else addEventListener('pageshow', finishAfterPageShow, { once: true });
+  else listen('pageshow', finishAfterPageShow, { once: true });
 };
 
-export const initializeListingBackLinks = () => {
+export const initializeListingBackLinks = (listen: typeof window.addEventListener = addEventListener) => {
   document.querySelectorAll<HTMLAnchorElement>('[data-listing-back]').forEach((link) => {
     const pathname = new URL(link.href).pathname;
     const sync = () => {
       const position = readPosition(positionKey(pathname), pathname);
       const category = new URLSearchParams(location.search).get('category');
-      if (pathname.endsWith('/recipes/') && ['home-cooking', 'flour', 'cocktail'].includes(category ?? '')) {
-        const fallback = `${pathname}?category=${category}`;
+      if (pathname.endsWith('/recipes/') && parseRecipeCategory(category)) {
+        const fallback = `${pathname}?category=${recipeCategorySlug(category!)}`;
         if (!position || new URL(position.url, location.origin).searchParams.get('category') !== category) {
           link.href = fallback;
           return null;
@@ -91,7 +96,7 @@ export const initializeListingBackLinks = () => {
       return position;
     };
     sync();
-    addEventListener('pageshow', sync);
+    listen('pageshow', sync);
     link.addEventListener('click', (event) => {
       const position = sync();
       if (!position || event.defaultPrevented || event.button !== 0

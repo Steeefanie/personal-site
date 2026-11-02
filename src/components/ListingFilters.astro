@@ -26,11 +26,14 @@ const { groups, showLabels = true } = Astro.props;
   {groups.map((group) => (
     <fieldset class:list={['filter-group', { 'filter-group--label-hidden': !showLabels }]} data-filter-group={group.key} data-filter-param={group.param}>
       <legend class:list={{ 'sr-only': !showLabels }}><LocalizedText value={group.label} /></legend>
-      <div class="filter-options">
+      <div class="filter-options-shell glass-control">
+        <div class="top-chrome-surface glass-surface" data-glass="control" aria-hidden="true"></div>
+        <div class="filter-options">
         <button type="button" class="filter-chip" data-filter-value="" aria-pressed="true"><LocalizedText value={ui.common.all} /></button>
         {group.options.map((option) => (
           <button type="button" class="filter-chip" data-filter-value={option.value} aria-pressed="false"><LocalizedText value={option.label} /></button>
         ))}
+        </div>
       </div>
     </fieldset>
   ))}

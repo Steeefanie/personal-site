@@ -1,3 +1,4 @@
+
 import {
   isValidAnswer,
   scoreAnswers, type Answers,
@@ -7,7 +8,8 @@ import { renderNarrativeReport } from './four-elements-report';
 import { createAiReportClient } from './four-elements-ai';
 import { downloadReport } from './questionnaire-download';
 import { legacyAiReportVersion } from '../lib/four-elements-ai';
-
+import { onPageLoad } from './page-lifecycle';
+onPageLoad((scope) => {
 const app = document.querySelector<HTMLElement>('[data-fe-app]');
 if (app) initialize(app);
 
@@ -53,6 +55,7 @@ function initialize(app: HTMLElement) {
   }
 
   const aiControls = createAiReportClient(() => answers);
+  scope.cleanup(() => aiControls.dispose());
 
   if (aiControls.getReport()) submitted = true;
 
@@ -154,7 +157,9 @@ function initialize(app: HTMLElement) {
     pageNodes.forEach((node, index) => { node.hidden = index !== page; });
     find('[data-fe-step]').textContent = `第 ${page + 1} / 8 页`;
     find<HTMLButtonElement>('[data-fe-previous]').disabled = page === 0;
-    find('[data-fe-next]').textContent = page === 7 ? '提交' : '下一页 →';
+    const nextButton = find<HTMLButtonElement>('[data-fe-next]');
+    nextButton.setAttribute('aria-label', page === 7 ? '提交' : '下一页');
+    nextButton.dataset.submit = String(page === 7);
     error.hidden = true;
     updateProgress();
     if (focus) {
@@ -267,3 +272,4 @@ function initialize(app: HTMLElement) {
     app.scrollIntoView({ block: 'start', behavior: 'instant' });
   }
 }
+});

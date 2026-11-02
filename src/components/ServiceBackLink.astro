@@ -17,7 +17,10 @@ const homePath = localizedPath(locale, '/');
 </style>
 
 <script>
-  document.querySelectorAll<HTMLAnchorElement>('[data-service-back]').forEach((link) => {
+
+import { onPageLoad } from '../scripts/page-lifecycle';
+onPageLoad(() => {
+document.querySelectorAll<HTMLAnchorElement>('[data-service-back]').forEach((link) => {
     link.addEventListener('click', (event) => {
       try { sessionStorage.setItem('restore-home-service-scroll', 'true'); } catch { /* Storage may be unavailable. */ }
       if (document.referrer) {
@@ -29,4 +32,5 @@ const homePath = localizedPath(locale, '/');
       }
     });
   });
+});
 </script>

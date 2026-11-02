@@ -1,10 +1,9 @@
 ---
-import LanguageSwitcher from './LanguageSwitcher.astro';
 import ThemeSwitcher from './ThemeSwitcher.astro';
 import SearchPanel from './SearchPanel.astro';
 import LocalizedText from './LocalizedText.astro';
-import { localeNames, locales, ui, type Locale } from '../lib/i18n';
-import { localeRoutePrefixes, localizedPath, logicalPathname } from '../lib/routes';
+import { ui, type Locale } from '../lib/i18n';
+import { localizedPath } from '../lib/routes';
 
 interface Props {
   activeNav: 'home' | 'blog' | 'projects' | 'recipes';
@@ -12,7 +11,6 @@ interface Props {
 }
 
 const { activeNav, locale } = Astro.props;
-const currentLogicalPath = logicalPathname(Astro.url.pathname);
 const navItems = [
   { key: 'home', href: '/', label: ui.nav.home },
   { key: 'blog', href: '/blog/', label: ui.nav.blog },
@@ -21,10 +19,7 @@ const navItems = [
 ] as const;
 ---
 
-<div class="top-chrome" data-top-chrome>
-  <div class="top-chrome-surface" aria-hidden="true"></div>
-  <header class="site-header">
-    <div class="site-shell header-inner">
+<div class="top-chrome" data-top-chrome transition:persist="site-chrome" transition:animate="none">
       <a class="site-name" href={localizedPath(locale, '/')} aria-label="Steeefanie">
         <span class="site-name-mark" aria-hidden="true">
           <img class="site-name-mark-image site-name-mark-image--light" src="/brand/favicon-light-nobg.svg" alt="" width="27" height="27" decoding="sync" draggable="false" />
@@ -32,14 +27,20 @@ const navItems = [
         </span>
         <span class="site-name-text">teeefanie</span>
       </a>
+  <header class="site-header">
+    <div class="site-shell header-inner">
       <div class="header-actions">
-        <nav class="primary-nav" aria-label={ui.common.primaryNavigation[locale]}>
+        <nav class="primary-nav has-selection-slider" style={`--selection-index: ${navItems.findIndex((item) => item.key === activeNav)}`} aria-label={ui.common.primaryNavigation[locale]}>
+          <div class="top-chrome-surface glass-surface" data-glass="navigation" aria-hidden="true"></div>
           {navItems.map((item) => (
             <a class="nav-link" href={localizedPath(locale, item.href)} aria-current={activeNav === item.key ? 'page' : undefined}>
               <LocalizedText value={item.label} />
             </a>
           ))}
+          <span class="selection-slider" aria-hidden="true"></span>
         </nav>
+        <div class="header-utilities">
+        <div class="top-chrome-surface glass-surface" data-glass="navigation" aria-hidden="true"></div>
         <button
           class="utility-button search-switcher"
           type="button"
@@ -51,7 +52,7 @@ const navItems = [
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.75" cy="10.75" r="6.75" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="m15.7 15.7 4.05 4.05" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
         </button>
         <ThemeSwitcher />
-        <LanguageSwitcher />
+        </div>
         <button
           class="utility-button menu-switcher"
           type="button"
@@ -61,32 +62,18 @@ const navItems = [
           aria-label={ui.common.openMenu[locale]}
         >
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8.5h14M5 15.5h14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+          <span class="top-chrome-surface glass-surface" data-glass="navigation" aria-hidden="true"></span>
         </button>
       </div>
     </div>
   </header>
 
+  <button class="search-backdrop" type="button" data-search-backdrop data-panel-close tabindex="-1" aria-hidden="true" hidden></button>
   <SearchPanel defaultScope={activeNav === 'home' ? 'all' : activeNav} />
 
-  <section id="language-panel" class="header-panel language-panel" data-panel="language" aria-label={ui.common.languageMenu[locale]} hidden>
-    <div class="site-shell panel-inner language-panel-inner">
-      {locales.map((candidate) => (
-        <a
-          class="language-option"
-          href={localizedPath(candidate, currentLogicalPath)}
-          data-language-option={localeRoutePrefixes[candidate].slice(1)}
-          aria-current={locale === candidate ? 'page' : undefined}
-          lang={candidate}
-          hreflang={candidate}
-        >
-          <span>{localeNames[candidate]}</span>
-        </a>
-      ))}
-    </div>
-  </section>
-
-  <nav id="navigation-panel" class="header-panel navigation-panel" data-panel="navigation" aria-label={ui.common.mobileNavigation[locale]} hidden>
-    <div class="site-shell panel-inner mobile-nav-list">
+  <nav id="navigation-panel" class="header-panel navigation-panel glass-menu" data-panel="navigation" aria-label={ui.common.mobileNavigation[locale]} hidden>
+    <div class="top-chrome-surface glass-surface" data-glass="menu" aria-hidden="true"></div>
+    <div class="site-shell panel-inner mobile-nav-list menu-choice-group">
       {navItems.map((item) => (
         <a class="mobile-nav-link" href={localizedPath(locale, item.href)} aria-current={activeNav === item.key ? 'page' : undefined}>
           <LocalizedText value={item.label} />
@@ -98,8 +85,11 @@ const navItems = [
 
 <script>
   import { lockPageScroll, unlockPageScroll } from '../lib/scroll-lock';
+  import '../scripts/glass';
+  import '../scripts/selection-slider';
+  import '../scripts/site-navigation';
 
-  type PanelName = 'search' | 'language' | 'navigation';
+  type PanelName = 'search' | 'navigation';
   const topChrome = document.querySelector<HTMLElement>('[data-top-chrome]');
   const header = topChrome?.querySelector<HTMLElement>('.site-header');
   const triggers = [...(topChrome?.querySelectorAll<HTMLButtonElement>('[data-panel-trigger]') ?? [])];
@@ -107,24 +97,18 @@ const navItems = [
   let openPanelName: PanelName | null = null;
   let closeTimer = 0;
   let panelAnimationTimer = 0;
-  let surfaceCloseTimer = 0;
-  let previousY = window.scrollY;
-  let headerFrame = 0;
-  let ignoreNextScrollUpdate = false;
-
-  const updateSurfaceHeight = () => {
-    if (!topChrome) return;
-    const panel = openPanelName ? topChrome.querySelector<HTMLElement>(`[data-panel="${openPanelName}"]`) : null;
-    const height = (header?.offsetHeight ?? 0) + (panel?.scrollHeight ?? 0);
-    topChrome.style.setProperty('--top-chrome-open-height', `${height}px`);
-  };
+  let restoringPanelFocus = false;
 
   const lockSearchScroll = () => {
     lockPageScroll('search');
+    document.querySelector<HTMLElement>('[data-search-backdrop]')?.removeAttribute('hidden');
+    document.querySelectorAll<HTMLElement>('main, body > footer').forEach((element) => { element.inert = true; });
   };
 
   const unlockSearchScroll = () => {
     unlockPageScroll('search');
+    document.querySelector<HTMLElement>('[data-search-backdrop]')?.setAttribute('hidden', '');
+    document.querySelectorAll<HTMLElement>('main, body > footer').forEach((element) => { element.inert = false; });
   };
 
   const closePanel = (restoreFocus = false) => {
@@ -140,12 +124,11 @@ const navItems = [
     triggers.forEach((button) => button.setAttribute('aria-expanded', 'false'));
     openPanelName = null;
     window.clearTimeout(panelAnimationTimer);
-    window.clearTimeout(surfaceCloseTimer);
     const collapseSurface = () => {
       topChrome?.removeAttribute('data-panel-open');
-      topChrome?.style.removeProperty('--top-chrome-open-height');
     };
     const finishClose = () => {
+      collapseSurface();
       if (previousName === 'search') unlockSearchScroll();
       if (!panel) return;
       panel.hidden = true;
@@ -157,26 +140,33 @@ const navItems = [
     }
     else {
       panel?.classList.add('is-closing');
-      surfaceCloseTimer = window.setTimeout(collapseSurface, 48);
-      panelAnimationTimer = window.setTimeout(finishClose, 400);
+      panelAnimationTimer = window.setTimeout(finishClose, 180);
     }
     if (restoreFocus && trigger) {
       if (previousName === 'search') {
         trigger.setAttribute('data-escape-focus', '');
         trigger.addEventListener('blur', () => trigger.removeAttribute('data-escape-focus'), { once: true });
       }
+      restoringPanelFocus = true;
       trigger.focus({ preventScroll: true });
+      restoringPanelFocus = false;
     }
   };
 
   const openPanel = (name: PanelName) => {
     window.clearTimeout(closeTimer);
     window.clearTimeout(panelAnimationTimer);
-    window.clearTimeout(surfaceCloseTimer);
     panels.forEach((panel) => {
       panel.classList.remove('is-closing');
       panel.hidden = panel.dataset.panel !== name;
     });
+    if (name === 'navigation') {
+      const panel = panels.find((item) => item.dataset.panel === name);
+      if (panel) {
+        panel.style.removeProperty('width');
+        panel.style.width = `${panel.offsetWidth * 2}px`;
+      }
+    }
     if (name === 'search') lockSearchScroll();
     else unlockSearchScroll();
     triggers.forEach((button) => button.setAttribute('aria-expanded', String(button.dataset.panelTrigger === name)));
@@ -184,10 +174,11 @@ const navItems = [
     header?.classList.remove('is-hidden');
     topChrome?.setAttribute('data-panel-open', name);
     requestAnimationFrame(() => {
-      updateSurfaceHeight();
       window.dispatchEvent(new CustomEvent('site:panel-opened', { detail: { panel: name } }));
     });
   };
+
+  topChrome?.querySelectorAll('[data-panel-close]').forEach((button) => button.addEventListener('click', () => closePanel(true)));
 
   triggers.forEach((trigger) => {
     const name = trigger.dataset.panelTrigger as PanelName;
@@ -197,9 +188,9 @@ const navItems = [
       else if (openPanelName === name) closePanel();
       else openPanel(name);
     });
-    if (name === 'language' || name === 'navigation') {
+    if (name === 'navigation') {
       trigger.addEventListener('focus', () => {
-        if (trigger.matches(':focus-visible')) openPanel(name);
+        if (!restoringPanelFocus && trigger.matches(':focus-visible')) openPanel(name);
       });
     }
   });
@@ -221,47 +212,6 @@ const navItems = [
     panel.addEventListener('pointerleave', scheduleClose);
   });
 
-  topChrome?.querySelectorAll<HTMLAnchorElement>('[data-language-option]').forEach((link) => {
-    link.addEventListener('click', (event) => {
-      const preference = link.dataset.languageOption;
-      if (preference) {
-        const secure = location.protocol === 'https:' ? '; Secure' : '';
-        document.cookie = `steeefanie_locale=${encodeURIComponent(preference)}; Max-Age=31536000; Path=/; SameSite=Lax${secure}`;
-      }
-      if (link.getAttribute('aria-current') === 'page') {
-        event.preventDefault();
-        closePanel();
-        return;
-      }
-      const target = new URL(link.href);
-      target.search = location.search;
-      link.href = target.href;
-      try {
-        const headings = [...document.querySelectorAll<HTMLElement>('.prose :is(h2, h3)')];
-        const readingAnchor = Math.min(180, innerHeight * 0.3);
-        let headingIndex = -1;
-        headings.forEach((heading, index) => {
-          if (heading.getBoundingClientRect().top <= readingAnchor) headingIndex = index;
-        });
-        const maximumScroll = Math.max(0, document.documentElement.scrollHeight - innerHeight);
-        const items = [...document.querySelectorAll<HTMLElement>('.content-list-item')]
-          .filter((item) => !item.hidden && item.getBoundingClientRect().bottom > 0);
-        const readingItem = items.find((item) => item.getBoundingClientRect().bottom > readingAnchor);
-        const itemLink = readingItem?.querySelector<HTMLAnchorElement>('a[href]');
-        const scrollState = {
-          target: `${target.pathname}${target.search}`,
-          scrollY,
-          progress: maximumScroll > 0 ? scrollY / maximumScroll : 0,
-          headingIndex,
-          headingOffset: headingIndex >= 0 ? headings[headingIndex].getBoundingClientRect().top : 0,
-          itemPath: itemLink ? new URL(itemLink.href).pathname.replace(/^\/(?:zh-cn|zh-tw|en)(?=\/)/, '') : undefined,
-          itemOffset: readingItem?.getBoundingClientRect().top,
-        };
-        sessionStorage.setItem('language-route-scroll', JSON.stringify(scrollState));
-      } catch (_) { /* Storage may be unavailable. */ }
-    });
-  });
-
   panels.forEach((panel) => panel.addEventListener('click', (event) => {
     if ((event.target as HTMLElement).closest('a')) closePanel();
   }));
@@ -271,42 +221,34 @@ const navItems = [
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Tab') {
       triggers.forEach((trigger) => trigger.removeAttribute('data-escape-focus'));
+      if (openPanelName === 'search') {
+        const search = panels.find((panel) => panel.dataset.panel === 'search');
+        const controls = [...(search?.querySelectorAll<HTMLElement>('button:not(:disabled), input, a[href]') ?? [])]
+          .filter((element) => element.getClientRects().length > 0);
+        const first = controls[0];
+        const last = controls.at(-1);
+        if (first && last && event.shiftKey && (document.activeElement === first || !search?.contains(document.activeElement))) {
+          event.preventDefault(); last.focus();
+        } else if (first && last && !event.shiftKey && (document.activeElement === last || !search?.contains(document.activeElement))) {
+          event.preventDefault(); first.focus();
+        }
+      }
     }
     if (event.key === 'Escape' && openPanelName) { event.preventDefault(); closePanel(true); }
   });
   window.addEventListener('site:close-panels', () => closePanel());
-  window.addEventListener('site:guestbook-open', () => header?.classList.add('is-hidden'));
-  window.addEventListener('site:guestbook-closing', () => header?.classList.remove('is-hidden'));
-  window.addEventListener('site:scroll-unlocked', (event) => {
-    const scrollY = (event as CustomEvent<{ scrollY?: number }>).detail?.scrollY;
-    previousY = typeof scrollY === 'number' ? scrollY : window.scrollY;
+  document.addEventListener('astro:before-preparation', () => closePanel());
+  document.addEventListener('astro:before-swap', () => {
+    window.clearTimeout(panelAnimationTimer);
+    openPanelName = null;
+    topChrome?.removeAttribute('data-panel-open');
+    panels.forEach((panel) => { panel.hidden = true; panel.classList.remove('is-closing'); });
+    triggers.forEach((button) => button.setAttribute('aria-expanded', 'false'));
+    header?.classList.remove('is-hidden');
+    unlockSearchScroll();
   });
-  window.addEventListener('site:toc-jump', (event) => {
-    const scrollY = (event as CustomEvent<{ scrollY?: number }>).detail?.scrollY;
-    ignoreNextScrollUpdate = true;
-    previousY = typeof scrollY === 'number' ? scrollY : window.scrollY;
-  });
-
-  const updateHeader = () => {
-    headerFrame = 0;
-    if (!header || openPanelName) return;
-    const currentY = Math.max(0, window.scrollY);
-    if (ignoreNextScrollUpdate) {
-      ignoreNextScrollUpdate = false;
-      previousY = currentY;
-      return;
-    }
-    const delta = currentY - previousY;
-    if (currentY < 72 || delta < -10) header.classList.remove('is-hidden');
-    else if (delta > 10) header.classList.add('is-hidden');
-    if (Math.abs(delta) > 10) previousY = currentY;
-  };
-  addEventListener('scroll', () => {
-    if (!headerFrame) headerFrame = requestAnimationFrame(updateHeader);
-  }, { passive: true });
   addEventListener('resize', () => {
-    if (openPanelName === 'navigation' && innerWidth > 720) closePanel();
-    else updateSurfaceHeight();
+    if (openPanelName === 'navigation' && innerWidth > 760) closePanel();
   }, { passive: true });
 
 </script>

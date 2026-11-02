@@ -1,0 +1,296 @@
+/* Shared material and layout language. Business and report styles stay separate. */
+@media screen {
+  [data-glass='menu'], [data-glass='dialog'], [data-glass='search'],
+  .glass-surface--panel, .article-toc-panel { --glass-blur: 3px; }
+  .article-toc-toggle-surface { --glass-blur: 2px; }
+  :root { --page: #f5f5f5; }
+  :root[data-theme='dark'] { --page: #111111; }
+  .hero-contact { flex-wrap: wrap; gap: 4px 12px; padding-inline: 12px 4px; }
+  .hero-email { overflow-wrap: anywhere; }
+  .hero-contact-button { border-radius: 50%; background: var(--control-bg); }
+  .hero-contact-actions { gap: 8px; }
+  .hero-contact-button:hover:where(:root:not([data-input-modality='touch']) *) { background: var(--control-hover); }
+  @media (min-width: 801px) {
+    .hero-contact { flex-wrap: nowrap; }
+    .hero-email { flex: none; white-space: nowrap; }
+    .hero-contact-actions { flex: none; }
+  }
+  .section-heading h2::before { display: none; }
+  .content-list-item { min-width: 0; }
+  .content-list .content-list-item > a:focus-visible { outline-offset: -4px; }
+  .item-meta .tag { padding: 0; background: transparent; }
+  .filter-options { gap: 4px; }
+  .filter-chip, .text-button { min-height: 44px; padding: 8px 16px; border-radius: 999px; }
+  .filter-chip { transition: background-color 150ms ease, color 150ms ease; }
+  .filter-chip::after, .pagination-button[aria-current='page']::after { display: none; }
+  .filter-chip:hover:where(:root:not([data-input-modality='touch']) *) { background: var(--control-hover); }
+  .filter-chip[aria-pressed='true'] { color: var(--brand); background: var(--brand-soft); }
+  .has-selection-slider { position: relative; isolation: isolate; }
+  .has-selection-slider > :is(.filter-chip, .nav-link) { position: relative; z-index: 1; }
+  .has-selection-slider > :is(.filter-chip, .nav-link):is(:hover:where(:root:not([data-input-modality='touch']) *), [aria-pressed='true'], [aria-current='page']) { background: transparent; }
+  .has-selection-slider > :is(.filter-chip, .nav-link):hover:where(:root:not([data-input-modality='touch']) *):not([aria-pressed='true']):not([aria-current='page']) { color: var(--text); }
+  .has-selection-slider > .filter-chip:hover:where(:root:not([data-input-modality='touch']) *):not([aria-pressed='true']) { color: var(--muted); }
+  .selection-slider {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 0;
+    pointer-events: none;
+    border-radius: 999px;
+    background: var(--glass-selection-bg, var(--control-hover));
+    box-shadow: var(--glass-selection-shadow);
+  }
+  .has-selection-slider .selection-slider {
+    transition: transform 240ms cubic-bezier(.2,.8,.2,1), width 240ms cubic-bezier(.2,.8,.2,1), height 240ms ease;
+  }
+  :is(.primary-nav, .filter-options, .search-scopes, .recipe-view-switch, .radio-slider-group) {
+    touch-action: pan-y pinch-zoom;
+  }
+  :is(.menu-choice-group, .toc-choice-group) > :is([aria-current='page'], [aria-current='location'], [aria-pressed='true']) {
+    touch-action: pan-x pinch-zoom;
+  }
+  .has-selection-slider.is-slider-dragging > .selection-slider { transition: none; }
+  .is-slider-dragging { -webkit-user-select: none; user-select: none; }
+  .primary-nav { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+  .primary-nav > .selection-slider {
+    width: calc((100% - 24px) / 4 + 2 * var(--selection-expansion));
+    height: calc(44px + 2 * var(--selection-expansion));
+    transform: translate(calc(6px - var(--selection-expansion) + var(--selection-index) * (100% + 4px - 2 * var(--selection-expansion))), calc(6px - var(--selection-expansion)));
+  }
+  .listing-filters .filter-options, .search-scopes { width: fit-content; max-width: 100%; padding: 4px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); }
+  body .recipes-listing .filter-chip:first-child { padding-left: 16px; }
+  .listing-pagination { gap: 8px; padding-top: 32px; flex-wrap: wrap; }
+  .pagination-button { min-height: 44px; min-width: 44px; padding: 8px 12px; border-radius: 999px; background: var(--surface); }
+  .pagination-button:hover:where(:root:not([data-input-modality='touch']) *) { background: var(--control-hover); }
+  .pagination-button[aria-current='page'] { background: var(--brand-soft); color: var(--brand); }
+  .article-title-row {
+    --project-title-size: var(--font-size-section-title);
+    --project-icon-size: calc(var(--project-title-size) * .7);
+    align-items: center;
+    /* Discount the icon's centered inset inside its 44px hit area. */
+    gap: calc(var(--project-icon-size) - (44px - var(--project-icon-size)) / 2);
+  }
+  .article-title-row h1 { margin-top: 0; }
+  .article-body .prose :is(h2, h3, h4) { scroll-margin-top: calc(var(--header-height) + 44px); }
+  .project-repository-link { width: 44px; height: 44px; border-radius: 4px; background: transparent; transform: translateY(2px); }
+  .project-repository-link svg { width: var(--project-icon-size); height: var(--project-icon-size); }
+
+  /* Recipe artwork is never filtered or tinted. */
+  .recipes-listing { position: relative; }
+  body .recipe-toolbar { display: contents; }
+  body .recipe-toolbar .listing-filters {
+    position: sticky;
+    top: calc(var(--chrome-top) + (var(--header-height) - 56px) / 2);
+    z-index: 100;
+    width: fit-content;
+    max-width: calc(100% - 122px);
+    margin-bottom: 24px;
+  }
+  body .recipe-toolbar .recipe-view-switch { position: absolute; top: 0; right: 0; }
+  body .recipe-view-switch { height: 56px; width: 106px; padding: 6px; border: 0; border-radius: 999px; background: transparent; }
+  body .recipe-view-switch button { min-height: 44px; }
+  body .recipes-listing[data-view='grid'] .content-list { border: 0; border-radius: 0; background: transparent; box-shadow: none; overflow: visible; }
+  body .recipes-listing[data-view='grid'] .content-list-item { border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+  body .recipes-listing[data-view='grid'] .recipe-media { width: 112px; height: 112px; }
+
+  /* Shared shell, without touching question data, charts or PDF rendering. */
+  .fe-page .fe-app[data-stage='intro'] { border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+  .fe-page .fe-app button { border-radius: 999px; }
+  .fe-page .fe-primary { color: var(--button-text); }
+  .fe-page .fe-secondary { background: var(--surface); box-shadow: 0 2px 6px rgb(0 0 0 / .035); }
+  .fe-page .fe-app button:not(:disabled):hover:where(:root:not([data-input-modality='touch']) *) { filter: brightness(.96); }
+  .fe-page .fe-options label > span { border-radius: 16px; background: var(--surface-soft); }
+  .fe-page .fe-options input:checked + span { background: var(--brand-soft); }
+  .fe-page .fe-app progress { height: 6px; border-radius: 999px; }
+  .fe-page :is(.fe-result-hero, .fe-analysis) { border-radius: 16px; box-shadow: none; }
+  .fe-page .questionnaire-actions, .fe-page .fe-quiz-actions { padding-block: 16px; }
+  .fe-clear-dialog { border: 1px solid var(--glass-border); border-radius: 28px; background: var(--glass-bg); box-shadow: var(--glass-highlight), var(--shadow-overlay); }
+  .guestbook-dialog { border: 1px solid var(--glass-border); border-radius: 28px; background: var(--glass-bg); box-shadow: var(--glass-highlight), var(--shadow-overlay); }
+  .guestbook-close { border-radius: 50%; background: var(--control-bg); }
+  .guestbook-close:hover:where(:root:not([data-input-modality='touch']) *) { background: var(--control-hover); }
+  .service-page .generator-shell { border-radius: 16px; box-shadow: none; }
+  .service-page :is(.upload-zone, .preview-stage, .size-input, .mode-option > span) { border-radius: 16px; }
+  .service-page .side-switch, .service-page .side-switch span { border-radius: 999px; }
+  .service-page :is(.generate-button, .download-button) { min-height: 48px; border-radius: 999px; }
+  .service-page .generate-button { color: var(--button-text); }
+  .service-page .preview-panel { background: var(--surface-soft); }
+  .service-page .mode-option > span { min-height: 72px; }
+
+  .article-toc { --article-toc-top: calc(var(--chrome-top) + var(--header-height) + var(--article-toc-edge)); }
+  /* Body tint only. Refraction/edge lighting and the selection slider are separate layers. */
+  :root {
+    --glass-tint: rgb(255 255 255 / .13);
+    --selection-expansion: 0px;
+    --glass-selection-shadow: inset 0 1px 1px rgb(255 255 255 / .8), 0 1px 3px rgb(0 0 0 / .08);
+  }
+  :root[data-theme='dark'] {
+    --glass-tint: rgb(32 32 32 / .55);
+    --glass-selection-bg: rgb(0 0 0 / .38);
+    --glass-selection-shadow: inset 0 1px 1px rgb(255 255 255 / .12), 0 1px 3px rgb(0 0 0 / .08);
+    --selection-expansion: 1px;
+  }
+  html:has(.site-header.is-hidden) .article-toc { --article-toc-top: var(--article-toc-edge); }
+  /* Public material class: compact controls use thin tint; reading panels use
+     a denser fill while sharing the same frost, without synthetic edge stacks. */
+  .glass-surface--panel {
+    --glass-fill: var(--glass-bg);
+    --glass-shadow: var(--shadow-overlay);
+  }
+  .glass-surface,
+  .article-toc .article-toc-panel {
+    border: 0;
+    background: var(--glass-fill, var(--glass-tint));
+    -webkit-backdrop-filter: var(--hyalite, blur(var(--glass-blur, 2px)));
+    backdrop-filter: var(--hyalite, blur(var(--glass-blur, 2px)));
+    box-shadow: var(--hyalite-edge, var(--glass-selection-shadow));
+  }
+  /* Hyalite's documented material: library filter and rim, with a thin tint above it. */
+  .glass-surface--static {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    box-shadow: var(--glass-selection-shadow);
+  }
+  .top-chrome-surface, .site-header { border-radius: 999px; }
+  /* Match the glass's circular profile: 28px outer radius, 22px inner radius,
+     with a 6px inset. Mixing superellipse thumbs with a circular shell breaks it. */
+  @supports (corner-shape: superellipse(1.15)) {
+    .header-panel {
+      corner-shape: superellipse(1.15);
+    }
+    .selection-slider, .recipe-view-switch, .top-chrome-surface { corner-shape: round; }
+    .top-chrome-surface, .selection-slider { border-radius: 999px; }
+  }
+  .header-inner { padding-inline: 0; }
+  /* A persisted view-transition root creates a stacking context of its own. */
+  .top-chrome { position: relative; z-index: 101; view-transition-name: none !important; }
+  .top-chrome > .site-name {
+    position: absolute;
+    top: calc(var(--chrome-top) + (var(--header-height) - 24px) / 2);
+    left: max(16px, calc((100% - var(--content-wide)) / 2));
+    z-index: 101;
+  }
+  .site-header { pointer-events: none; }
+  .header-actions {
+    pointer-events: auto;
+    position: fixed;
+    top: calc(var(--chrome-top) + (var(--header-height) - 56px) / 2);
+    right: max(16px, calc((100% - var(--content-wide)) / 2));
+    gap: 12px;
+  }
+  .primary-nav, .header-utilities {
+    position: relative;
+    isolation: isolate;
+    padding: 6px;
+    margin: 0;
+    flex: none;
+  }
+  .header-utilities { display: flex; align-items: center; gap: 4px; }
+  .primary-nav > .nav-link, .header-utilities > .utility-button { position: relative; z-index: 1; }
+  .header-utilities .utility-button:is(:hover:where(:root:not([data-input-modality='touch']) *), :focus-visible, [aria-expanded='true']) {
+    background: transparent;
+    color: var(--brand-interactive);
+  }
+  .header-utilities .utility-button:focus-visible,
+  .language-option:focus-visible { outline-color: var(--muted); }
+  .language-option:is(:hover:where(:root:not([data-input-modality='touch']) *), :focus-visible, [aria-current='page']) {
+    background: transparent;
+  }
+  .top-chrome-surface {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    background: var(--glass-tint);
+    -webkit-backdrop-filter: var(--hyalite, blur(var(--glass-blur, 2px)));
+    backdrop-filter: var(--hyalite, blur(var(--glass-blur, 2px)));
+    box-shadow: var(--hyalite-edge, var(--glass-selection-shadow));
+  }
+  .glass-control { position: relative; isolation: isolate; }
+  .filter-options-shell { width: fit-content; max-width: 100%; border-radius: 999px; }
+  .listing-filters .filter-options-shell > .filter-options { padding: 6px; border: 0; background: transparent; }
+  .glass-control > .top-chrome-surface { border-radius: inherit; pointer-events: none; }
+  .recipe-view-switch > button { z-index: 1; }
+  .header-panel.glass-menu,
+  .article-toc-panel.glass-menu {
+    border: 0;
+    border-radius: var(--radius-overlay);
+    background: transparent;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    box-shadow: var(--shadow-overlay);
+    corner-shape: round;
+  }
+  .header-panel:is(.language-panel, .navigation-panel) { width: max-content; }
+  .glass-menu > .top-chrome-surface { border-radius: inherit; pointer-events: none; }
+  /* Ancestor opacity isolates backdrop sampling into a transparent buffer;
+     Hyalite's opaque-source correction then exposes it as black. Fade the
+     surface itself and the text separately, leaving their common parent opaque. */
+  .glass-menu.is-closing { animation: glass-menu-conceal 160ms ease-in both; }
+  .glass-menu.is-closing > :is(.top-chrome-surface, .menu-choice-group, .article-toc-content) {
+    animation: glass-menu-fade 160ms ease-in both;
+  }
+  @keyframes glass-menu-conceal {
+    to { transform: translateY(-6px); box-shadow: none; }
+  }
+  @keyframes glass-menu-fade { to { opacity: 0; } }
+  .menu-choice-group { position: relative; z-index: 1; padding: 6px; }
+  .menu-choice-group > :is(.language-option, .mobile-nav-link) {
+    position: relative;
+    z-index: 1;
+    min-height: 44px;
+    padding-block: 8px;
+    border-radius: 22px;
+    background: transparent;
+  }
+  .menu-choice-group > .selection-slider { border-radius: calc(22px + var(--selection-expansion)); }
+  .menu-choice-group > :is(.language-option, .mobile-nav-link):not([aria-current='page']) { color: var(--text); }
+  .article-toc .article-toc-nav a { min-height: 44px; display: flex; align-items: center; padding-block: 10px; border-radius: 12px; }
+
+  .article-toc .article-toc-reset { min-height: 44px; }
+
+  @media (max-width: 800px) {
+    body .recipes-listing[data-view='list'] .content-list-item > a { grid-template-columns: 80px minmax(0,1fr); }
+    body .recipes-listing[data-view='list'] .recipe-media { width: 80px; height: 80px; }
+  }
+  @media (max-width: 760px) {
+    .primary-nav { display: none; }
+    :root { --page-gutter: 20px; }
+    .header-inner { padding-inline: 0; gap: 4px; }
+    .top-chrome[data-panel-open='search'] .search-panel { inset: calc(var(--chrome-top) + var(--header-height) + 8px) 0 0; width: 100%; height: auto; max-height: none; border-radius: 28px 28px 0 0; transform: none; }
+    .search-panel-inner { padding: 20px 20px max(24px, env(safe-area-inset-bottom)); }
+    body .recipe-toolbar .listing-filters { max-width: calc(100% - 118px); margin-bottom: 24px; }
+    body .recipe-toolbar .listing-filters[data-stuck='true'] { max-width: var(--recipe-filter-available, 100%); }
+    .recipes-listing .filter-chip { min-width: 44px; padding-inline: 8px; }
+    body .recipes-listing .filter-chip:first-child { padding-left: 8px; }
+    body .recipe-toolbar .recipe-view-switch { top: 0; }
+    body .recipes-listing[data-view='grid'] .recipe-media { width: 96px; height: 96px; }
+    .listing-pagination { gap: 4px; }
+    .pagination-button { padding-inline: 8px; }
+    .fe-page .fe-scale { gap: 5px; }
+  }
+  @media (max-width: 360px) {
+    .header-inner { padding-inline: 0; }
+    .site-name-text { display: none; }
+    .pagination-pages { gap: 0; }
+    .pagination-ellipsis { min-width: 16px; }
+  }
+  @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+    :root, :root[data-theme='dark'] { --glass-bg: var(--surface); --lens-bg: var(--surface); --glass-border: var(--border); }
+    .glass-surface, .top-chrome-surface, .header-panel, .article-toc .article-toc-panel, .guestbook-dialog, .fe-clear-dialog { background: var(--surface); -webkit-backdrop-filter: none; backdrop-filter: none; }
+  }
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .glass-surface, .top-chrome-surface, .header-panel, .article-toc .article-toc-panel, .guestbook-dialog, .fe-clear-dialog { background: var(--surface); }
+  }
+  @media (forced-colors: active) {
+    :root, :root[data-theme='dark'] { --lens-bg: Canvas; }
+    .glass-surface, .top-chrome-surface, .header-panel, .article-toc .article-toc-panel, .guestbook-dialog, .fe-clear-dialog { background: Canvas; border: 1px solid CanvasText; -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none; }
+    .nav-link[aria-current], .filter-chip[aria-pressed='true'], .pagination-button[aria-current] { outline: 2px solid Highlight; outline-offset: -3px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .has-selection-slider .selection-slider { transition: none; }
+    .glass-menu, .glass-menu > *, .header-panel, .search-panel, .content-list-item > a, .hero-contact-button { animation: none !important; transition: none; }
+  }
+}

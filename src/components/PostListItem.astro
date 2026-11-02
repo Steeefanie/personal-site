@@ -31,11 +31,11 @@ const formatDate = (locale: keyof typeof entries, date: Date) => new Intl.DateTi
     <div>
       <h2 class="item-title">{entry.title}</h2>
       <p class="item-description">{entry.attribution && <span class="content-attribution">{entry.attribution}</span>}{entry.description}</p>
-    </div>
-    <div class="item-meta">
-      <time datetime={entry.publishDate.toISOString()}>{formatDate(locale, entry.publishDate)}</time>
-      <span>{entry.readingTime}</span>
-      <span class="tag-list">{entry.tags.map((tag) => <span class="tag">#{tag.label}</span>)}</span>
+      <div class="item-meta">
+        <time datetime={entry.publishDate.toISOString()}>{formatDate(locale, entry.publishDate)}</time>
+        <span>{entry.readingTime}</span>
+        <span class="tag-list">{entry.tags.map((tag) => <span class="tag">#{tag.label}</span>)}</span>
+      </div>
     </div>
   </a>
 </li>

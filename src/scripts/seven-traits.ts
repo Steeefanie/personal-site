@@ -1,3 +1,4 @@
+
 import {
   isValidAnswer,
   questions, scoreAnswers, type Answers,
@@ -6,7 +7,8 @@ import { createDraftStore } from '../lib/seven-traits-draft';
 import { renderReport } from './seven-traits-report';
 import { createAiReportClient } from './seven-traits-ai';
 import { downloadReport } from './questionnaire-download';
-
+import { onPageLoad } from './page-lifecycle';
+onPageLoad((scope) => {
 const app = document.querySelector<HTMLElement>('[data-st-app]');
 if (app) initialize(app);
 
@@ -52,6 +54,7 @@ function initialize(app: HTMLElement) {
   }
 
   const aiControls = createAiReportClient(() => answers);
+  scope.cleanup(() => aiControls.dispose());
 
   if (aiControls.getReport()) submitted = true;
   form.querySelectorAll<HTMLInputElement>('input').forEach(input => { input.disabled = submitted; });
@@ -154,7 +157,9 @@ function initialize(app: HTMLElement) {
     pageNodes.forEach((node, index) => { node.hidden = index !== page; });
     find('[data-st-step]').textContent = `第 ${page + 1} / 7 轮`;
     find<HTMLButtonElement>('[data-st-previous]').disabled = page === 0;
-    find('[data-st-next]').textContent = page === 6 ? '提交' : '下一轮 →';
+    const nextButton = find<HTMLButtonElement>('[data-st-next]');
+    nextButton.setAttribute('aria-label', page === 6 ? '提交' : '下一轮');
+    nextButton.dataset.submit = String(page === 6);
     error.hidden = true;
     updateProgress();
     if (focus) {
@@ -286,3 +291,4 @@ function initialize(app: HTMLElement) {
     app.scrollIntoView({ block: 'start', behavior: 'instant' });
   }
 }
+});
