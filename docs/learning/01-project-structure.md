@@ -119,7 +119,7 @@ personal-site/
 
 它不是删除规则；文件仍在本地，只是 Git 默认不跟踪它们。
 
-`tmp/`、`output/` 等本地验证和导出目录也被忽略。`AGENTS.md` 使用 `.git/info/exclude` 在本机排除，不写入公开的 `.gitignore`。
+`tmp/`、`output/` 等本地验证和导出目录也被忽略，并在 `tsconfig.json` 中排除，避免临时脚本参与 Astro 类型检查。清理这些目录时，应保留历史备份、已交付的截图及导出文件、正在使用的本地服务运行环境，只删除确认不再需要的诊断文件和缓存。`AGENTS.md` 使用 `.git/info/exclude` 在本机排除，不写入公开的 `.gitignore`。
 
 ### `.gitattributes`：跨平台换行符规则
 

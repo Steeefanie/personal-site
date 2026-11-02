@@ -221,26 +221,3 @@ const latestContent = (group: LatestGroup): Localized<LatestContent> => Object.f
     .service-app-label { max-width: 84px; font-size: calc(var(--font-size-unit) * 0.72); }
   }
 </style>
-
-<script>
-
-import { onPageLoad } from '../scripts/page-lifecycle';
-onPageLoad((scope) => {
-  if (!document.querySelector('[data-service-link]')) return;
-  const addEventListener = scope.onWindow;
-document.querySelectorAll<HTMLAnchorElement>('[data-service-link]').forEach((serviceLink) => serviceLink.addEventListener('click', () => {
-    try { sessionStorage.setItem('home-service-scroll-y', String(window.scrollY)); } catch (_) { /* Storage may be unavailable. */ }
-  }));
-
-  const restoreHomeScroll = () => {
-    try {
-      if (sessionStorage.getItem('restore-home-service-scroll') !== 'true') return;
-      sessionStorage.removeItem('restore-home-service-scroll');
-      const savedY = Number(sessionStorage.getItem('home-service-scroll-y'));
-      if (Number.isFinite(savedY)) requestAnimationFrame(() => window.scrollTo({ top: savedY, behavior: 'auto' }));
-    } catch (_) { /* Storage may be unavailable. */ }
-  };
-  restoreHomeScroll();
-  addEventListener('pageshow', restoreHomeScroll);
-});
-</script>

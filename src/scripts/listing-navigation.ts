@@ -1,5 +1,3 @@
-import { parseRecipeCategory, recipeCategorySlug } from '../lib/recipe-categories';
-
 interface ListingPosition {
   url: string;
   scrollY: number;
@@ -8,16 +6,6 @@ interface ListingPosition {
 const positionKey = (pathname: string) => `listing-position:${pathname}`;
 const returnKey = 'listing-return-position';
 const currentUrl = () => `${location.pathname}${location.search}${location.hash}`;
-
-const previousHistoryUrl = (): string | undefined => {
-  // Only use native back when the preceding entry is exactly this list, not
-  // an article's chapter anchor or another article in the reading sequence.
-  const navigation = window.navigation;
-  const index = navigation?.currentEntry?.index;
-  return navigation && index !== undefined && index > 0
-    ? navigation.entries()[index - 1]?.url ?? undefined
-    : undefined;
-};
 
 const readPosition = (key: string, pathname: string): ListingPosition | null => {
   try {
@@ -77,36 +65,4 @@ export const rememberListingPosition = (section: HTMLElement, listen: typeof win
   const finishAfterPageShow = () => requestAnimationFrame(finish);
   if (document.readyState === 'complete') finishAfterPageShow();
   else listen('pageshow', finishAfterPageShow, { once: true });
-};
-
-export const initializeListingBackLinks = (listen: typeof window.addEventListener = addEventListener) => {
-  document.querySelectorAll<HTMLAnchorElement>('[data-listing-back]').forEach((link) => {
-    const pathname = new URL(link.href).pathname;
-    const sync = () => {
-      const position = readPosition(positionKey(pathname), pathname);
-      const category = new URLSearchParams(location.search).get('category');
-      if (pathname.endsWith('/recipes/') && parseRecipeCategory(category)) {
-        const fallback = `${pathname}?category=${recipeCategorySlug(category!)}`;
-        if (!position || new URL(position.url, location.origin).searchParams.get('category') !== category) {
-          link.href = fallback;
-          return null;
-        }
-      }
-      link.href = position?.url ?? pathname;
-      return position;
-    };
-    sync();
-    listen('pageshow', sync);
-    link.addEventListener('click', (event) => {
-      const position = sync();
-      if (!position || event.defaultPrevented || event.button !== 0
-        || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-      if (previousHistoryUrl() === new URL(position.url, location.origin).href) {
-        event.preventDefault();
-        history.back();
-        return;
-      }
-      try { sessionStorage.setItem(returnKey, JSON.stringify(position)); } catch { /* Storage may be unavailable. */ }
-    });
-  });
 };
