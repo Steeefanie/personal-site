@@ -105,9 +105,8 @@
   .fe-page :is(.fe-result-hero, .fe-analysis) { border-radius: 16px; box-shadow: none; }
   .fe-page .questionnaire-actions, .fe-page .fe-quiz-actions { padding-block: 16px; }
   .fe-clear-dialog { border: 1px solid var(--glass-border); border-radius: 28px; background: var(--glass-bg); box-shadow: var(--glass-highlight), var(--shadow-overlay); }
-  .guestbook-dialog { border: 1px solid var(--glass-border); border-radius: 28px; background: var(--glass-bg); box-shadow: var(--glass-highlight), var(--shadow-overlay); }
-  .guestbook-close { border-radius: 50%; background: var(--control-bg); }
-  .guestbook-close:hover:where(:root:not([data-input-modality='touch']) *) { background: var(--control-hover); }
+  .guestbook-dialog { border: 0; border-radius: 28px; background: transparent; box-shadow: var(--shadow-overlay); }
+  .guestbook-close { border-radius: 50%; background: transparent; }
   .service-page .generator-shell { border-radius: 16px; box-shadow: none; }
   .service-page :is(.upload-zone, .preview-stage, .size-input, .mode-option > span) { border-radius: 16px; }
   .service-page .side-switch, .service-page .side-switch span { border-radius: 999px; }
@@ -259,7 +258,7 @@
     .primary-nav { display: none; }
     :root { --page-gutter: 20px; }
     .header-inner { padding-inline: 0; gap: 4px; }
-    .top-chrome[data-panel-open='search'] .search-panel { inset: calc(var(--chrome-top) + var(--header-height) + 8px) 0 0; width: 100%; height: auto; max-height: none; border-radius: 28px 28px 0 0; transform: none; }
+    .top-chrome[data-panel-open='search'] .search-panel { inset: calc(var(--chrome-top) + var(--header-height) + 8px) 0 auto; width: 100vw; height: calc(100dvh - var(--chrome-top) - var(--header-height) - 8px); max-height: none; border-radius: 28px 28px 0 0; transform: none; }
     .search-panel-inner { padding: 20px 20px max(24px, env(safe-area-inset-bottom)); }
     body .recipe-toolbar .listing-filters { max-width: calc(100% - 118px); margin-bottom: 24px; }
     body .recipe-toolbar .listing-filters[data-stuck='true'] { max-width: var(--recipe-filter-available, 100%); }
@@ -279,14 +278,14 @@
   }
   @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
     :root, :root[data-theme='dark'] { --glass-bg: var(--surface); --lens-bg: var(--surface); --glass-border: var(--border); }
-    .glass-surface, .top-chrome-surface, .header-panel, .article-toc .article-toc-panel, .guestbook-dialog, .fe-clear-dialog { background: var(--surface); -webkit-backdrop-filter: none; backdrop-filter: none; }
+    .glass-surface, .top-chrome-surface, .header-panel, .article-toc .article-toc-panel, .fe-clear-dialog { background: var(--surface); -webkit-backdrop-filter: none; backdrop-filter: none; }
   }
   @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-    .glass-surface, .top-chrome-surface, .header-panel, .article-toc .article-toc-panel, .guestbook-dialog, .fe-clear-dialog { background: var(--surface); }
+    .glass-surface, .top-chrome-surface, .header-panel, .article-toc .article-toc-panel, .fe-clear-dialog { background: var(--surface); }
   }
   @media (forced-colors: active) {
     :root, :root[data-theme='dark'] { --lens-bg: Canvas; }
-    .glass-surface, .top-chrome-surface, .header-panel, .article-toc .article-toc-panel, .guestbook-dialog, .fe-clear-dialog { background: Canvas; border: 1px solid CanvasText; -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none; }
+    .glass-surface, .top-chrome-surface, .header-panel, .article-toc .article-toc-panel, .fe-clear-dialog { background: Canvas; border: 1px solid CanvasText; -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none; }
     .nav-link[aria-current], .filter-chip[aria-pressed='true'], .pagination-button[aria-current] { outline: 2px solid Highlight; outline-offset: -3px; }
   }
   @media (prefers-reduced-motion: reduce) {

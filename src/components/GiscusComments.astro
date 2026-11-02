@@ -47,12 +47,12 @@ const errorText = text(
 </div>
 
 <script>
+  import { onPageLoad } from '../scripts/page-lifecycle';
+  import { mountCommentsPreview } from '../scripts/comments-preview';
 
-import { onPageLoad } from '../scripts/page-lifecycle';
-import { mountCommentsPreview } from '../scripts/comments-preview';
 onPageLoad((scope) => {
   const addEventListener = scope.onWindow;
-type Locale = 'zh-CN' | 'zh-TW' | 'en';
+  type Locale = 'zh-CN' | 'zh-TW' | 'en';
   type Theme = 'light' | 'dark';
 
   const roots = [...document.querySelectorAll<HTMLElement>('[data-giscus-root]')];
@@ -70,11 +70,8 @@ type Locale = 'zh-CN' | 'zh-TW' | 'en';
   const currentTheme = (): Theme => document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
 
   const encodeTheme = (source: string): string => {
-    const compact = source
-      .replace(/\s+/g, ' ')
-      .replace(/\s*([{}:;,])\s*/g, '$1')
-      .trim();
-    const bytes = new TextEncoder().encode(compact);
+    // Whitespace before pseudo-classes is a descendant combinator, not padding.
+    const bytes = new TextEncoder().encode(source.trim());
     let binary = '';
     bytes.forEach((byte) => { binary += String.fromCharCode(byte); });
     return `data:text/css;base64,${window.btoa(binary)}`;
@@ -152,7 +149,15 @@ type Locale = 'zh-CN' | 'zh-TW' | 'en';
     // Match the published integration: let giscus render as soon as it creates
     // its frame; a resize notification is not a reliable loading handshake.
     const observer = new MutationObserver(() => {
-      if (!root.querySelector('iframe.giscus-frame')) return;
+      const iframe = root.querySelector<HTMLIFrameElement>('iframe.giscus-frame');
+      if (!iframe) return;
+      // A theme switch during the initial navigation can reach about:blank.
+      // Resend the latest theme after the widget itself has loaded.
+      iframe.addEventListener('load', () => {
+        void themeFor(root, currentTheme()).then((theme) => {
+          if (!disposed) sendConfig(root, { theme });
+        });
+      }, { once: true });
       showFrame(root);
       observer.disconnect();
     });

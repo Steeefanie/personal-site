@@ -6,19 +6,20 @@ import vm from 'node:vm';
 
 const component = readFileSync(new URL('../src/components/GiscusComments.astro', import.meta.url), 'utf8');
 const source = stripTypeScriptTypes(component.split('<script>')[1].split('</script>')[0]
-  .replace(/^import .*;\s*$/gm, '').replaceAll('import.meta.env.DEV', 'false'));
+  .replace(/^\s*import .*;\s*$/gm, '').replaceAll('import.meta.env.DEV', 'false'));
 
-async function setup() {
+async function setup(hostname = 'example.com') {
   const events = new Map(), timers = new Map(), cleanups = [], observers = [];
   const node = () => ({ hidden: false, setAttribute(name) { if (name === 'hidden') this.hidden = true; }, removeAttribute(name) { if (name === 'hidden') this.hidden = false; } });
   const status = node(), error = node(); error.hidden = true;
   const mount = { append(script) { this.script = script; } };
   const root = { dataset: { giscusMode: 'article', giscusReady: 'true', themeLight: 'light' },
     querySelector(selector) { return selector.includes('status') ? status : selector.includes('error') ? error : selector.includes('mount') ? mount : this.frame; } };
-  const window = { setTimeout(callback) { const id = timers.size + 1; timers.set(id, callback); return id; }, clearTimeout(id) { timers.delete(id); } };
+  const window = { btoa: value => Buffer.from(value, 'binary').toString('base64'), setTimeout(callback) { const id = timers.size + 1; timers.set(id, callback); return id; }, clearTimeout(id) { timers.delete(id); } };
   const document = { documentElement: { dataset: { language: 'zh-CN', theme: 'light' } },
     querySelectorAll: () => [root], createElement: () => ({ dataset: {}, addEventListener(type, callback) { this[type] = callback; } }) };
-  vm.runInNewContext(source, { window, document, location: { hostname: 'example.com', pathname: '/' },
+  vm.runInNewContext(source, { window, document, location: { hostname, origin: `http://${hostname}`, pathname: '/' },
+    fetch: async () => ({ ok: true, text: async () => '.gsc-main :is(.btn, .gsc-comment-box) { color: red; }' }),
     onPageLoad: init => init({ onWindow: (type, callback) => events.set(type, callback), cleanup: fn => cleanups.push(fn) }),
     MutationObserver: class {
       constructor(callback) { this.callback = callback; observers.push(this); }
@@ -27,7 +28,7 @@ async function setup() {
     }, TextEncoder, URL, URLSearchParams });
   await new Promise(resolve => setImmediate(resolve));
   const state = { root, status, error, mount, timers,
-    frame() { root.frame = { contentWindow: {} }; observers.filter(observer => observer.active).forEach(observer => observer.callback()); },
+    frame() { root.frame = { contentWindow: {}, addEventListener() {} }; observers.filter(observer => observer.active).forEach(observer => observer.callback()); },
     message(data, origin = 'https://giscus.app', source = root.frame?.contentWindow) { events.get('message')({ origin, source, data: { giscus: data } }); },
     timeout() { [...timers.values()].forEach(fn => fn()); },
     cleanup() { cleanups.forEach(fn => fn()); } };
@@ -83,4 +84,12 @@ test('a script load error is visible and page cleanup cancels the timeout', asyn
   assert.equal(pending.timers.size, 1);
   pending.cleanup();
   assert.equal(pending.timers.size, 0);
+});
+
+test('local theme encoding preserves descendant pseudo-class selectors', async () => {
+  const state = await setup('localhost');
+  const theme = state.mount.script.dataset.theme;
+  assert.match(theme, /^data:text\/css;base64,/);
+  assert.equal(Buffer.from(theme.split(',')[1], 'base64').toString('utf8'),
+    '.gsc-main :is(.btn, .gsc-comment-box) { color: red; }');
 });

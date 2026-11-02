@@ -65,7 +65,7 @@ onPageLoad((scope) => {
 
     const eligible = (surface: HTMLElement) => {
       if (solid.matches || document.hidden || !surface.isConnected || hasStaticGlassBackground(surface) || surface.closest('[hidden],.is-closing,[inert]')) return false;
-      if (surface.matches('dialog') && !surface.hasAttribute('open')) return false;
+      if (surface.closest('dialog:not([open])')) return false;
       const box = surface.getBoundingClientRect();
       return box.width > 0 && box.height > 0 && getComputedStyle(surface).visibility !== 'hidden';
     };

@@ -1,5 +1,5 @@
 html.guestbook-open .top-chrome {
-  pointer-events: none;
+  z-index: 201;
 }
 
 .guestbook-dialog {
@@ -9,14 +9,27 @@ html.guestbook-open .top-chrome {
   translate: -50% 0;
   width: min(800px, calc(100% - 48px));
   max-width: none;
-  height: min(640px, calc(100dvh - var(--header-height) - 60px));
-  max-height: calc(100dvh - var(--header-height) - 48px);
+  height: calc(100dvh - var(--chrome-top) - var(--header-height) - 28px);
+  max-height: none;
   padding: 0;
   margin: 0;
   overflow: hidden;
   border: 0;
   border-radius: clamp(20px, 2vw, 28px);
+  isolation: isolate;
+  background: transparent;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
   color: var(--text);
+}
+
+/* Keep filtered pixels out of the ancestor chain of the iframe and close button. */
+.guestbook-material {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
 }
 
 .guestbook-dialog[open] {
@@ -27,11 +40,14 @@ html.guestbook-open .top-chrome {
   animation: guestbook-exit 180ms ease-in both;
 }
 
-.guestbook-dialog.is-closing::backdrop {
+.guestbook-backdrop.is-closing {
   animation: guestbook-exit 180ms ease-in both;
 }
 
-.guestbook-dialog::backdrop {
+.guestbook-backdrop {
+  position: fixed;
+  z-index: 199;
+  inset: 0;
   background: rgba(0, 0, 0, 0.12);
 }
 
@@ -39,37 +55,33 @@ html.guestbook-open .top-chrome {
   outline: none;
 }
 
-:root[data-theme='dark'] .guestbook-dialog::backdrop {
+:root[data-theme='dark'] .guestbook-backdrop {
   background: rgba(0, 0, 0, 0.2);
 }
 
 .guestbook-shell {
   position: relative;
+  z-index: 1;
   height: 100%;
+  min-height: 0;
   overflow: hidden;
 }
 
-.guestbook-header {
+.guestbook-close {
   position: absolute;
   z-index: 2;
-  inset: 0 0 auto auto;
-  display: flex;
-  min-height: 44px;
-  align-items: flex-start;
-  padding: 0;
-  pointer-events: none;
-}
-
-.guestbook-close {
-  position: relative;
+  top: 24px;
+  right: calc(24px + var(--guestbook-scrollbar-width, 0px));
   isolation: isolate;
   display: grid;
   width: 44px;
   height: 44px;
   padding: 0;
-  margin: 24px;
+  margin: 0;
+  overflow: hidden;
   place-items: center;
   border: 0;
+  border-radius: 50%;
   background: transparent;
   color: var(--muted);
   cursor: pointer;
@@ -79,6 +91,14 @@ html.guestbook-open .top-chrome {
 
 .guestbook-close:hover:where(:root:not([data-input-modality='touch']) *) {
   color: var(--brand-interactive);
+}
+
+.guestbook-close-surface {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  --glass-blur: 2px;
 }
 
 .guestbook-close:active {
@@ -100,6 +120,7 @@ html.guestbook-open .top-chrome {
   height: 100%;
   min-height: 0;
   overflow-y: auto;
+  overflow-x: hidden;
   overscroll-behavior: contain;
   scrollbar-gutter: stable;
   -webkit-overflow-scrolling: touch;
@@ -178,7 +199,12 @@ html.guestbook-open .top-chrome {
 .giscus,
 .giscus-frame {
   width: 100%;
+  max-width: 100%;
 }
+
+/* Match the child theme so the browser keeps its canvas transparent. */
+.giscus-frame { color-scheme: light !important; }
+:root[data-theme='dark'] .giscus-frame { color-scheme: dark !important; }
 
 .article-with-comments .article-body {
   padding-bottom: 40px;
@@ -197,47 +223,13 @@ html.guestbook-open .top-chrome {
   margin-bottom: 28px;
 }
 
-@media (max-width: 1360px) {
-  .guestbook-close::before {
-    position: absolute;
-    z-index: 0;
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background: color-mix(in srgb, var(--surface) 80%, transparent);
-    content: '';
-    -webkit-backdrop-filter: blur(3px) saturate(115%);
-    backdrop-filter: blur(3px) saturate(115%);
-    -webkit-mask-image: radial-gradient(
-      circle,
-      #000 0 18%,
-      rgba(0, 0, 0, 0.9) 28%,
-      rgba(0, 0, 0, 0.66) 40%,
-      rgba(0, 0, 0, 0.38) 52%,
-      rgba(0, 0, 0, 0.16) 62%,
-      rgba(0, 0, 0, 0.04) 70%,
-      transparent 78%,
-      transparent 100%
-    );
-    mask-image: radial-gradient(
-      circle,
-      #000 0 18%,
-      rgba(0, 0, 0, 0.9) 28%,
-      rgba(0, 0, 0, 0.66) 40%,
-      rgba(0, 0, 0, 0.38) 52%,
-      rgba(0, 0, 0, 0.16) 62%,
-      rgba(0, 0, 0, 0.04) 70%,
-      transparent 78%,
-      transparent 100%
-    );
-  }
-}
-
 @media (max-width: 760px) {
-  .guestbook-close { margin: 20px; }
-  .guestbook-dialog.glass-surface {
-    inset: calc(var(--chrome-top) + var(--header-height) + 8px) 0 0;
-    width: 100%; height: auto; max-height: none;
+  .guestbook-close { top: 20px; right: calc(20px + var(--guestbook-scrollbar-width, 0px)); }
+  .guestbook-dialog {
+    inset: calc(var(--chrome-top) + var(--header-height) + 8px) 0 auto;
+    width: 100vw;
+    height: calc(100dvh - var(--chrome-top) - var(--header-height) - 8px);
+    max-height: none;
     translate: none; border-radius: 28px 28px 0 0;
   }
   .guestbook-layout {
@@ -247,12 +239,6 @@ html.guestbook-open .top-chrome {
 }
 
 @media (max-width: 720px) {
-  .guestbook-header {
-    min-height: 44px;
-    padding: 0;
-  }
-
-
   .article-comments {
     padding-bottom: 64px;
   }

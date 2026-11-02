@@ -154,6 +154,37 @@ test('confirmation dialogs attach the shared optics on open and release on close
   assert.equal(dialog.dataset.glassActive, undefined);
 });
 
+test('a dialog background and close lens follow their owning dialog lifecycle', async () => {
+  const state = await setup();
+  let open = false;
+  let closing = false;
+  const owner = {};
+  const surface = glass => ({
+    dataset: { glass }, isConnected: true,
+    getClientRects: () => open ? [{}] : [],
+    closest: selector => selector === 'dialog' || (selector === 'dialog[open]' && open)
+      || (selector === '.is-closing' && closing) ? owner : null,
+  });
+  const background = surface('dialog');
+  const close = surface('control');
+  state.surfaces.push(background, close);
+  state.events.get('astro:page-load')(); state.flush();
+  assert.equal(state.active.has(background), false);
+  assert.equal(state.active.has(close), false);
+  open = true; state.mutate();
+  assert.equal(state.active.has(background), true);
+  assert.equal(state.active.has(close), true);
+  assert.equal(state.calls.find(([call, element]) => call === 'attach' && element === background)[2].blur, 3);
+  assert.equal(state.calls.find(([call, element]) => call === 'attach' && element === close)[2].blur, 2);
+  const refreshes = () => state.calls.filter(([call, element]) => call === 'refresh' && [background, close].includes(element)).length;
+  const beforeClosing = refreshes();
+  closing = true; state.mutate(); state.flush();
+  assert.equal(refreshes(), beforeClosing);
+  open = false; state.mutate();
+  assert.equal(state.active.has(background), false);
+  assert.equal(state.active.has(close), false);
+});
+
 test('search attaches immediately on opening and releases on closing', async () => {
   const state = await setup();
   const search = { dataset: { glass: 'search' }, isConnected: true, hidden: true,

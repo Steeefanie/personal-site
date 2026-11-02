@@ -1,4 +1,4 @@
-@import url('/fonts/site/fonts.css');
+@import url('https://steeefanie.top/fonts/site/fonts.css');
 
 :host,
 html {
@@ -51,7 +51,7 @@ html body main {
 html body main .gsc-main,
 html body main .gsc-main .gsc-comment-box,
 html body main .gsc-main .gsc-comment {
-  font-family: var(--font-family-default);
+  font-family: var(--font-family-default) !important;
 }
 
 html body main .gsc-main .gsc-header,
@@ -86,56 +86,47 @@ html body main .gsc-main .gsc-comments-count {
 
 html body main .gsc-main .gsc-comment-box {
   overflow: hidden;
-  border: 1px solid var(--color-border-default) !important;
-  border-radius: 10px !important;
-  background: var(--color-canvas-overlay) !important;
-  box-shadow: none !important;
-  transition: border-color 150ms ease, box-shadow 150ms ease;
+  min-width: 0;
+  transition: box-shadow 150ms ease;
 }
 
 html body main .gsc-main .gsc-comment-box:focus-within {
-  border-color: var(--color-accent-fg) !important;
-  box-shadow: 0 0 0 2px var(--color-accent-subtle) !important;
+  border-color: transparent !important;
+  outline: none !important;
+  box-shadow: var(--comment-highlight) !important;
 }
 
 html body main .gsc-main .gsc-comment-box-tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px 0 !important;
   border: 0 !important;
-  border-bottom: 1px solid var(--color-border-muted) !important;
-  border-radius: 0 !important;
   background: transparent !important;
 }
 
 html body main .gsc-main .gsc-comment-box-tabs > div {
-  padding-inline: 10px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 !important;
   margin: 0 !important;
 }
 
 html body main .gsc-main .gsc-comment-box-tabs button {
   position: relative;
-  padding: 12px 10px 10px !important;
+  height: 44px;
+  min-height: 44px;
+  padding: 10px 18px !important;
   margin: 0 !important;
   border: 0 !important;
-  border-radius: 0 !important;
+  border-radius: 999px !important;
   background: transparent !important;
   box-shadow: none !important;
   color: var(--color-fg-muted) !important;
   font-size: 0.82rem;
   font-weight: 500;
-}
-
-html body main .gsc-main .gsc-comment-box-tabs button.color-text-primary {
-  color: var(--color-fg-default) !important;
-}
-
-html body main .gsc-main .gsc-comment-box-tabs button.color-text-primary::after {
-  position: absolute;
-  right: 10px;
-  bottom: -1px;
-  left: 10px;
-  height: 2px;
-  border-radius: 999px;
-  background: var(--color-accent-fg);
-  content: '';
+  line-height: 20px;
 }
 
 html body main .gsc-main .gsc-comment-box-tabs .gsc-comment-box-md-toolbar {
@@ -158,6 +149,10 @@ html body main .gsc-main .gsc-comment-box-write {
 }
 
 html body main .gsc-main .gsc-comment-box-textarea {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  resize: vertical;
   min-height: 132px !important;
   padding: 15px 16px !important;
   border: 0 !important;
@@ -201,7 +196,6 @@ html body main .gsc-main .gsc-comment-box-is-reply .gsc-comment-box-buttons .btn
 
 html body main .gsc-main .gsc-comment-box-is-reply:not(:focus-within) {
   border-color: var(--color-border-muted) !important;
-  border-radius: 8px !important;
 }
 
 html body main .gsc-main .gsc-comment-box-is-reply:not(:focus-within) .gsc-comment-box-tabs,
@@ -211,9 +205,9 @@ html body main .gsc-main .gsc-comment-box-is-reply:not(:focus-within) .gsc-comme
 }
 
 html body main .gsc-main .gsc-comment-box-is-reply:not(:focus-within) .gsc-comment-box-textarea {
-  height: 40px !important;
-  min-height: 40px !important;
-  padding: 8px 12px !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  padding: 10px 12px !important;
   overflow: hidden !important;
   resize: none !important;
   line-height: 24px;
@@ -233,8 +227,6 @@ html body main .gsc-main .btn-primary:focus {
 
 html body main .gsc-main .gsc-right-header.BtnGroup {
   overflow: hidden;
-  border: 1px solid var(--color-border-muted) !important;
-  border-radius: 8px !important;
 }
 
 html body main .gsc-main .gsc-right-header .BtnGroup-item {
@@ -244,11 +236,7 @@ html body main .gsc-main .gsc-right-header .BtnGroup-item {
 }
 
 html body main .gsc-main .gsc-right-header .BtnGroup-item + .BtnGroup-item {
-  border-left: 1px solid var(--color-border-muted) !important;
-}
-
-html body main .gsc-main .gsc-right-header .btn {
-  border-radius: 0 !important;
+  border-left: 0 !important;
 }
 
 html body main .gsc-main .gsc-comment-box-tabs button:focus-visible,
@@ -270,9 +258,7 @@ html body main .gsc-main .gsc-comment {
 
 html body main .gsc-main .gsc-comment > div {
   overflow: hidden;
-  border: 1px solid var(--color-border-muted) !important;
-  border-radius: 10px !important;
-  background: var(--color-canvas-overlay) !important;
+
 }
 
 html body main .gsc-main .gsc-comment-content {
@@ -294,25 +280,29 @@ html body main { --comment-glass: rgb(32 32 32 / .55); --comment-selected: rgb(2
 /* Static glass: same tint/highlight as site buttons, without backdrop work. */
 html body main .gsc-main :is(.gsc-comment-box, .gsc-comment > div) {
   border: 0 !important;
-  border-radius: 24px !important;
+  border-radius: var(--comment-card-radius) !important;
   background: var(--comment-glass) !important;
   box-shadow: var(--comment-highlight) !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
-html body main .gsc-main .gsc-comment-box:focus-within {
-  outline: 2px solid var(--color-fg-muted);
-  outline-offset: 2px;
-}
 html body main .gsc-main :is(.gsc-comment-box-tabs, .gsc-comment-box-bottom) { border: 0 !important; }
-html body main .gsc-main .gsc-comment-box-tabs button {
-  min-height: 44px;
-  border-radius: 999px !important;
-}
+
 html body main .gsc-main .gsc-comment-box-tabs button.color-text-primary {
+  isolation: isolate;
   color: var(--color-accent-fg) !important;
-  background: var(--comment-selected) !important;
-  box-shadow: var(--comment-highlight) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+html body main .gsc-main .gsc-comment-box-tabs button.color-text-primary::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 6px 4px;
+  border-radius: 999px;
+  background: var(--comment-selected);
+  box-shadow: var(--comment-highlight);
+  pointer-events: none;
 }
 html body main .gsc-main .gsc-comment-box-tabs button.color-text-primary::after { display: none; }
 html body main .gsc-main :is(.btn, .btn-primary, .gsc-right-header.BtnGroup) {
@@ -328,7 +318,13 @@ html body main .gsc-main :is(.btn, .btn-primary, .gsc-right-header.BtnGroup) {
 html body main .gsc-main :is(.btn-primary, .btn:hover, .btn:focus-visible) { color: var(--color-accent-fg) !important; }
 html body main .gsc-main .btn:disabled { color: var(--color-fg-muted) !important; }
 html body main .gsc-main .gsc-right-header .BtnGroup-item { background: transparent !important; box-shadow: none !important; border: 0 !important; }
-html body main .gsc-main .gsc-comment-box-is-reply:not(:focus-within) { border-radius: 16px !important; }
+/* Expanded geometry is canonical: inner radius + inset = outer radius.
+   Keep the same frame after focus leaves instead of switching radius by state. */
+html body main .gsc-main .gsc-comment-box.gsc-comment-box-is-reply {
+  width: calc(100% - 2 * var(--comment-reply-gap));
+  margin: var(--comment-reply-gap) !important;
+  border-radius: var(--comment-reply-radius) !important;
+}
 @media (forced-colors: active) {
   html body main .gsc-main :is(.gsc-comment-box, .gsc-comment > div, .btn, .gsc-right-header.BtnGroup) { background: Canvas !important; color: CanvasText !important; border: 1px solid ButtonText !important; box-shadow: none !important; }
 }
@@ -367,10 +363,107 @@ html body main .gsc-main .gsc-right-header .btn:is(:hover, :focus-visible) {
   color: var(--color-fg-default) !important;
 }
 html body main .gsc-main .gsc-right-header .BtnGroup-item[aria-current='true'] .btn { color: var(--color-accent-fg) !important; }
-html body main .gsc-main .gsc-comment-box-tabs button { border-radius: 12px !important; }
+
 @media (prefers-reduced-motion: reduce) {
   html body main .gsc-main .gsc-right-header.BtnGroup::before { transition: none; }
 }
 @media (forced-colors: active) {
   html body main .gsc-main .gsc-right-header.BtnGroup::before { background: Highlight; box-shadow: none; }
+}
+
+/* The iframe canvas stays transparent; only individual controls carry material. */
+html, html body, html body > div, html body main {
+  background: transparent !important;
+}
+html body { margin: 0; }
+html body *, html body *::before, html body *::after { box-sizing: border-box; }
+html body main {
+  --comment-card-radius: 24px;
+  --comment-reply-gap: 12px;
+  --comment-reply-radius: calc(var(--comment-card-radius) - var(--comment-reply-gap));
+  padding: 4px !important; min-width: 0; max-width: 100%;
+}
+html body main .gsc-main { min-width: 0; width: 100%; }
+html body main .gsc-main :is(button, textarea, input) {
+  font-family: var(--font-family-default) !important;
+}
+html body main .gsc-main :is(.gsc-header, .gsc-comment-box-bottom) {
+  flex-wrap: wrap; gap: 12px;
+}
+html body main .gsc-main .gsc-header { align-items: center; }
+html body main .gsc-main .gsc-left-header { min-width: 0; flex-wrap: wrap; }
+html body main .gsc-main .gsc-right-header.BtnGroup {
+  flex-shrink: 0; width: max-content; max-width: 100%;
+}
+html body main .gsc-main .gsc-comment-box-tabs > div { min-width: 0; }
+
+html body main .gsc-main .gsc-comment-box-main {
+  margin: 0 !important;
+  padding: 8px 12px 0;
+}
+/* Giscus draws its focus ring on this wrapper, not just on the textarea. */
+html body main .gsc-main .gsc-comment-box-write {
+  overflow: hidden;
+  border: 0 !important;
+  border-radius: var(--comment-reply-radius) !important;
+  outline: none !important;
+  box-shadow: none !important;
+  transition: background-color 150ms ease;
+}
+html body main .gsc-main .gsc-comment-box-write:focus-within {
+  border: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background: var(--comment-selected) !important;
+}
+html body main .gsc-main .gsc-comment-box-textarea:is(:focus, :focus-visible) {
+  border: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+html body main .gsc-main .gsc-comment-content {
+  overflow-wrap: anywhere;
+}
+html body main .gsc-main .gsc-comment-content :is(img, video) { max-width: 100%; }
+html body main .gsc-main .gsc-comment-content pre { max-width: 100%; overflow-x: auto; }
+html body main .gsc-main .gsc-reply-box {
+  border-top: 0 !important;
+  background: transparent !important;
+  padding: var(--comment-reply-gap) !important;
+}
+html body main .gsc-main .gsc-reply-box > button {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 44px;
+  min-height: 44px;
+  padding: 10px 12px !important;
+  line-height: 24px;
+  border: 0 !important;
+  border-radius: var(--comment-reply-radius) !important;
+  background: var(--comment-glass) !important;
+  box-shadow: var(--comment-highlight) !important;
+}
+html body main .gsc-main .gsc-comment-box-is-reply:not(:focus-within) {
+  height: 44px;
+  padding: 0 !important;
+  background: var(--comment-glass) !important;
+}
+html body main .gsc-main .gsc-comment-box-is-reply:not(:focus-within) .gsc-comment-box-main {
+  padding: 0 !important;
+}
+@media (max-width: 480px) {
+  html body main .gsc-main .gsc-header { align-items: flex-start; }
+  html body main .gsc-main .gsc-comment-box-bottom { padding: 12px !important; }
+  html body main .gsc-main .gsc-comment-box-bottom > * { min-width: 0; max-width: 100%; }
+  html body main .gsc-main .gsc-comment-box-bottom .btn { white-space: normal; }
+  html body main .gsc-main .gsc-comment-box-textarea { padding: 12px !important; }
+}
+
+@media (forced-colors: active) {
+  html body main .gsc-main .gsc-comment-box-write:focus-within {
+    outline: 2px solid Highlight !important;
+    outline-offset: -2px;
+  }
 }

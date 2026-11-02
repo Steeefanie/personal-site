@@ -39,7 +39,7 @@ const eligible = (element: HTMLElement) => {
   if (element.dataset.glass === 'navigation') {
     return !header?.classList.contains('is-hidden') && chrome?.getAttribute('data-panel-open') !== 'search';
   }
-  if (element.dataset.glass === 'dialog') return element.hasAttribute('open');
+  if (element.dataset.glass === 'dialog') return element.hasAttribute?.('open') || !!element.closest?.('dialog[open]');
   if (element.dataset.glass === 'search') return chrome?.getAttribute('data-panel-open') === 'search' && !element.hidden;
   if (element.dataset.glass === 'control' || element.dataset.glass === 'menu') return true;
   if (!contents || contents.dataset.resizing === 'true') return false;
@@ -52,7 +52,7 @@ const eligible = (element: HTMLElement) => {
 const sync = (refreshExisting = true, openingOnly = false) => {
   if (!api || disposed) return;
   for (const element of surfaces) {
-    if (openingOnly && !['menu', 'contents', 'dialog', 'search'].includes(element.dataset.glass ?? '')) continue;
+    if (openingOnly && !['menu', 'contents', 'control', 'dialog', 'search'].includes(element.dataset.glass ?? '')) continue;
     try {
       if (eligible(element)) {
         if (!attached.has(element)) {
@@ -64,7 +64,7 @@ const sync = (refreshExisting = true, openingOnly = false) => {
           // Keep filter definitions alive with the persisted chrome during body swaps.
           const definitions = document.querySelector('body > svg:has(filter[id^="hyalite-"])');
           if (definitions?.tagName?.toLowerCase() === 'svg') chrome?.append(definitions);
-        } else if (refreshExisting && !element.classList?.contains('is-closing')) api.refresh(element);
+        } else if (refreshExisting && !element.classList?.contains('is-closing') && !element.closest?.('.is-closing')) api.refresh(element);
       } else if (attached.has(element)) release(element);
     } catch {
       release(element);
@@ -100,7 +100,7 @@ const initialize = async () => {
     await loading;
     if (disposed || !window.Hyalite?.supported()) return;
     api = window.Hyalite;
-    for (const root of [chrome, contents, footerLanguage, ...surfaces.filter((element) => element.dataset.glass === 'dialog')]) {
+    for (const root of [chrome, contents, footerLanguage, ...surfaces.filter((element) => element.dataset.glass === 'dialog').map((element) => element.closest?.('dialog') ?? element)]) {
       if (root) observer.observe(root, { subtree: true, attributes: true,
         attributeFilter: ['class', 'hidden', 'open', 'data-panel-open', 'data-open', 'data-resizing', 'data-mode'] });
     }
@@ -132,7 +132,7 @@ addEventListener('pageshow', (event) => {
   if (!event.persisted) return;
   disposed = false;
   if (api) {
-    for (const root of [chrome, contents, footerLanguage, ...surfaces.filter((element) => element.dataset.glass === 'dialog')]) {
+    for (const root of [chrome, contents, footerLanguage, ...surfaces.filter((element) => element.dataset.glass === 'dialog').map((element) => element.closest?.('dialog') ?? element)]) {
       if (root) observer.observe(root, { subtree: true, attributes: true,
         attributeFilter: ['class', 'hidden', 'open', 'data-panel-open', 'data-open', 'data-resizing', 'data-mode'] });
     }
@@ -152,7 +152,7 @@ document.addEventListener('astro:page-load', () => {
   footerLanguage = document.querySelector<HTMLElement>('[data-footer-language]');
   surfaces = collectSurfaces();
   observer.disconnect();
-  for (const root of [chrome, contents, footerLanguage, ...surfaces.filter((element) => element.dataset.glass === 'dialog')]) {
+  for (const root of [chrome, contents, footerLanguage, ...surfaces.filter((element) => element.dataset.glass === 'dialog').map((element) => element.closest?.('dialog') ?? element)]) {
     if (root) observer.observe(root, { subtree: true, attributes: true,
       attributeFilter: ['class', 'hidden', 'open', 'data-panel-open', 'data-open', 'data-resizing', 'data-mode'] });
   }

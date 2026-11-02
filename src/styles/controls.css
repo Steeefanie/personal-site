@@ -35,7 +35,6 @@
   body .listing-pagination .pagination-button,
   body .listing-filters .text-button,
   body .search-panel-heading .glass-button,
-  body .guestbook-close,
   body .service-page .upload-icon {
     background: var(--glass-tint);
     box-shadow: var(--glass-selection-shadow);
@@ -149,8 +148,7 @@
     }
   }
 
-  .search-panel.glass-surface,
-  .guestbook-dialog.glass-surface { box-shadow: var(--hyalite-edge, var(--glass-selection-shadow)), var(--shadow-overlay); }
+  .search-panel.glass-surface { box-shadow: var(--hyalite-edge, var(--glass-selection-shadow)), var(--shadow-overlay); }
   .search-field-wrap { border: 0; background: var(--glass-tint); box-shadow: var(--glass-selection-shadow); }
   .search-field-wrap:focus-within { outline: none; }
   .search-panel[data-keyboard-focus] .search-field-wrap:focus-within { outline: 2px solid var(--muted); outline-offset: 2px; }

@@ -7,28 +7,28 @@ import { localeFromPathname } from '../lib/routes';
 const locale = localeFromPathname(Astro.url.pathname);
 ---
 
+<div class="guestbook-backdrop" data-guestbook-backdrop hidden aria-hidden="true"></div>
 <dialog
-  class="guestbook-dialog glass-surface glass-surface--panel"
+  class="guestbook-dialog"
   data-guestbook-dialog
-  data-glass="dialog"
   tabindex="-1"
   autofocus
   aria-labelledby="guestbook-title"
   aria-describedby="guestbook-intro guestbook-privacy guestbook-login"
 >
+  <div class="guestbook-material glass-surface glass-surface--panel" data-glass="dialog" aria-hidden="true"></div>
   <div class="guestbook-shell">
-    <header class="guestbook-header">
-      <button
-        type="button"
-        class="guestbook-close"
-        data-guestbook-close
-        aria-label={ui.guestbook.close[locale]}
-      >
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M6 6L18 18M18 6L6 18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
-        </svg>
-      </button>
-    </header>
+    <button
+      type="button"
+      class="guestbook-close"
+      data-guestbook-close
+      aria-label={ui.guestbook.close[locale]}
+    >
+      <span class="guestbook-close-surface glass-surface" data-glass="control" aria-hidden="true"></span>
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M6 6L18 18M18 6L6 18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+      </svg>
+    </button>
     <div class="guestbook-scroll">
       <div class="guestbook-layout">
         <aside class="guestbook-info">
@@ -51,18 +51,32 @@ const locale = localeFromPathname(Astro.url.pathname);
 import { lockPageScroll, unlockPageScroll } from '../lib/scroll-lock';
 import { onPageLoad } from '../scripts/page-lifecycle';
 onPageLoad((scope) => {
-const dialog = document.querySelector<HTMLDialogElement>('[data-guestbook-dialog]');
+  const dialog = document.querySelector<HTMLDialogElement>('[data-guestbook-dialog]');
+  const backdrop = document.querySelector<HTMLElement>('[data-guestbook-backdrop]');
   const openButton = document.querySelector<HTMLButtonElement>('[data-guestbook-open]');
   const closeButton = dialog?.querySelector<HTMLButtonElement>('[data-guestbook-close]');
+  const scroll = dialog?.querySelector<HTMLElement>('.guestbook-scroll');
+  const alignCloseButton = () => {
+    if (!dialog || !scroll) return;
+    dialog.style.setProperty('--guestbook-scrollbar-width', `${scroll.offsetWidth - scroll.clientWidth}px`);
+  };
+  const scrollbarObserver = new ResizeObserver(alignCloseButton);
+  if (scroll) scrollbarObserver.observe(scroll);
+  scope.cleanup(() => scrollbarObserver.disconnect());
+  const backgroundState = new Map<HTMLElement, boolean>();
   let closeTimer = 0;
 
-  const finishClose = () => {
+  const finishClose = (restoreFocus = true) => {
     if (!dialog?.open) return;
+    window.clearTimeout(closeTimer);
     dialog.close();
     dialog.classList.remove('is-closing');
+    if (backdrop) { backdrop.hidden = true; backdrop.classList.remove('is-closing'); }
     document.documentElement.classList.remove('guestbook-open');
+    backgroundState.forEach((inert, element) => { element.inert = inert; });
+    backgroundState.clear();
     unlockPageScroll('guestbook');
-    if (openButton) {
+    if (restoreFocus && openButton) {
       openButton.classList.add('is-focus-restored');
       openButton.addEventListener(
         'blur',
@@ -76,19 +90,28 @@ const dialog = document.querySelector<HTMLDialogElement>('[data-guestbook-dialog
   const requestClose = () => {
     if (!dialog?.open || dialog.classList.contains('is-closing')) return;
     dialog.classList.add('is-closing');
+    backdrop?.classList.add('is-closing');
     window.dispatchEvent(new CustomEvent('site:guestbook-closing'));
     window.clearTimeout(closeTimer);
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) finishClose();
-    else closeTimer = window.setTimeout(finishClose, 180);
+    else closeTimer = window.setTimeout(() => finishClose(), 180);
   };
 
   openButton?.addEventListener('click', () => {
     if (!dialog || dialog.open) return;
-    window.dispatchEvent(new CustomEvent('site:close-panels'));
+    window.dispatchEvent(new CustomEvent('site:close-panels', { detail: { immediately: true } }));
     lockPageScroll('guestbook');
     document.documentElement.classList.add('guestbook-open');
     try {
-      dialog.showModal();
+      // A modal dialog makes the header inert at browser level. Keep only the
+      // page content inert so navigation, search and theme controls remain usable.
+      dialog.show();
+      alignCloseButton();
+      document.querySelectorAll<HTMLElement>('#main-content, body > footer').forEach((element) => {
+        backgroundState.set(element, element.inert);
+        element.inert = true;
+      });
+      if (backdrop) backdrop.hidden = false;
     } catch (error) {
       document.documentElement.classList.remove('guestbook-open');
       unlockPageScroll('guestbook');
@@ -105,6 +128,15 @@ const dialog = document.querySelector<HTMLDialogElement>('[data-guestbook-dialog
     requestClose();
   });
 
-  scope.cleanup(finishClose);
+  scope.onWindow('keydown', (event) => {
+    if (event.key !== 'Escape' || event.defaultPrevented || !dialog?.open) return;
+    event.preventDefault();
+    requestClose();
+  });
+  scope.onWindow('site:panel-opening', ((event: CustomEvent<{ panel: string }>) => {
+    if (event.detail.panel === 'search') finishClose(false);
+  }) as EventListener);
+
+  scope.cleanup(() => finishClose(false));
 });
 </script>

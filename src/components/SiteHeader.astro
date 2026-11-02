@@ -98,20 +98,25 @@ const navItems = [
   let closeTimer = 0;
   let panelAnimationTimer = 0;
   let restoringPanelFocus = false;
+  const searchBackgroundState = new Map<HTMLElement, boolean>();
 
   const lockSearchScroll = () => {
     lockPageScroll('search');
     document.querySelector<HTMLElement>('[data-search-backdrop]')?.removeAttribute('hidden');
-    document.querySelectorAll<HTMLElement>('main, body > footer').forEach((element) => { element.inert = true; });
+    document.querySelectorAll<HTMLElement>('main, body > footer').forEach((element) => {
+      if (!searchBackgroundState.has(element)) searchBackgroundState.set(element, element.inert);
+      element.inert = true;
+    });
   };
 
   const unlockSearchScroll = () => {
     unlockPageScroll('search');
     document.querySelector<HTMLElement>('[data-search-backdrop]')?.setAttribute('hidden', '');
-    document.querySelectorAll<HTMLElement>('main, body > footer').forEach((element) => { element.inert = false; });
+    searchBackgroundState.forEach((inert, element) => { element.inert = inert; });
+    searchBackgroundState.clear();
   };
 
-  const closePanel = (restoreFocus = false) => {
+  const closePanel = (restoreFocus = false, immediately = false) => {
     if (!openPanelName) return;
     const previousName = openPanelName;
     const trigger = triggers.find((item) => item.dataset.panelTrigger === previousName);
@@ -134,7 +139,7 @@ const navItems = [
       panel.hidden = true;
       panel.classList.remove('is-closing');
     };
-    if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    if (immediately || matchMedia('(prefers-reduced-motion: reduce)').matches) {
       collapseSurface();
       finishClose();
     }
@@ -154,6 +159,7 @@ const navItems = [
   };
 
   const openPanel = (name: PanelName) => {
+    window.dispatchEvent(new CustomEvent('site:panel-opening', { detail: { panel: name } }));
     window.clearTimeout(closeTimer);
     window.clearTimeout(panelAnimationTimer);
     panels.forEach((panel) => {
@@ -236,7 +242,7 @@ const navItems = [
     }
     if (event.key === 'Escape' && openPanelName) { event.preventDefault(); closePanel(true); }
   });
-  window.addEventListener('site:close-panels', () => closePanel());
+  window.addEventListener('site:close-panels', (event) => closePanel(false, (event as CustomEvent).detail?.immediately === true));
   document.addEventListener('astro:before-preparation', () => closePanel());
   document.addEventListener('astro:before-swap', () => {
     window.clearTimeout(panelAnimationTimer);

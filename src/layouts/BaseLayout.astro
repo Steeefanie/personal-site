@@ -103,6 +103,7 @@ const alternateLocales = locales.filter((candidate) => candidate !== locale);
     <main id="main-content" class="main-content">
       <slot />
     </main>
+    <slot name="overlays" />
     <SiteFooter />
     <script>
 
